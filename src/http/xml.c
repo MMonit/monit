@@ -120,10 +120,12 @@ static void document_head(StringBuffer_T B, int V, const char *myip) {
                             Run.files.control ? Run.files.control : "");
 
         if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix) {
+                StringBuffer_append(B, "<httpd>");
                 if (Run.httpd.flags & Httpd_Net)
-                        StringBuffer_append(B, "<httpd><address>%s</address><port>%d</port><ssl>%d</ssl></httpd>", Run.httpd.socket.net.address ? Run.httpd.socket.net.address : myip ? myip : "", Run.httpd.socket.net.port, Run.httpd.socket.net.ssl.flags & SSL_Enabled);
-                else if (Run.httpd.flags & Httpd_Unix)
-                        StringBuffer_append(B, "<httpd><unixsocket>%s</unixsocket></httpd>", Run.httpd.socket.unix.path ? Run.httpd.socket.unix.path : "");
+                        StringBuffer_append(B, "<address>%s</address><port>%d</port><ssl>%d</ssl>", Run.httpd.socket.net.address ? Run.httpd.socket.net.address : myip ? myip : "", Run.httpd.socket.net.port, Run.httpd.socket.net.ssl.flags & SSL_Enabled);
+                if (Run.httpd.flags & Httpd_Unix)
+                        StringBuffer_append(B, "<unixsocket>%s</unixsocket>", Run.httpd.socket.unix.path ? Run.httpd.socket.unix.path : "");
+                StringBuffer_append(B, "</httpd>");
 
                 if (Run.mmonitcredentials)
                         StringBuffer_append(B, "<credentials><username>%s</username><password>%s</password></credentials>", Run.mmonitcredentials->uname, Run.mmonitcredentials->passwd);

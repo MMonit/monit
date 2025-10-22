@@ -2638,7 +2638,8 @@ static void print_status(HttpRequest req, HttpResponse res, int version) {
         if (stringFormat && Str_startsWith(stringFormat, "xml")) {
                 char buf[STRLEN];
                 StringBuffer_T sb = StringBuffer_create(256);
-                status_xml(sb, NULL, version, Socket_getLocalHost(req->S, buf, sizeof(buf)), NULL);
+                const char *localhost = ((Run.httpd.flags & Httpd_Unix) && Socket_getFamily(req->S) == Socket_Unix) ? NULL : Socket_getLocalHost(req->S, buf, sizeof(buf));
+                status_xml(sb, NULL, version, localhost, NULL);
                 StringBuffer_append(res->outputbuffer, "%s", StringBuffer_toString(sb));
                 StringBuffer_free(&sb);
                 set_content_type(res, "text/xml");
