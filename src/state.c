@@ -237,8 +237,11 @@ static bool _stateDirty = false;
 
 
 static void _updateStart(Service_T S, int nstart, int ncycle) {
-        S->nstart = nstart;
-        S->ncycle = ncycle;
+        if (! State_reboot()) {
+                // Restore the start counter only on monit reload or start within the same boot session (reboot resets start counters)
+                S->nstart = nstart;
+                S->ncycle = ncycle;
+        }
 }
 
 
@@ -256,7 +259,6 @@ static void _updateMonitor(Service_T S, Monitor_State monitor) {
                 else
                         S->monitor = Monitor_Init;
         }
-        S->onrebootRestored = true;
 }
 
 
@@ -363,6 +365,7 @@ static void _restoreV4(void) {
                                 default:
                                         break;
                         }
+                        service->onrebootRestored = true;
                 }
         }
 }
@@ -407,6 +410,7 @@ static void _restoreV3(void) {
                                 default:
                                         break;
                         }
+                        service->onrebootRestored = true;
                 }
         }
 }
@@ -449,6 +453,7 @@ static void _restoreV2(void) {
                                 default:
                                         break;
                         }
+                        service->onrebootRestored = true;
                 }
         }
 }
@@ -466,6 +471,7 @@ static void _restoreV1(void) {
                         _updateMonitor(service, state.monitor);
                         if (service->type == Service_File)
                                 _updateFilePosition(service, state.priv.file.inode, state.priv.file.readpos);
+                        service->onrebootRestored = true;
                 }
         }
 }
@@ -483,6 +489,7 @@ static void _restoreV0(int services) {
                 if (service) {
                         _updateStart(service, state.nstart, state.ncycle);
                         _updateMonitor(service, state.monitor);
+                        service->onrebootRestored = true;
                 }
         }
 }

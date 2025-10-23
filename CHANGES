@@ -13,6 +13,9 @@ Fixed: Issue #1137: Hostname error in log when fetching status in XML format fro
 Fixed: The MongoDB protocol test did support only MongodDB < 5.1. The protocol test was updated to support
      the newer mongodb ping style.
 
+Fixed: The service restart counter wasn't reset on reboot, which could cause the restart timeout to falsely trigger
+     when monit had a long polling cycle and the machine was repeatedly rebooted immediately after the first monit cycle.
+
 New: The "check program" output in the "monit status" CLI was limited to 200 characters. The limitation is removed
      and monit will display up to "set limits { programOutput: <size> }" characters now.
 
