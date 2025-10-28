@@ -107,7 +107,8 @@
 
 
 static struct {
-        int hasIOStatistics; // True if /proc/<PID>/io is present
+        bool hasIOStatistics; // True if /proc/<PID>/io is present
+        bool hasSmapsRollup;  // True if /proc/<PID>/smaps_rollup is present
 } _statistics = {};
 
 
@@ -156,8 +157,8 @@ typedef struct Proc_T {
 
 
 static void __attribute__ ((constructor)) _constructor(void) {
-        struct stat sb;
-        _statistics.hasIOStatistics = stat("/proc/self/io", &sb) == 0 ? true : false;
+        _statistics.hasIOStatistics = access("/proc/self/io", R_OK) == 0 ? true : false;
+        _statistics.hasSmapsRollup = access("/proc/self/smaps_rollup", R_OK) == 0 ? true : false;
 }
 
 
@@ -180,8 +181,6 @@ static unsigned long long old_cpu_total      = 0;
 static long page_size = 0;
 
 static double hz = 0.;
-
-static bool hasSmapsRollup;
 
 /**
  * Get system start time
@@ -259,7 +258,7 @@ static bool _parseProcPidStatus(Proc_T proc) {
 // parse /proc/PID/smaps_rollup (requires kernel >= 4.14)
 // See: https://www.kernel.org/doc/Documentation/filesystems/proc.rst
 static bool _parseProcPidSmapsRollup(Proc_T proc) {
-        if (hasSmapsRollup) {
+        if (_statistics.hasSmapsRollup) {
                 char buf[4096];
                 char *tmp = NULL;
                 if (! file_readProc(buf, sizeof(buf), "smaps_rollup", proc->data.pid, NULL)) {
@@ -513,8 +512,6 @@ bool init_systeminfo_sysdep(void) {
         }
 
         System_Info.booted = (long long)_getStartTime();
-
-        hasSmapsRollup = access("/proc/self/smaps_rollup", R_OK) ? false : true;
 
         return true;
 }
