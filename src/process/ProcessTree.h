@@ -56,8 +56,9 @@ typedef struct ProcessTree_T {
                 int *list;
         } children;
         struct {
-                unsigned long long usage;
-                unsigned long long usage_total;
+                unsigned long long usage_rss;
+                unsigned long long usage_pss;
+                unsigned long long usage_total; // Process and its children (PSS total)
         } memory;
         struct {
                 unsigned long long time;

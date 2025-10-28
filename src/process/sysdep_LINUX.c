@@ -85,6 +85,10 @@
 #include <sys/resource.h>
 #endif
 
+#ifdef HAVE_SYS_MMAN_H
+#include <sys/mman.h>
+#endif
+
 #include "monit.h"
 #include "ProcessTree.h"
 #include "process_sysdep.h"
@@ -123,6 +127,9 @@ typedef struct Proc_T {
                 unsigned long       item_utime;
                 unsigned long       item_stime;
                 unsigned long long  item_starttime;
+                struct {
+                        unsigned long long    usage_pss;
+                } memory;
                 struct {
                         unsigned long long    bytes;
                         unsigned long long    bytesPhysical;
@@ -173,6 +180,8 @@ static unsigned long long old_cpu_total      = 0;
 static long page_size = 0;
 
 static double hz = 0.;
+
+static bool hasSmapsRollup;
 
 /**
  * Get system start time
@@ -242,6 +251,30 @@ static bool _parseProcPidStatus(Proc_T proc) {
         if (sscanf(tmp + 4, "\t%d", &(proc->data.gid)) != 1) {
                 DEBUG("system statistic error -- cannot read process gid\n");
                 return false;
+        }
+        return true;
+}
+
+
+// parse /proc/PID/smaps_rollup (requires kernel >= 4.14)
+// See: https://www.kernel.org/doc/Documentation/filesystems/proc.rst
+static bool _parseProcPidSmapsRollup(Proc_T proc) {
+        if (hasSmapsRollup) {
+                char buf[4096];
+                char *tmp = NULL;
+                if (! file_readProc(buf, sizeof(buf), "smaps_rollup", proc->data.pid, NULL)) {
+                        // Kernel threads have no smaps_rollup, continue
+                        return true;
+                }
+                if (! (tmp = strstr(buf, "Pss:"))) {
+                        DEBUG("system statistic error -- cannot find PSS\n");
+                        return false;
+                }
+                if (sscanf(tmp + 4, "\t%llu kB", &(proc->data.memory.usage_pss)) != 1) {
+                        DEBUG("system statistic error -- cannot read process PSS\n");
+                        return false;
+                }
+                proc->data.memory.usage_pss *= 1024;
         }
         return true;
 }
@@ -481,6 +514,8 @@ bool init_systeminfo_sysdep(void) {
 
         System_Info.booted = (long long)_getStartTime();
 
+        hasSmapsRollup = access("/proc/self/smaps_rollup", R_OK) ? false : true;
+
         return true;
 }
 
@@ -511,7 +546,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
         time_t starttime = _getStartTime();
         for (size_t i = 0; i < globbuf.gl_pathc; i++) {
                 proc.data.pid = atoi(globbuf.gl_pathv[i] + 6); // skip "/proc/"
-                if (_parseProcPidStat(&proc) && _parseProcPidStatus(&proc) && _parseProcPidIO(&proc) && _parseProcPidCmdline(&proc, pflags)) {
+                if (_parseProcPidStat(&proc) && _parseProcPidStatus(&proc) && _parseProcPidIO(&proc) && _parseProcPidCmdline(&proc, pflags) && _parseProcPidSmapsRollup(&proc)) {
                         // Non-mandatory statistics (may not exist)
                         _parseProcFdCount(&proc);
                         _parseProcPidAttrCurrent(&proc);
@@ -524,7 +559,8 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                         pt[count].threads.self = proc.data.item_threads;
                         pt[count].uptime = starttime > 0 ? (System_Info.time / 10. - (starttime + (time_t)(proc.data.item_starttime / hz))) : 0;
                         pt[count].cpu.time = (double)(proc.data.item_utime + proc.data.item_stime) / hz * 10.; // jiffies -> seconds = 1/hz
-                        pt[count].memory.usage = (unsigned long long)proc.data.item_rss * (unsigned long long)page_size;
+                        pt[count].memory.usage_rss = (unsigned long long)proc.data.item_rss * (unsigned long long)page_size;
+                        pt[count].memory.usage_pss = proc.data.memory.usage_pss;
                         pt[count].read.bytes = proc.data.read.bytes;
                         pt[count].read.bytesPhysical = proc.data.read.bytesPhysical;
                         pt[count].read.operations = proc.data.read.operations;

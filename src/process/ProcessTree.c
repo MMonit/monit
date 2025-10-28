@@ -125,7 +125,7 @@ static void _fillProcessTree(ProcessTree_T *pt, int index) {
                 pt[index].children.total = pt[index].children.count;
                 pt[index].threads.children = 0;
                 pt[index].cpu.usage.children = 0.;
-                pt[index].memory.usage_total = pt[index].memory.usage;
+                pt[index].memory.usage_total = pt[index].memory.usage_pss ? pt[index].memory.usage_pss : pt[index].memory.usage_rss;
                 pt[index].filedescriptors.usage_total = pt[index].filedescriptors.usage;
                 for (int i = 0; i < pt[index].children.count; i++) {
                         _fillProcessTree(pt, pt[index].children.list[i]);
@@ -310,15 +310,19 @@ bool ProcessTree_updateProcess(Service_T s, pid_t pid) {
                         s->inf.process->cpu_percent = -1;
                         s->inf.process->total_cpu_percent = -1;
                 }
-                s->inf.process->mem               = ptree[leaf].memory.usage;
+                s->inf.process->mem               = ptree[leaf].memory.usage_pss ? ptree[leaf].memory.usage_pss : ptree[leaf].memory.usage_rss;
                 s->inf.process->total_mem         = ptree[leaf].memory.usage_total;
                 s->inf.process->filedescriptors.open        = ptree[leaf].filedescriptors.usage;
                 s->inf.process->filedescriptors.openTotal   = ptree[leaf].filedescriptors.usage_total;
                 s->inf.process->filedescriptors.limit.soft  = ptree[leaf].filedescriptors.limit.soft;
                 s->inf.process->filedescriptors.limit.hard  = ptree[leaf].filedescriptors.limit.hard;
                 if (System_Info.memory.size > 0) {
-                        s->inf.process->total_mem_percent = ptree[leaf].memory.usage_total >= System_Info.memory.size ? 100. : (100. * (double)ptree[leaf].memory.usage_total / (double)System_Info.memory.size);
-                        s->inf.process->mem_percent       = ptree[leaf].memory.usage >= System_Info.memory.size ? 100. : (100. * (double)ptree[leaf].memory.usage / (double)System_Info.memory.size);
+                        // Note: We use PSS to calculate the total memory usage as of Monit 5.36.0, which accounts a fair part of shared memory pages for each process. However,
+                        //       if PSS information is unavailable (e.g., Linux version < 4.14 or platform where such information is not implemented), we resort to using RSS,
+                        //       which counts the entire shared memory for each process. Consequently, the total calculated using RSS may be inaccurate and could even exceed the
+                        //       actual memory size.
+                        s->inf.process->total_mem_percent = s->inf.process->total_mem >= System_Info.memory.size ? 100. : (100. * (double)s->inf.process->total_mem / (double)System_Info.memory.size);
+                        s->inf.process->mem_percent       = s->inf.process->mem >= System_Info.memory.size ? 100. : (100. * (double)s->inf.process->mem / (double)System_Info.memory.size);
                 }
                 if (ptree[leaf].read.bytes >= 0)
                         Statistics_update(&(s->inf.process->read.bytes), ptree[leaf].read.time, ptree[leaf].read.bytes);

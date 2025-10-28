@@ -6,7 +6,7 @@ AC_PREREQ([2.53])
 # Note: in  case of beta subversion, use underscore "_" rather then dash "-"
 # since RPM doesn't allow dash in Version
 # Example: 5.0_beta2
-AC_INIT([monit], [5.35.3], [monit-general@nongnu.org])
+AC_INIT([monit], [5.36.0], [monit-general@nongnu.org])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE
@@ -153,6 +153,7 @@ AC_CHECK_HEADERS([ \
 	sys/iostat.h \
 	sys/loadavg.h \
 	sys/lock.h \
+	sys/mman.h \
 	sys/mntent.h \
 	sys/mnttab.h \
 	sys/mutex.h \
