@@ -208,7 +208,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                 pt[i].cred.euid           = procs[i].pi_uid;
                 pt[i].threads.self        = procs[i].pi_thcount;
                 pt[i].uptime              = System_Info.time / 10. - procs[i].pi_start;
-                pt[i].memory.usage        = (unsigned long long)(procs[i].pi_drss + procs[i].pi_trss) * (unsigned long long)page_size;
+                pt[i].memory.usage_rss    = (unsigned long long)(procs[i].pi_drss + procs[i].pi_trss) * (unsigned long long)page_size;
                 pt[i].cpu.time            = procs[i].pi_ru.ru_utime.tv_sec * 10 + (double)procs[i].pi_ru.ru_utime.tv_usec / 100000. + procs[i].pi_ru.ru_stime.tv_sec * 10 + (double)procs[i].pi_ru.ru_stime.tv_usec / 100000.;
                 pt[i].read.bytes          = -1;
                 pt[i].read.bytesPhysical  = -1;

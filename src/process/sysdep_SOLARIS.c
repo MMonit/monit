@@ -159,13 +159,13 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                 pt[i].pid = atoi(globbuf.gl_pathv[i] + strlen("/proc/"));
                 if (file_readProc(buf, sizeof(buf), "psinfo", pt[i].pid, NULL)) {
                         psinfo_t *psinfo = (psinfo_t *)&buf;
-                        pt[i].ppid         = psinfo->pr_ppid;
-                        pt[i].cred.uid     = psinfo->pr_uid;
-                        pt[i].cred.euid    = psinfo->pr_euid;
-                        pt[i].cred.gid     = psinfo->pr_gid;
-                        pt[i].uptime       = System_Info.time / 10. - psinfo->pr_start.tv_sec;
-                        pt[i].zombie       = psinfo->pr_nlwp == 0 ? true : false; // If we don't have any light-weight processes (LWP) then we are definitely a zombie
-                        pt[i].memory.usage = (unsigned long long)psinfo->pr_rssize * 1024;
+                        pt[i].ppid             = psinfo->pr_ppid;
+                        pt[i].cred.uid         = psinfo->pr_uid;
+                        pt[i].cred.euid        = psinfo->pr_euid;
+                        pt[i].cred.gid         = psinfo->pr_gid;
+                        pt[i].uptime           = System_Info.time / 10. - psinfo->pr_start.tv_sec;
+                        pt[i].zombie           = psinfo->pr_nlwp == 0 ? true : false; // If we don't have any light-weight processes (LWP) then we are definitely a zombie
+                        pt[i].memory.usage_rss = (unsigned long long)psinfo->pr_rssize * 1024;
                         if (pflags & ProcessEngine_CollectCommandLine) {
                                 pt[i].cmdline = Str_dup(psinfo->pr_psargs);
                                 if (STR_UNDEF(pt[i].cmdline)) {

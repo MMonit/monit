@@ -232,7 +232,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                         } else if ((unsigned long)rv < sizeof(tinfo)) {
                                 Log_error("proc_pidinfo for pid %d -- invalid result size\n", pt[i].pid);
                         } else {
-                                pt[i].memory.usage = (unsigned long long)tinfo.pti_resident_size;
+                                pt[i].memory.usage_rss = (unsigned long long)tinfo.pti_resident_size;
                                 pt[i].cpu.time = (double)(tinfo.pti_total_user + tinfo.pti_total_system) / 100000000.; // The time is in nanoseconds, we store it as 1/10s
                                 pt[i].threads.self = tinfo.pti_threadnum;
                         }

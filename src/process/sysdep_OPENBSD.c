@@ -201,7 +201,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                         pt[index].cred.gid            = pinfo[i].p_rgid;
                         pt[index].uptime              = System_Info.time / 10. - pinfo[i].p_ustart_sec;
                         pt[index].cpu.time            = pinfo[i].p_rtime_sec * 10 + (double)pinfo[i].p_rtime_usec / 100000.;
-                        pt[index].memory.usage        = (unsigned long long)pinfo[i].p_vm_rssize * (unsigned long long)pagesize;
+                        pt[index].memory.usage_rss    = (unsigned long long)pinfo[i].p_vm_rssize * (unsigned long long)pagesize;
                         pt[index].zombie              = pinfo[i].p_stat == SZOMB ? true : false;
                         pt[index].read.bytes          = -1;
                         pt[index].read.bytesPhysical  = -1;

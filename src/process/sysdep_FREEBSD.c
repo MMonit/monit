@@ -170,7 +170,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                 pt[i].threads.self          = pinfo[i].ki_numthreads;
                 pt[i].uptime                = System_Info.time / 10. - pinfo[i].ki_start.tv_sec;
                 pt[i].cpu.time              = (double)pinfo[i].ki_runtime / 100000.;
-                pt[i].memory.usage          = (uint64_t)pinfo[i].ki_rssize * (uint64_t)pagesize;
+                pt[i].memory.usage_rss      = (uint64_t)pinfo[i].ki_rssize * (uint64_t)pagesize;
                 pt[i].read.bytes            = -1;
                 pt[i].read.bytesPhysical    = -1;
                 pt[i].read.operations       = pinfo[i].ki_rusage.ru_inblock;
