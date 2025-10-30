@@ -7,13 +7,19 @@ Version 5.36.0
 Fixed: Issue #1136, Issue #42: Monit memory usage monitoring was based on RSS
        (Resident Set Size), which can be misleading because it overcounts shared memory
        by adding the entire amount to each process that uses it.
-       Where available (Linux kernel >= 4.14), Monit will use the PSS (Proportional Set
-       Size) instead of RSS. The PSS provides a more accurate measure by fairly dividing
-       shared memory among processes, giving a more realistic view of both a single
-       process's contribution and the total memory footprint of process and its children in
-       applications like Apache or Nginx.
+       Monit uses the PSS (Proportional Set Size) instead of RSS now. The PSS provides a
+       more accurate measure by fairly dividing shared memory among processes, giving a more
+       realistic view of both a single process's contribution and the total memory footprint
+       of process and its children in applications like Apache or Nginx.
        Warning: Monit >= 5.36.0 may thus report significantly lower usage for both "memory" and
        "total memory" for processes.
+       Warning: The following platforms will keep using RSS:
+                        - Linux with kernel <= 4.13
+                        - AIX
+                        - Solaris
+                        - FreeBSD
+                        - OpenBSD
+                        - NetBSD
 
 Fixed: Issue #1129: When Monit log was set to a device, such as "set logfile /dev/stdout" (e.g. inside the
        Docker container), Monit hangs when the "View Monit logfile" is used in the Monit HTTP interface.

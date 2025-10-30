@@ -117,6 +117,7 @@ AC_CHECK_HEADERS([ \
         mach/host_info.h \
         mach/mach.h \
         mach/mach_host.h \
+        mach/task.h \
 	memory.h \
 	mntent.h \
 	netdb.h \
