@@ -4,22 +4,19 @@
 
 Version 5.36.0
 
-New: Issue #1136, Issue #42: memory usage report overcounts the shared library RSS.
-       Monit prefers the PSS (Proportional Set Size) report instead of RSS (Resident Set
-       Size) now. The PSS provides a more accurate measure by fairly dividing shared
-       memory among processes. RSS can be misleading because it overcounts shared
-       memory by adding the entire amount to each process that uses it. PSS gives
-       a more realistic view of both a single process's contribution and the system's
-       total memory footprint.
-       The following platforms don't have PSS implemented and are still using RSS:
-           - Linux with kernel <= 4.13
-           - AIX
-           - Solaris
-           - FreeBSD
-           - OpenBSD
-           - NetBSD
-       Warning: Monit >= 5.36.0 may thus report significantly lower usage for both "memory" and
-       "total memory" for processes.
+New: Linux: Issue #1136, Issue #42: process memory usage report overcounts the shared library
+     RSS. Monit prefers the PSS (Proportional Set Size) report instead of RSS (Resident Set
+     Size) now. The PSS provides a more accurate measure by fairly dividing shared
+     memory among processes. RSS can be misleading because it overcounts shared
+     memory by adding the entire amount to each process that uses it. PSS gives
+     a more realistic view of both a single process's contribution and the system's
+     total memory footprint.
+     Warning: Monit >= 5.36.0 may thus report significantly lower usage for both "memory" and
+     "total memory" for processes.
+
+New: MacOS: Process memory usage report is in line with ActivityMonitor now and shows the process'
+     physical memory footprint instead of RSS. It excludes shared memory that's being used by
+     multiple processes (to avoid double-counting).
 
 New: The "check program" output in the "monit status" CLI was limited to 200 characters. The limitation is removed
      and monit will display up to "set limits { programOutput: <size> }" characters now.

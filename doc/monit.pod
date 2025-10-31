@@ -2182,19 +2182,18 @@ I<CHILDREN> is the number of child processes of the process. Example:
 
 I<MEMORY> is the memory usage of the process itself, [%] or absolute
 value [B, kB, MB, GB]. 
-Monit prefers the PSS (Proportional Set Size) report instead of RSS (Resident Set
-Size). The PSS provides a more accurate measure by fairly dividing shared
-memory among processes. RSS can be misleading because it overcounts shared
-memory by adding the entire amount to each process that uses it. PSS gives
-a more realistic view of both a single process's contribution and the system's
-total memory footprint.
-The following platforms don't have PSS implemented and are still using RSS:
-    - Linux with kernel <= 4.13
-    - AIX
-    - Solaris
-    - FreeBSD
-    - OpenBSD
-    - NetBSD
+
+- Linux:
+  Monit prefers the PSS (Proportional Set Size) report instead of RSS (Resident Set
+  Size). The PSS provides a more accurate measure by fairly dividing shared
+  memory among processes. RSS can be misleading because it overcounts shared
+  memory by adding the entire amount to each process that uses it. PSS gives
+  a more realistic view of both a single process's contribution and the system's
+  total memory footprint.
+
+- MacOS: Process memory usage report is in line with ActivityMonitor and shows
+  the process' physical memory footprint instead of RSS. It excludes shared memory
+  that's being used by multiple processes (to avoid double-counting).
 
 Example:
 
