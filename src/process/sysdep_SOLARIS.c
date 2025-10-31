@@ -111,6 +111,8 @@ static long   old_total = 0;
 bool init_systeminfo_sysdep(void) {
         System_Info.cpu.count = sysconf( _SC_NPROCESSORS_ONLN);
         page_size = getpagesize();
+        unsigned long long pagein = 0;
+        unsigned long long pageout = 0;
         System_Info.memory.size = (unsigned long long)sysconf(_SC_PHYS_PAGES) * (unsigned long long)page_size;
         kstat_ctl_t *kctl = kstat_open();
         if (kctl) {
@@ -122,8 +124,30 @@ bool init_systeminfo_sysdep(void) {
                                         System_Info.booted = (unsigned long long)knamed->value.ul;
                         }
                 }
+
+                cpu_vminfo_t vmstat;
+                *kstat = kstat_lookup(kctl, "unix", 0, "vminfo");
+                if (kstat) {
+                        if (kstat_read(kctl, kstat, &vmstat) != -1) {
+                                // pagein = vmstat->pgpgin; //FIXME: drop?
+                                // pageout = vmstat->pgpgout;
+                                pagein = vmstat->pgswapin;
+                                pageout = vmstat->pgswapout;
+                        }
+                } else {
+                        // Use default value.
+                        pagein = 0;
+                        pageout = 0;
+                }
+
                 kstat_close(kctl);
         }
+
+        System_Info.page.pagein = pagein;
+        System_Info.page.pageout = pageout;
+        System_Info.page.lastpagein = System_Info.page.pagein;
+        System_Info.page.lastpageout = System_Info.page.pageout;
+
         return true;
 }
 
@@ -269,6 +293,32 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                         si->memory.usage.bytes = System_Info.memory.size - freemem - arcsize;
                 }
         }
+
+        /* Page */
+        unsigned long long pagein = 0;
+        unsigned long long pageout = 0;
+
+        cpu_vminfo_t vmstat;
+        *kstat = kstat_lookup(kctl, "unix", 0, "vminfo");
+        if (kstat) {
+                if (kstat_read(kctl, kstat, &vmstat) != -1) {
+                        // pagein = vmstat->pgpgin; //FIXME: drop?
+                        // pageout = vmstat->pgpgout;
+                        pagein = vmstat->pgswapin;
+                        pageout = vmstat->pgswapout;
+                }
+        }
+    
+        si->page.lastpagein = si->page.pagein;
+        si->page.lastpageout = si->page.pageout;
+        si->page.pagein = pagein;
+        si->page.pageout = pageout;
+        // A growing counter only.
+        if (si->page.lastpagein > si->page.pagein)
+                si->page.lastpagein = 0;
+        if (si->page.lastpageout > si->page.pageout)
+                si->page.lastpageout = 0;
+
         kstat_close(kctl);
 
         /* Swap */

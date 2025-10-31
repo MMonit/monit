@@ -340,6 +340,11 @@ static void addsecurityattribute(char *, Action_Type, Action_Type);
 static void addfiledescriptors(Operator_Type, bool, long long, float, Action_Type, Action_Type);
 static void _sanityCheckEveryStatement(Service_T s);
 
+// For debug purpose only
+#ifdef HAVE_YYDEBUG
+int yydebug = 1;
+#endif
+
 %}
 
 %union {
@@ -393,6 +398,7 @@ static void _sanityCheckEveryStatement(Service_T s);
 %token SECURITY ATTRIBUTE
 %token FILEDESCRIPTORS
 %token HARDLINK
+%token PAGEIN PAGEOUT PAGE
 
 %left GREATER GREATEROREQUAL LESS LESSOREQUAL EQUAL NOTEQUAL
 
@@ -2541,6 +2547,7 @@ resourcesystemlist : resourcesystemopt
 resourcesystemopt  : resourceload
                    | resourcemem
                    | resourceswap
+                   | resourcepage
                    | resourcecpu
                    ;
 
@@ -2666,6 +2673,23 @@ resourceswap    : SWAP operator value unit {
                         resourceset.operator = $<number>2;
                         resourceset.limit = $<real>3;
                   }
+                ;
+
+resourcepage    : PAGEIN operator NUMBER page {
+                        resourceset.resource_id = Resource_Pagein;
+                        resourceset.operator = $<number>2;
+                        resourceset.limit = $<number>3 * $<number>4;
+                  }
+                | PAGEOUT operator NUMBER page {
+                        resourceset.resource_id = Resource_Pageout;
+                        resourceset.operator = $<number>2;
+                        resourceset.limit = $<number>3 * $<number>4;
+                  }
+                ;
+
+// Proper unit for the swap page counter.
+page            : /* empty */  { $<number>$ = 1; } //FIXME: rename to pageunit?
+                | PAGE         { $<number>$ = 1; }
                 ;
 
 resourcethreads : THREADS operator NUMBER {

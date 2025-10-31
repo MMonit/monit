@@ -2153,6 +2153,14 @@ GB]. Example:
 
  if swap usage > 20% for 10 cycles then alert
 
+I<PAGEIN>, I<PAGEOUT> are the swap page counter of the system. Example:
+
+ if pagein > 50 pages then alert
+ if pageout > 100 pages then alert
+
+The respective counter is the difference between the page counters
+within a cycle.
+
 =head3 Process resource tests
 
 I<CPU> is the CPU usage of the process itself [%]. Monit calculates

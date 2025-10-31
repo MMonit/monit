@@ -513,7 +513,55 @@ bool init_systeminfo_sysdep(void) {
 
         System_Info.booted = (long long)_getStartTime();
 
-        return true;
+        char buf[4096];
+        char *ptr;
+        unsigned long long pagein;
+        unsigned long long pageout;
+    
+        /* Page, data from /proc/stat */
+        if (! file_readProc(buf, sizeof(buf), "stat", -1, NULL)) {
+                Log_error("system statistic error -- cannot read /proc/stat\n");
+                goto error;
+        }
+        ptr = strstr(buf, "swap ");
+        if (ptr) {
+                sscanf(ptr, "swap %llu %llu", &pagein, &pageout);
+        } else {
+                /* Page, data from /proc/vmstat */
+                if (! file_readProc(buf, sizeof(buf), "vmstat", -1, NULL)) {
+                        Log_error("system statistic error -- cannot read /proc/vmstat\n");
+                        goto error; //FIXME
+                }
+//FIXME: drop?
+                // ptr = strstr(buf, "pgpgin ");
+                // if (ptr)
+                //      sscanf(ptr, "pgpgin %llu", &pagein);
+                // ptr = strstr(buf, "pgpgout ");
+                // if (ptr)
+                //      sscanf(ptr, "pgpgout %llu", &pageout);
+                ptr = strstr(buf, "pswpin ");
+                if (ptr)
+                        sscanf(ptr, "pswpin %llu", &pagein);
+                ptr = strstr(buf, "pswpout ");
+                if (ptr)
+                        sscanf(ptr, "pswpout %llu", &pageout);
+        }
+
+        System_Info.page.pagein = pagein;
+        System_Info.page.pageout = pageout;
+        System_Info.page.lastpagein = System_Info.page.pagein;
+        System_Info.page.lastpageout = System_Info.page.pageout;
+
+        return true; //FIXME
+    
+error: //FIXME
+        // Use default value.
+        System_Info.page.pagein = 0;
+        System_Info.page.pageout = 0;
+        System_Info.page.lastpagein = System_Info.page.pagein;
+        System_Info.page.lastpageout = System_Info.page.pageout;
+
+        return true; //FIXME
 }
 
 
@@ -618,7 +666,7 @@ int getloadavg_sysdep(double *loadv, int nelem) {
  */
 bool used_system_memory_sysdep(SystemInfo_T *si) {
         char          *ptr;
-        char           buf[2048];
+        char           buf[4096];
         unsigned long long mem_total = 0ULL;
         unsigned long long mem_available = 0ULL;
         unsigned long long mem_free = 0ULL;
@@ -679,12 +727,58 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.size = swap_total * 1024;
         si->swap.usage.bytes = (swap_total - swap_free) * 1024;
 
+        // char buf[4096];
+        // char *ptr;
+        unsigned long long pagein = 0;
+        unsigned long long pageout = 0;
+    
+        /* Page, data from /proc/stat */
+        if (! file_readProc(buf, sizeof(buf), "stat", -1, NULL)) {
+                Log_error("system statistic error -- cannot read /proc/stat\n");
+                goto error2;
+        }
+        ptr = strstr(buf, "swap ");
+        if (ptr) {
+                sscanf(ptr, "swap %llu %llu", &pagein, &pageout);
+        } else {
+                /* Page, data from /proc/vmstat */
+                if (! file_readProc(buf, sizeof(buf), "vmstat", -1, NULL)) {
+                        Log_error("system statistic error -- cannot read /proc/vmstat\n");
+                        goto error2;
+                }
+                //FIXME: drop?
+                // ptr = strstr(buf, "pgpgin ");
+                // if (ptr) sscanf(ptr, "pgpgin %llu", &pagein);
+                // ptr = strstr(buf, "pgpgout ");
+                // if (ptr) sscanf(ptr, "pgpgout %llu", &pageout);
+                ptr = strstr(buf, "pswpin ");
+                if (ptr)
+                        sscanf(ptr, "pswpin %llu", &pagein);
+                ptr = strstr(buf, "pswpout ");
+                if (ptr)
+                        sscanf(ptr, "pswpout %llu", &pageout);
+        }
+
+        si->page.lastpagein = si->page.pagein;
+        si->page.lastpageout = si->page.pageout;
+        si->page.pagein = pagein;
+        si->page.pageout = pageout;
+        // A growing counter only.
+        if (si->page.lastpagein > si->page.pagein)
+                si->page.lastpagein = 0;
+        if (si->page.lastpageout > si->page.pageout)
+                si->page.lastpageout = 0;
+
         return true;
 
 error:
         si->memory.usage.bytes = 0ULL;
         si->swap.size = 0ULL;
         return false;
+
+error2: //FIXME: drop?
+        return true;
+
 }
 
 

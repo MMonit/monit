@@ -326,7 +326,9 @@ typedef enum {
         Resource_LoadAveragePerCore1m,
         Resource_LoadAveragePerCore5m,
         Resource_LoadAveragePerCore15m,
-        Resource_HardLink                   // Used by check file, fifo and directory
+        Resource_HardLink, // Used by check file, fifo and directory
+        Resource_Pagein,
+        Resource_Pageout
 } Resource_Type;
 
 
@@ -591,6 +593,12 @@ typedef struct SystemInfo_T {
                         unsigned long long bytes; /**< Total real memory in use in the system */
                 } usage;
         } memory;
+        struct {
+                unsigned long long lastpagein;
+                unsigned long long lastpageout;
+                unsigned long long pagein;
+                unsigned long long pageout;
+        } paging;
         struct {
                 unsigned long long size;                                       /**< Swap size */
                 struct {

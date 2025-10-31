@@ -147,6 +147,38 @@ bool init_systeminfo_sysdep(void) {
         } else {
                 System_Info.booted = booted.tv_sec;
         }
+
+#ifdef HOST_VM_INFO64
+        vm_statistics64_data_t page_info;
+        mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+        kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info_t)&page_info, &count);
+#else
+        vm_statistics_data_t page_info;
+        mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
+        kern_return_t kret = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&page_info, &count);
+#endif
+        if (kret != KERN_SUCCESS) {
+                DEBUG("system statistic error -- cannot get memory usage\n");
+                // return false; //FIXME:????
+                // Use default values.
+                System_Info.page.pagein = 0;
+                System_Info.page.pageout = 0;
+                System_Info.page.lastpagein = System_Info.page.pagein;
+                System_Info.page.lastpageout = System_Info.page.pageout;
+                return true;
+        }
+
+        /* Page, data from host_statistics */
+#ifdef HOST_VM_INFO64
+        System_Info.page.pagein = (unsigned long long)(page_info.swapins);
+        System_Info.page.pageout = (unsigned long long)(page_info.swapouts);
+#else
+        System_Info.page.pagein = (unsigned long long)(page_info.pageins);
+        System_Info.page.pageout = (unsigned long long)(page_info.pageouts);
+#endif
+        System_Info.page.lastpagein = System_Info.page.pagein;
+        System_Info.page.lastpageout = System_Info.page.pageout;
+
         return true;
 }
 
@@ -309,9 +341,15 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  */
 bool used_system_memory_sysdep(SystemInfo_T *si) {
         /* Memory */
+#ifdef HOST_VM_INFO64
+        vm_statistics64_data_t page_info;
+        mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+        kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info_t)&page_info, &count);
+#else
         vm_statistics_data_t page_info;
         mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
         kern_return_t kret = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&page_info, &count);
+#endif
         if (kret != KERN_SUCCESS) {
                 DEBUG("system statistic error -- cannot get memory usage\n");
                 return false;
@@ -330,6 +368,22 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.size = (unsigned long long)swap.xsu_total;
         si->swap.usage.bytes = (unsigned long long)swap.xsu_used;
 
+        // Page, data from host_statistics
+        si->page.lastpagein = si->page.pagein;
+        si->page.lastpageout = si->page.pageout;
+#ifdef HOST_VM_INFO64
+        si->page.pagein = (unsigned long long)(page_info.swapins);
+        si->page.pageout = (unsigned long long)(page_info.swapouts);
+#else
+        si->page.pagein = (unsigned long long)(page_info.pageins);
+        si->page.pageout = (unsigned long long)(page_info.pageouts);
+#endif
+        // A growing counter only
+        if (si->page.lastpagein > si->page.pagein)
+                si->page.lastpagein = 0;
+        if (si->page.lastpageout > si->page.pageout)
+                si->page.lastpageout = 0;
+
         return true;
 }
 
@@ -346,7 +400,11 @@ bool used_system_cpu_sysdep(SystemInfo_T *si) {
         mach_msg_type_number_t    count;
 
         count = HOST_CPU_LOAD_INFO_COUNT;
+#ifdef HOST_VM_INFO64
+        kret  = host_statistics64(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&cpu_info, &count);
+#else
         kret  = host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&cpu_info, &count);
+#endif
         if (kret == KERN_SUCCESS) {
                 for (int i = 0; i < CPU_STATE_MAX; i++)
                         total_new += cpu_info.cpu_ticks[i];

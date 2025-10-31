@@ -554,11 +554,25 @@ static void status_service(Service_T S, StringBuffer_T B, int V) {
                                             "<percent>%.1f</percent>"
                                             "<kilobyte>%llu</kilobyte>"
                                             "</swap>"
+                                            "<page>" //FIXME: rename to paging? FIXME: add to M/Monit
+                                            "<pagein>"
+                                            "<interval>%llu</interval>"
+                                            "<counter>%llu</counter>"
+                                            "</pagein>"
+                                            "<pageout>"
+                                            "<interval>%llu</interval>"
+                                            "<counter>%llu</counter>"
+                                            "</pageout>"
+                                            "</page>"
                                             "</system>",
                                             System_Info.memory.usage.percent,
-                                            (unsigned long long)((double)System_Info.memory.usage.bytes / 1024.),               // Send as kB for backward compatibility
+                                            (unsigned long long)((double)System_Info.memory.usage.bytes / 1024.), // Send as kB for backward compatibility
                                             System_Info.swap.usage.percent,
-                                            (unsigned long long)((double)System_Info.swap.usage.bytes / 1024.));             // Send as kB for backward compatibility
+                                            (unsigned long long)((double)System_Info.swap.usage.bytes / 1024.),   // Send as kB for backward compatibility
+                                            System_Info.page.pagein - System_Info.page.lastpagein,
+                                            System_Info.page.pagein,
+                                            System_Info.page.pageout - System_Info.page.lastpageout,
+                                            System_Info.page.pageout);
                 }
                 if (S->type == Service_Program && S->program->started) {
                         StringBuffer_append(B,

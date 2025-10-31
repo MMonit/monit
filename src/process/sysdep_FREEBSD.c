@@ -129,6 +129,28 @@ bool init_systeminfo_sysdep(void) {
                 System_Info.booted = booted.tv_sec;
         }
 
+        size_t len = sizeof(unsigned long long);
+        unsigned long long pagein;
+        unsigned long long pageout;
+
+        if (sysctlbyname("vm.stats.vm.v_swappgsin", &pagein, &len, NULL, 0) == -1) {
+                Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsin failed: %s\n", STRERROR);
+                // return false; //FIXME: drop?
+                // Use default value.
+                pagein = 0;
+        }
+        if (sysctlbyname("vm.stats.vm.v_swappgsout", &pageout, &len, NULL, 0) == -1) {
+                Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsout failed: %s\n", STRERROR);
+                // return false; //FIXME: drop?
+                // Use default value.
+                pageout = 0;
+        }
+
+        System_Info.page.pagein = pagein;
+        System_Info.page.pageout = pageout;
+        System_Info.page.lastpagein = System_Info.page.pagein;
+        System_Info.page.lastpageout = System_Info.page.pageout;
+
         return true;
 }
 
@@ -280,6 +302,33 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         }
         si->swap.size = (unsigned long long)total * (unsigned long long)pagesize;
         si->swap.usage.bytes = (unsigned long long)used * (unsigned long long)pagesize;
+
+        /* Page */
+        size_t len = sizeof(unsigned long long);
+        unsigned long long pagein = 0;
+        unsigned long long pageout = 0;
+
+        if (sysctlbyname("vm.stats.vm.v_swappgsin", &pagein, &len, NULL, 0) == -1) {
+                Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsin failed: %s\n", STRERROR);
+                // return false; //FIXME: drop?
+                pagein = 0;
+        }
+        if (sysctlbyname("vm.stats.vm.v_swappgsout", &pageout, &len, NULL, 0) == -1) {
+                Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsout failed: %s\n", STRERROR);
+                // return false; //FIXME: drop?
+                pageout = 0;
+        }
+
+        si->page.lastpagein = si->page.pagein;
+        si->page.lastpageout = si->page.pageout;
+        si->page.pagein = pagein;
+        si->page.pageout = pageout;
+        // A growing counter only.
+        if (si->page.lastpagein > si->page.pagein)
+                si->page.lastpagein = 0;
+        if (si->page.lastpageout > si->page.pageout)
+                si->page.lastpageout = 0;
+
         return true;
 }
 

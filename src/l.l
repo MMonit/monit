@@ -159,6 +159,7 @@ month          ("month"|"months")
 atime          ("atime"|"access time"|"access timestamp")
 ctime          ("ctime"|"change time"|"change timestamp")
 mtime          ("mtime"|"modification time"|"modification timestamp"|"modify time"|"modify timestamp")
+page           ("page"|"pages")
 
 %x ARGUMENT_COND DEPEND_COND SERVICE_COND URL_COND ADDRESS_COND STRING_COND HOSTGROUP_COND EVERY_COND HTTP_HEADER_COND INCLUDE
 
@@ -460,6 +461,8 @@ register          { return REGISTER; }
 fsflag(s)?        { return FSFLAG; }
 fips              { return FIPS; }
 filedescriptors   { return FILEDESCRIPTORS; }
+pagein(s)?        { return PAGEIN; }
+pageout(s)?       { return PAGEOUT; }
 {byte}            { return BYTE; }
 {kilobyte}        { return KILOBYTE; }
 {megabyte}        { return MEGABYTE; }
@@ -491,6 +494,7 @@ filedescriptors   { return FILEDESCRIPTORS; }
 {atime}           { return ATIME; }
 {ctime}           { return CTIME; }
 {mtime}           { return MTIME; }
+{page}            { return PAGE; }
 
 include           { BEGIN(INCLUDE); }
 

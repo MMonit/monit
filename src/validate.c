@@ -702,6 +702,30 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         rv = _checkLoadAverage(r, System_Info.loadavg[2] / (double)System_Info.cpu.count, "loadavg per core (15min)", report);
                         break;
 
+                case Resource_Pagein:
+                        if (s->type == Service_System) {
+                                unsigned long long dp = System_Info.page.pagein - System_Info.page.lastpagein;
+                                if (Util_evalDoubleQExpression(r->operator, dp, r->limit)) {
+                                        rv = State_Failed;
+                                        snprintf(report, STRLEN, "pagein amount of %llu matches resource limit [pagein amount %s %.0f]", dp, OperatorShort_Names[r->operator], r->limit);
+                                } else {
+                                        snprintf(report, STRLEN, "pagein amount check succeeded [current pagein amount = %llu]", dp);
+                                }
+                        }
+                        break;
+
+                case Resource_Pageout:
+                        if (s->type == Service_System) {
+                                unsigned long long dp = System_Info.page.pageout - System_Info.page.lastpageout;
+                                if (Util_evalDoubleQExpression(r->operator, dp, r->limit)) {
+                                        rv = State_Failed;
+                                        snprintf(report, STRLEN, "pageout amount of %llu matches resource limit [pageout amount %s %.0f]", dp, OperatorShort_Names[r->operator], r->limit);
+                                } else {
+                                        snprintf(report, STRLEN, "pageout amount check succeeded [current pageout amount = %llu]", dp);
+                                }
+                        }
+                        break;
+
                 default:
                         Log_error("'%s' error -- unknown resource ID: [%d]\n", s->name, r->resource_id);
                         return State_Failed;
