@@ -2191,7 +2191,8 @@ value [B, kB, MB, GB].
   a more realistic view of both a single process's contribution and the system's
   total memory footprint.
 
-- MacOS: Process memory usage report is in line with ActivityMonitor and shows
+- MacOS:
+  Process memory usage report is in line with ActivityMonitor and shows
   the process' physical memory footprint instead of RSS. It excludes shared memory
   that's being used by multiple processes (to avoid double-counting).
 
