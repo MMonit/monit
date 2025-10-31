@@ -289,7 +289,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                                 }
 
                                 mach_port_deallocate(mach_task_self(), task);
-                        } else {
+                        } else if (Run.debug >= 2) {
                                 DEBUG("task_for_pid for pid %d error -- %s\n", pt[i].pid, mach_error_string(krv));
                         }
 
