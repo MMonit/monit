@@ -87,10 +87,10 @@ error2:
         System_Info.memory.usage.percent = 0.;
         System_Info.swap.usage.bytes = 0ULL;
         System_Info.swap.usage.percent = 0.;
-        System_Info.page.pagein = 0ULL;
-        System_Info.page.pageout = 0ULL;
-        System_Info.page.lastpagein = 0ULL;
-        System_Info.page.lastpageout = 0ULL;
+        System_Info.paging.pagein = 0ULL;
+        System_Info.paging.pageout = 0ULL;
+        System_Info.paging.lastpagein = 0ULL;
+        System_Info.paging.lastpageout = 0ULL;
 error3:
         System_Info.cpu.usage.user = 0.;
         System_Info.cpu.usage.system = 0.;

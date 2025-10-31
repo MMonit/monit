@@ -704,7 +704,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
 
                 case Resource_Pagein:
                         if (s->type == Service_System) {
-                                unsigned long long dp = System_Info.page.pagein - System_Info.page.lastpagein;
+                                unsigned long long dp = System_Info.paging.pagein - System_Info.paging.lastpagein;
                                 if (Util_evalDoubleQExpression(r->operator, dp, r->limit)) {
                                         rv = State_Failed;
                                         snprintf(report, STRLEN, "pagein amount of %llu matches resource limit [pagein amount %s %.0f]", dp, OperatorShort_Names[r->operator], r->limit);
@@ -716,7 +716,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
 
                 case Resource_Pageout:
                         if (s->type == Service_System) {
-                                unsigned long long dp = System_Info.page.pageout - System_Info.page.lastpageout;
+                                unsigned long long dp = System_Info.paging.pageout - System_Info.paging.lastpageout;
                                 if (Util_evalDoubleQExpression(r->operator, dp, r->limit)) {
                                         rv = State_Failed;
                                         snprintf(report, STRLEN, "pageout amount of %llu matches resource limit [pageout amount %s %.0f]", dp, OperatorShort_Names[r->operator], r->limit);

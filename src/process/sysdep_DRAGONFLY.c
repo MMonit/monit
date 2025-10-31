@@ -147,10 +147,10 @@ bool init_systeminfo_sysdep(void) {
                 pageout = 0;
         }
 
-        System_Info.page.pagein = pagein;
-        System_Info.page.pageout = pageout;
-        System_Info.page.lastpagein = System_Info.page.pagein;
-        System_Info.page.lastpageout = System_Info.page.pageout;
+        System_Info.paging.pagein = pagein;
+        System_Info.paging.pageout = pageout;
+        System_Info.paging.lastpagein = System_Info.paging.pagein;
+        System_Info.paging.lastpageout = System_Info.paging.pageout;
 
         return true;
 }
@@ -304,15 +304,15 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 pageout = 0;
         }
 
-        si->page.lastpagein = si->page.pagein;
-        si->page.lastpageout = si->page.pageout;
-        si->page.pagein = pagein;
-        si->page.pageout = pageout;
+        si->paging.lastpagein = si->paging.pagein;
+        si->paging.lastpageout = si->paging.pageout;
+        si->paging.pagein = pagein;
+        si->paging.pageout = pageout;
         // A growing counter only.
-        if (si->page.lastpagein > si->page.pagein)
-                si->page.lastpagein = 0;
-        if (si->page.lastpageout > si->page.pageout)
-                si->page.lastpageout = 0;
+        if (si->paging.lastpagein > si->paging.pagein)
+                si->paging.lastpagein = 0;
+        if (si->paging.lastpageout > si->paging.pageout)
+                si->paging.lastpageout = 0;
 
         return true;
 }

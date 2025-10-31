@@ -569,10 +569,10 @@ static void status_service(Service_T S, StringBuffer_T B, int V) {
                                             (unsigned long long)((double)System_Info.memory.usage.bytes / 1024.), // Send as kB for backward compatibility
                                             System_Info.swap.usage.percent,
                                             (unsigned long long)((double)System_Info.swap.usage.bytes / 1024.),   // Send as kB for backward compatibility
-                                            System_Info.page.pagein - System_Info.page.lastpagein,
-                                            System_Info.page.pagein,
-                                            System_Info.page.pageout - System_Info.page.lastpageout,
-                                            System_Info.page.pageout);
+                                            System_Info.paging.pagein - System_Info.paging.lastpagein,
+                                            System_Info.paging.pagein,
+                                            System_Info.paging.pageout - System_Info.paging.lastpageout,
+                                            System_Info.paging.pageout);
                 }
                 if (S->type == Service_Program && S->program->started) {
                         StringBuffer_append(B,

@@ -135,15 +135,15 @@ bool init_systeminfo_sysdep(void) {
                 DEBUG("system statistic error -- cannot get stat counters: %s\n", STRERROR);
                 // return false; //FIXME: drop?
                 // Use default value.
-                System_Info.page.pagein = 0;
-                System_Info.page.pageout = 0;
-                System_Info.page.lastpagein = System_Info.page.pagein;
-                System_Info.page.lastpageout = System_Info.page.pageout;
+                System_Info.paging.pagein = 0;
+                System_Info.paging.pageout = 0;
+                System_Info.paging.lastpagein = System_Info.paging.pagein;
+                System_Info.paging.lastpageout = System_Info.paging.pageout;
         } else {
-                System_Info.page.pagein = (unsigned long long)vm.pgswapin;
-                System_Info.page.pageout = (unsigned long long)vm.pgswapout;
-                System_Info.page.lastpagein = System_Info.page.pagein;
-                System_Info.page.lastpageout = System_Info.page.pageout;
+                System_Info.paging.pagein = (unsigned long long)vm.pgswapin;
+                System_Info.paging.pageout = (unsigned long long)vm.pgswapout;
+                System_Info.paging.lastpagein = System_Info.paging.pagein;
+                System_Info.paging.lastpageout = System_Info.paging.pageout;
         }
 
         return true;
@@ -271,15 +271,15 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.usage.bytes = (unsigned long long)vm.swpginuse * (unsigned long long)vm.pagesize;
 
         /* Page */
-        si->page.lastpagein = si->page.pagein;
-        si->page.lastpageout = si->page.pageout;
-        si->page.pagein = (unsigned long long)vm.pgswapin;
-        si->page.pageout = (unsigned long long)vm.pgswapout;
+        si->paging.lastpagein = si->paging.pagein;
+        si->paging.lastpageout = si->paging.pageout;
+        si->paging.pagein = (unsigned long long)vm.pgswapin;
+        si->paging.pageout = (unsigned long long)vm.pgswapout;
         // A growing counter only.
-        if (si->page.lastpagein > si->page.pagein)
-                si->page.lastpagein = 0;
-        if (si->page.lastpageout > si->page.pageout)
-                si->page.lastpageout = 0;
+        if (si->paging.lastpagein > si->paging.pagein)
+                si->paging.lastpagein = 0;
+        if (si->paging.lastpageout > si->paging.pageout)
+                si->paging.lastpageout = 0;
 
         return true;
 }

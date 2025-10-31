@@ -547,19 +547,19 @@ bool init_systeminfo_sysdep(void) {
                         sscanf(ptr, "pswpout %llu", &pageout);
         }
 
-        System_Info.page.pagein = pagein;
-        System_Info.page.pageout = pageout;
-        System_Info.page.lastpagein = System_Info.page.pagein;
-        System_Info.page.lastpageout = System_Info.page.pageout;
+        System_Info.paging.pagein = pagein;
+        System_Info.paging.pageout = pageout;
+        System_Info.paging.lastpagein = System_Info.paging.pagein;
+        System_Info.paging.lastpageout = System_Info.paging.pageout;
 
         return true; //FIXME
     
 error: //FIXME
         // Use default value.
-        System_Info.page.pagein = 0;
-        System_Info.page.pageout = 0;
-        System_Info.page.lastpagein = System_Info.page.pagein;
-        System_Info.page.lastpageout = System_Info.page.pageout;
+        System_Info.paging.pagein = 0;
+        System_Info.paging.pageout = 0;
+        System_Info.paging.lastpagein = System_Info.paging.pagein;
+        System_Info.paging.lastpageout = System_Info.paging.pageout;
 
         return true; //FIXME
 }
@@ -759,15 +759,15 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                         sscanf(ptr, "pswpout %llu", &pageout);
         }
 
-        si->page.lastpagein = si->page.pagein;
-        si->page.lastpageout = si->page.pageout;
-        si->page.pagein = pagein;
-        si->page.pageout = pageout;
+        si->paging.lastpagein = si->paging.pagein;
+        si->paging.lastpageout = si->paging.pageout;
+        si->paging.pagein = pagein;
+        si->paging.pageout = pageout;
         // A growing counter only.
-        if (si->page.lastpagein > si->page.pagein)
-                si->page.lastpagein = 0;
-        if (si->page.lastpageout > si->page.pageout)
-                si->page.lastpageout = 0;
+        if (si->paging.lastpagein > si->paging.pagein)
+                si->paging.lastpagein = 0;
+        if (si->paging.lastpageout > si->paging.pageout)
+                si->paging.lastpageout = 0;
 
         return true;
 

@@ -130,10 +130,10 @@ bool init_systeminfo_sysdep(void) {
                 Log_error("system statistic error -- perfstat_memory_total failed: %s\n", STRERROR);
 
                 // Use default value. //FIXME: drop? should be reset on some global level if init_systeminfo_sysdep returns error?
-                System_Info.page.pagein = 0;
-                System_Info.page.pageout = 0;
-                System_Info.page.lastpagein = System_Info.page.pagein;
-                System_Info.page.lastpageout = System_Info.page.pageout;
+                System_Info.paging.pagein = 0;
+                System_Info.paging.pageout = 0;
+                System_Info.paging.lastpagein = System_Info.paging.pagein;
+                System_Info.paging.lastpageout = System_Info.paging.pageout;
 
                 return false;
         }
@@ -150,12 +150,12 @@ bool init_systeminfo_sysdep(void) {
         endutxent();
 
 //FIXME: uncomment / drop?
-        // System_Info.page.pagein = (unsigned long long)(mem.pgins);
-        // System_Info.page.pageout = (unsigned long long)(mem.pgouts);
-        System_Info.page.pagein = (unsigned long long)(mem.pgspins);
-        System_Info.page.pageout = (unsigned long long)(mem.pgspouts);
-        System_Info.page.lastpagein = System_Info.page.pagein;
-        System_Info.page.lastpageout = System_Info.page.pageout;
+        // System_Info.paging.pagein = (unsigned long long)(mem.pgins);
+        // System_Info.paging.pageout = (unsigned long long)(mem.pgouts);
+        System_Info.paging.pagein = (unsigned long long)(mem.pgspins);
+        System_Info.paging.pageout = (unsigned long long)(mem.pgspouts);
+        System_Info.paging.lastpagein = System_Info.paging.pagein;
+        System_Info.paging.lastpageout = System_Info.paging.pageout;
 
         return true;
 }
@@ -301,18 +301,18 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.usage.bytes = (unsigned long long)(mem.pgsp_total - mem.pgsp_free) * 4096; /* 4kB blocks */
 
         /* Page */
-        si->page.lastpagein = si->page.pagein;
-        si->page.lastpageout = si->page.pageout;
+        si->paging.lastpagein = si->paging.pagein;
+        si->paging.lastpageout = si->paging.pageout;
 //FIXME: uncomment / drop?
         // si.page.pagein = (unsigned long long)(mem.pgins);
         // si.page.pageout = (unsigned long long)(mem.pgouts);
         si.page.pagein = (unsigned long long)(mem.pgspins);
         si.page.pageout = (unsigned long long)(mem.pgspouts);
         // A growing counter only.
-        if (si->page.lastpagein > si->page.pagein)
-                si->page.lastpagein = 0;
-        if (si->page.lastpageout > si->page.pageout)
-                si->page.lastpageout = 0;
+        if (si->paging.lastpagein > si->paging.pagein)
+                si->paging.lastpagein = 0;
+        if (si->paging.lastpageout > si->paging.pageout)
+                si->paging.lastpageout = 0;
 
         return true;
 }
