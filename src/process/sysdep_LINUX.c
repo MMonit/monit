@@ -517,7 +517,7 @@ bool init_systeminfo_sysdep(void) {
         char *ptr;
         unsigned long long pagein;
         unsigned long long pageout;
-    
+
         /* Page, data from /proc/stat */
         if (! file_readProc(buf, sizeof(buf), "stat", -1, NULL)) {
                 Log_error("system statistic error -- cannot read /proc/stat\n");
@@ -553,7 +553,7 @@ bool init_systeminfo_sysdep(void) {
         System_Info.paging.lastpageout = System_Info.paging.pageout;
 
         return true; //FIXME
-    
+
 error: //FIXME
         // Use default value.
         System_Info.paging.pagein = 0;
@@ -731,7 +731,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         // char *ptr;
         unsigned long long pagein = 0;
         unsigned long long pageout = 0;
-    
+
         /* Page, data from /proc/stat */
         if (! file_readProc(buf, sizeof(buf), "stat", -1, NULL)) {
                 Log_error("system statistic error -- cannot read /proc/stat\n");

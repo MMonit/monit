@@ -308,7 +308,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                         pageout = vmstat->pgswapout;
                 }
         }
-    
+
         si->paging.lastpagein = si->paging.pagein;
         si->paging.lastpageout = si->paging.pageout;
         si->paging.pagein = pagein;
