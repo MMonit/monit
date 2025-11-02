@@ -163,8 +163,8 @@ bool init_systeminfo_sysdep(void) {
         }
 
         /* Page, data from host_statistics */
-        System_Info.paging.pagein = (unsigned long long)(page_info.swapins); //FIXME: investigate pageins vs swapins + swapouts vs pageouts
-        System_Info.paging.pageout = (unsigned long long)(page_info.swapouts); //FIXME: investigate pageins vs swapins + swapouts vs pageouts
+        System_Info.paging.pagein = page_info.swapins; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
+        System_Info.paging.pageout = page_info.swapouts; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
         System_Info.paging.lastpagein = System_Info.paging.pagein;
         System_Info.paging.lastpageout = System_Info.paging.pageout;
 
@@ -354,8 +354,8 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         // Page, data from host_statistics
         si->paging.lastpagein = si->paging.pagein;
         si->paging.lastpageout = si->paging.pageout;
-        si->paging.pagein = (unsigned long long)(page_info.swapins); //FIXME: investigate pageins vs swapins + swapouts vs pageouts
-        si->paging.pageout = (unsigned long long)(page_info.swapouts); //FIXME: investigate pageins vs swapins + swapouts vs pageouts
+        si->paging.pagein = page_info.swapins; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
+        si->paging.pageout = page_info.swapouts; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
         // A growing counter only
         if (si->paging.lastpagein > si->paging.pagein)
                 si->paging.lastpagein = 0;
