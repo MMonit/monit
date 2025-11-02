@@ -148,15 +148,9 @@ bool init_systeminfo_sysdep(void) {
                 System_Info.booted = booted.tv_sec;
         }
 
-#ifdef HOST_VM_INFO64
         vm_statistics64_data_t page_info;
         mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-        kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info_t)&page_info, &count);
-#else
-        vm_statistics_data_t page_info;
-        mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-        kern_return_t kret = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&page_info, &count);
-#endif
+        kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&page_info, &count);
         if (kret != KERN_SUCCESS) {
                 DEBUG("system statistic error -- cannot get memory usage\n");
                 // return false; //FIXME:????
@@ -169,13 +163,8 @@ bool init_systeminfo_sysdep(void) {
         }
 
         /* Page, data from host_statistics */
-#ifdef HOST_VM_INFO64
-        System_Info.paging.pagein = (unsigned long long)(page_info.swapins);
-        System_Info.paging.pageout = (unsigned long long)(page_info.swapouts);
-#else
-        System_Info.paging.pagein = (unsigned long long)(page_info.pageins);
-        System_Info.paging.pageout = (unsigned long long)(page_info.pageouts);
-#endif
+        System_Info.paging.pagein = (unsigned long long)(page_info.swapins); //FIXME: investigate pageins vs swapins + swapouts vs pageouts
+        System_Info.paging.pageout = (unsigned long long)(page_info.swapouts); //FIXME: investigate pageins vs swapins + swapouts vs pageouts
         System_Info.paging.lastpagein = System_Info.paging.pagein;
         System_Info.paging.lastpageout = System_Info.paging.pageout;
 
@@ -341,15 +330,9 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  */
 bool used_system_memory_sysdep(SystemInfo_T *si) {
         /* Memory */
-#ifdef HOST_VM_INFO64
         vm_statistics64_data_t page_info;
         mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-        kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info_t)&page_info, &count);
-#else
-        vm_statistics_data_t page_info;
-        mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-        kern_return_t kret = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&page_info, &count);
-#endif
+        kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&page_info, &count);
         if (kret != KERN_SUCCESS) {
                 DEBUG("system statistic error -- cannot get memory usage\n");
                 return false;
@@ -371,13 +354,8 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         // Page, data from host_statistics
         si->paging.lastpagein = si->paging.pagein;
         si->paging.lastpageout = si->paging.pageout;
-#ifdef HOST_VM_INFO64
-        si->paging.pagein = (unsigned long long)(page_info.swapins);
-        si->paging.pageout = (unsigned long long)(page_info.swapouts);
-#else
-        si->paging.pagein = (unsigned long long)(page_info.pageins);
-        si->paging.pageout = (unsigned long long)(page_info.pageouts);
-#endif
+        si->paging.pagein = (unsigned long long)(page_info.swapins); //FIXME: investigate pageins vs swapins + swapouts vs pageouts
+        si->paging.pageout = (unsigned long long)(page_info.swapouts); //FIXME: investigate pageins vs swapins + swapouts vs pageouts
         // A growing counter only
         if (si->paging.lastpagein > si->paging.pagein)
                 si->paging.lastpagein = 0;
@@ -395,16 +373,9 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
 bool used_system_cpu_sysdep(SystemInfo_T *si) {
         long                      total;
         long                      total_new = 0;
-        kern_return_t             kret;
         host_cpu_load_info_data_t cpu_info;
-        mach_msg_type_number_t    count;
-
-        count = HOST_CPU_LOAD_INFO_COUNT;
-#ifdef HOST_VM_INFO64
-        kret  = host_statistics64(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&cpu_info, &count);
-#else
-        kret  = host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&cpu_info, &count);
-#endif
+        mach_msg_type_number_t    count = HOST_CPU_LOAD_INFO_COUNT;
+        kern_return_t             kret = host_statistics64(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info64_t)&cpu_info, &count);
         if (kret == KERN_SUCCESS) {
                 for (int i = 0; i < CPU_STATE_MAX; i++)
                         total_new += cpu_info.cpu_ticks[i];

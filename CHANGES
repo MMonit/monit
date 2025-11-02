@@ -35,6 +35,10 @@ Fixed: The service restart counter wasn't reset on reboot, which could cause the
 
 Changed: The "check program" output change test now sets the level to warning (yellow), instead of error (red).
 
+Changed: MacOS: Monit now utilizes the 64-bit system API to retrieve system memory usage information. The support for
+         32-bit Macs is deprecated, as the last pure 32-bit Macs were released in 2006.
+         Thanks to Lutz Mader.
+
 
 
 Version 5.35.2
