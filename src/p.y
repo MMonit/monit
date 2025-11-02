@@ -2688,7 +2688,7 @@ resourcepage    : PAGEIN operator NUMBER page {
                 ;
 
 // Proper unit for the swap page counter.
-page            : /* empty */  { $<number>$ = 1; } //FIXME: rename to pageunit?
+page            : /* empty */  { $<number>$ = 1; } //FIXME: rename to pageunit? //FIXME: allow paging [%]? (no need to set hardcoded value) //FIXME: memory pressure? what it exactly is?
                 | PAGE         { $<number>$ = 1; }
                 ;
 
