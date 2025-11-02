@@ -309,9 +309,9 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  */
 bool used_system_memory_sysdep(SystemInfo_T *si) {
         /* Memory */
-        vm_statistics_data_t page_info;
-        mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-        kern_return_t kret = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&page_info, &count);
+        vm_statistics64_data_t page_info;
+        mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+        kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&page_info, &count);
         if (kret != KERN_SUCCESS) {
                 DEBUG("system statistic error -- cannot get memory usage\n");
                 return false;
@@ -346,7 +346,7 @@ bool used_system_cpu_sysdep(SystemInfo_T *si) {
         mach_msg_type_number_t    count;
 
         count = HOST_CPU_LOAD_INFO_COUNT;
-        kret  = host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&cpu_info, &count);
+        kret  = host_statistics64(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info64_t)&cpu_info, &count);
         if (kret == KERN_SUCCESS) {
                 for (int i = 0; i < CPU_STATE_MAX; i++)
                         total_new += cpu_info.cpu_ticks[i];
