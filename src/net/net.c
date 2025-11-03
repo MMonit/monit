@@ -491,8 +491,7 @@ double icmp_echo(const char *hostname, Socket_Family family, Outgoing_T *outgoin
         }
         int status = getaddrinfo(hostname, NULL, &hints, &result);
         if (status) {
-                snprintf(error, STRLEN, "Ping for '%s' -- getaddrinfo failed: %s", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
-                Log_error("%s\n", error);
+                snprintf(error, STRLEN, "getaddrinfo failed for '%s' -- %s", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                 return -1.;
         }
         int s = -1;
