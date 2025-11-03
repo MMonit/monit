@@ -275,11 +275,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->paging.lastpageout = si->paging.pageout;
         si->paging.pagein = (unsigned long long)vm.pgswapin;
         si->paging.pageout = (unsigned long long)vm.pgswapout;
-        // A growing counter only.
-        if (si->paging.lastpagein > si->paging.pagein)
-                si->paging.lastpagein = 0;
-        if (si->paging.lastpageout > si->paging.pageout)
-                si->paging.lastpageout = 0;
 
         return true;
 }

@@ -107,6 +107,7 @@
 
 // libmonit
 #include "system/Time.h"
+#include "util/Int.h"
 #include "util/Fmt.h"
 #include "io/File.h"
 #include "io/InputStream.h"
@@ -703,25 +704,25 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         break;
 
                 case Resource_Pagein:
-                        if (s->type == Service_System) {
-                                unsigned long long dp = System_Info.paging.pagein - System_Info.paging.lastpagein;
-                                if (Util_evalDoubleQExpression(r->operator, dp, r->limit)) {
+                        {
+                                unsigned long long delta = Int_deltaUINT64(System_Info.paging.lastpagein, System_Info.paging.pagein); //FIXME: if lastpagein, skip (initializing)
+                                if (Util_evalDoubleQExpression(r->operator, delta, r->limit)) {
                                         rv = State_Failed;
-                                        snprintf(report, STRLEN, "pagein amount of %llu matches resource limit [pagein amount %s %.0f]", dp, OperatorShort_Names[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "pagein amount of %llu matches resource limit [pagein amount %s %.0f]", delta, OperatorShort_Names[r->operator], r->limit);
                                 } else {
-                                        snprintf(report, STRLEN, "pagein amount check succeeded [current pagein amount = %llu]", dp);
+                                        snprintf(report, STRLEN, "pagein amount check succeeded [current pagein amount = %llu]", delta);
                                 }
                         }
                         break;
 
                 case Resource_Pageout:
-                        if (s->type == Service_System) {
-                                unsigned long long dp = System_Info.paging.pageout - System_Info.paging.lastpageout;
-                                if (Util_evalDoubleQExpression(r->operator, dp, r->limit)) {
+                        {
+                                unsigned long long delta = Int_deltaUINT64(System_Info.paging.lastpageout, System_Info.paging.pageout); //FIXME: if lastpageout, skip (initializing)
+                                if (Util_evalDoubleQExpression(r->operator, delta, r->limit)) {
                                         rv = State_Failed;
-                                        snprintf(report, STRLEN, "pageout amount of %llu matches resource limit [pageout amount %s %.0f]", dp, OperatorShort_Names[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "pageout amount of %llu matches resource limit [pageout amount %s %.0f]", delta, OperatorShort_Names[r->operator], r->limit);
                                 } else {
-                                        snprintf(report, STRLEN, "pageout amount check succeeded [current pageout amount = %llu]", dp);
+                                        snprintf(report, STRLEN, "pageout amount check succeeded [current pageout amount = %llu]", delta);
                                 }
                         }
                         break;

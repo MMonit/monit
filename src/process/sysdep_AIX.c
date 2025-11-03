@@ -308,11 +308,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         // si.page.pageout = (unsigned long long)(mem.pgouts);
         si.page.pagein = (unsigned long long)(mem.pgspins);
         si.page.pageout = (unsigned long long)(mem.pgspouts);
-        // A growing counter only.
-        if (si->paging.lastpagein > si->paging.pagein)
-                si->paging.lastpagein = 0;
-        if (si->paging.lastpageout > si->paging.pageout)
-                si->paging.lastpageout = 0;
 
         return true;
 }

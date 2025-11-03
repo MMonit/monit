@@ -148,26 +148,6 @@ bool init_systeminfo_sysdep(void) {
                 System_Info.booted = booted.tv_sec;
         }
 
-        vm_statistics64_data_t page_info;
-        mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-        kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&page_info, &count);
-        if (kret != KERN_SUCCESS) {
-                DEBUG("system statistic error -- cannot get memory usage\n");
-                // return false; //FIXME:????
-                // Use default values.
-                System_Info.paging.pagein = 0;
-                System_Info.paging.pageout = 0;
-                System_Info.paging.lastpagein = System_Info.paging.pagein;
-                System_Info.paging.lastpageout = System_Info.paging.pageout;
-                return true;
-        }
-
-        /* Page, data from host_statistics */
-        System_Info.paging.pagein = page_info.swapins; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
-        System_Info.paging.pageout = page_info.swapouts; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
-        System_Info.paging.lastpagein = System_Info.paging.pagein;
-        System_Info.paging.lastpageout = System_Info.paging.pageout;
-
         return true;
 }
 
@@ -329,7 +309,7 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  * @return: true if successful, false if failed (or not available)
  */
 bool used_system_memory_sysdep(SystemInfo_T *si) {
-        /* Memory */
+        // Memory and paging activity
         vm_statistics64_data_t page_info;
         mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
         kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&page_info, &count);
@@ -338,8 +318,12 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 return false;
         }
         si->memory.usage.bytes = (unsigned long long)(page_info.wire_count + page_info.active_count) * (unsigned long long)pagesize;
+        si->paging.lastpagein = si->paging.pagein;
+        si->paging.lastpageout = si->paging.pageout;
+        si->paging.pagein = page_info.swapins; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
+        si->paging.pageout = page_info.swapouts; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
 
-        /* Swap */
+        // Swap
         int mib[2] = {CTL_VM, VM_SWAPUSAGE};
         size_t len = sizeof(struct xsw_usage);
         struct xsw_usage swap;
@@ -350,17 +334,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         }
         si->swap.size = (unsigned long long)swap.xsu_total;
         si->swap.usage.bytes = (unsigned long long)swap.xsu_used;
-
-        // Page, data from host_statistics
-        si->paging.lastpagein = si->paging.pagein;
-        si->paging.lastpageout = si->paging.pageout;
-        si->paging.pagein = page_info.swapins; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
-        si->paging.pageout = page_info.swapouts; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
-        // A growing counter only
-        if (si->paging.lastpagein > si->paging.pagein)
-                si->paging.lastpagein = 0;
-        if (si->paging.lastpageout > si->paging.pageout)
-                si->paging.lastpageout = 0;
 
         return true;
 }

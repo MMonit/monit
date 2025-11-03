@@ -74,6 +74,7 @@
 
 // libmonit
 #include "system/Time.h"
+#include "util/Int.h"
 #include "util/Fmt.h"
 #include "util/List.h"
 
@@ -458,10 +459,8 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                         StringBuffer_free(&sb);
                                         _formatStatus("memory usage", Event_Resource, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.memory.usage.bytes, (char[10]){}), System_Info.memory.usage.percent);
                                         _formatStatus("swap usage", Event_Resource, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.swap.usage.bytes, (char[10]){}), System_Info.swap.usage.percent);
-//FIXME: drop / uncomment / cleanup?
-                                        // _formatStatus("swap pagein count", Event_Resource, type, res, s, true, "%llu [%llu]", System_Info.paging.pagein - System_Info.paging.lastpagein, System_Info.paging.pagein);
-                                        // _formatStatus("swap pageout count", Event_Resource, type, res, s, true, "%llu [%llu]", System_Info.paging.pageout - System_Info.paging.lastpageout, System_Info.paging.pageout);
-                                        _formatStatus("swap page count in out", Event_Resource, type, res, s, true, "%llu [%llu] %llu [%llu]", System_Info.paging.pagein - System_Info.paging.lastpagein, System_Info.paging.pagein, System_Info.paging.pageout - System_Info.paging.lastpageout, System_Info.paging.pageout);
+                                        _formatStatus("swap pagein count", Event_Resource, type, res, s, true, "%llu [%llu]", Int_deltaUINT64(System_Info.paging.lastpagein, System_Info.paging.pagein), System_Info.paging.pagein); //FIXME: if value=0, the counter is being initialized
+                                        _formatStatus("swap pageout count", Event_Resource, type, res, s, true, "%llu [%llu]", Int_deltaUINT64(System_Info.paging.lastpageout, System_Info.paging.pageout), System_Info.paging.pageout); //FIXME: if value=0, the counter is being initialized
                                         _formatStatus("uptime", Event_Uptime, type, res, s, System_Info.booted > 0, "%s", _getUptime(Time_now() - System_Info.booted, (char[256]){}));
                                         _formatStatus("boot time", Event_Null, type, res, s, true, "%s", Time_localStr(System_Info.booted, (char[32]){}));
                                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerSystem) {

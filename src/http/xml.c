@@ -54,6 +54,7 @@
 #endif
 
 // libmonit
+#include "util/Int.h"
 #include "util/List.h"
 #include "system/Time.h"
 
@@ -554,25 +555,17 @@ static void status_service(Service_T S, StringBuffer_T B, int V) {
                                             "<percent>%.1f</percent>"
                                             "<kilobyte>%llu</kilobyte>"
                                             "</swap>"
-                                            "<page>" //FIXME: rename to paging? FIXME: add to M/Monit
-                                            "<pagein>"
-                                            "<interval>%llu</interval>"
-                                            "<counter>%llu</counter>"
-                                            "</pagein>"
-                                            "<pageout>"
-                                            "<interval>%llu</interval>"
-                                            "<counter>%llu</counter>"
-                                            "</pageout>"
-                                            "</page>"
+                                            "<paging>"
+                                            "<in>%llu</in>"
+                                            "<out>%llu</out>"
+                                            "</paging>"
                                             "</system>",
                                             System_Info.memory.usage.percent,
                                             (unsigned long long)((double)System_Info.memory.usage.bytes / 1024.), // Send as kB for backward compatibility
                                             System_Info.swap.usage.percent,
                                             (unsigned long long)((double)System_Info.swap.usage.bytes / 1024.),   // Send as kB for backward compatibility
-                                            System_Info.paging.pagein - System_Info.paging.lastpagein,
-                                            System_Info.paging.pagein,
-                                            System_Info.paging.pageout - System_Info.paging.lastpageout,
-                                            System_Info.paging.pageout);
+                                            Int_deltaUINT64(System_Info.paging.lastpagein, System_Info.paging.pagein), //FIXME: if lastpagein=0, it's being initialized
+                                            Int_deltaUINT64(System_Info.paging.lastpageout, System_Info.paging.pageout)); //FIXME: if lastpagein=0, it's being initialized
                 }
                 if (S->type == Service_Program && S->program->started) {
                         StringBuffer_append(B,
