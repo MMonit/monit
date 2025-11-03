@@ -318,9 +318,8 @@ bool ProcessTree_updateProcess(Service_T s, pid_t pid) {
                 s->inf.process->filedescriptors.limit.hard  = ptree[leaf].filedescriptors.limit.hard;
                 if (System_Info.memory.size > 0) {
                         // Note: We use PSS to calculate the total memory usage as of Monit 5.36.0, which accounts a fair part of shared memory pages for each process. However,
-                        //       if PSS information is unavailable (e.g., Linux version < 4.14 or platform where such information is not implemented), we resort to using RSS,
-                        //       which counts the entire shared memory for each process. Consequently, the total calculated using RSS may be inaccurate and could even exceed the
-                        //       actual memory size.
+                        //       if PSS information is unavailable, we resort to using RSS, which counts the entire shared memory for each process. Consequently, the total
+                        //       calculated using RSS may be inaccurate and could even exceed the actual memory size.
                         s->inf.process->total_mem_percent = s->inf.process->total_mem >= System_Info.memory.size ? 100. : (100. * (double)s->inf.process->total_mem / (double)System_Info.memory.size);
                         s->inf.process->mem_percent       = s->inf.process->mem >= System_Info.memory.size ? 100. : (100. * (double)s->inf.process->mem / (double)System_Info.memory.size);
                 }

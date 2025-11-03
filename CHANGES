@@ -4,16 +4,22 @@
 
 Version 5.36.0
 
-Fixed: Issue #1136, Issue #42: Monit memory usage monitoring was based on RSS
-       (Resident Set Size), which can be misleading because it overcounts shared memory
-       by adding the entire amount to each process that uses it.
-       Where available (Linux kernel >= 4.14), Monit will use the PSS (Proportional Set
-       Size) instead of RSS. The PSS provides a more accurate measure by fairly dividing
-       shared memory among processes, giving a more realistic view of both a single
-       process's contribution and the total memory footprint of process and its children in
-       applications like Apache or Nginx.
-       Warning: Monit >= 5.36.0 may thus report significantly lower usage for both "memory" and
-       "total memory" for processes.
+New: Linux: Issue #1136, Issue #42: process memory usage report overcounts the shared library
+     RSS. Monit prefers the PSS (Proportional Set Size) report instead of RSS (Resident Set
+     Size) now. The PSS provides a more accurate measure by fairly dividing shared
+     memory among processes. RSS can be misleading because it overcounts shared
+     memory by adding the entire amount to each process that uses it. PSS gives
+     a more realistic view of both a single process's contribution and the system's
+     total memory footprint.
+     Warning: Monit >= 5.36.0 may thus report significantly lower usage for both "memory" and
+     "total memory" for processes.
+
+New: MacOS: Process memory usage report is in line with ActivityMonitor now and shows the process'
+     physical memory footprint instead of RSS. It excludes shared memory that's being used by
+     multiple processes (to avoid double-counting).
+
+New: The "check program" output in the "monit status" CLI was limited to 200 characters. The limitation is removed
+     and monit will display up to "set limits { programOutput: <size> }" characters now.
 
 Fixed: Issue #1129: When Monit log was set to a device, such as "set logfile /dev/stdout" (e.g. inside the
        Docker container), Monit hangs when the "View Monit logfile" is used in the Monit HTTP interface.
@@ -27,10 +33,11 @@ Fixed: The MongoDB protocol test did support only MongodDB < 5.1. The protocol t
 Fixed: The service restart counter wasn't reset on reboot, which could cause the restart timeout to falsely trigger
      when monit had a long polling cycle and the machine was repeatedly rebooted immediately after the first monit cycle.
 
-New: The "check program" output in the "monit status" CLI was limited to 200 characters. The limitation is removed
-     and monit will display up to "set limits { programOutput: <size> }" characters now.
-
 Changed: The "check program" output change test now sets the level to warning (yellow), instead of error (red).
+
+Changed: MacOS: Monit now utilizes the 64-bit system API to retrieve system memory usage information. The support for
+         32-bit Macs is deprecated, as the last pure 32-bit Macs were released in 2006.
+         Thanks to Lutz Mader.
 
 
 

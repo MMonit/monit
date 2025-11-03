@@ -149,11 +149,12 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
 
         int treesize;
         struct kinfo_proc *pinfo = kvm_getprocs(kvm_handle, KERN_PROC_PROC, 0, &treesize);
-        if (! pinfo || (treesize < 1)) {
+        if (! pinfo || treesize < 1) {
                 Log_error("system statistics error -- kvm_getprocs: %s\n", kvm_geterr(kvm_handle));
                 kvm_close(kvm_handle);
                 return 0;
         }
+
         unsigned long long now = Time_milli();
 
         ProcessTree_T *pt = CALLOC(sizeof(ProcessTree_T), treesize);

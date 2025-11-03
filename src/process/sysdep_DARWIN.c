@@ -45,6 +45,10 @@
 #include <mach/mach.h>
 #endif
 
+#ifdef HAVE_MACH_TASK_INFO_H
+#include <mach/task.h>
+#endif
+
 #ifdef HAVE_LIBPROC_H
 #include <libproc.h>
 #endif
@@ -223,7 +227,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                         }
                 }
                 if (! pt[i].zombie) {
-                        // CPU, memory, threads
+                        // CPU, threads
                         struct proc_taskinfo tinfo;
                         int rv = proc_pidinfo(pt[i].pid, PROC_PIDTASKINFO, 0, &tinfo, sizeof(tinfo)); // If the process is zombie, skip this
                         if (rv <= 0) {
@@ -232,10 +236,31 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                         } else if ((unsigned long)rv < sizeof(tinfo)) {
                                 Log_error("proc_pidinfo for pid %d -- invalid result size\n", pt[i].pid);
                         } else {
-                                pt[i].memory.usage_rss = (unsigned long long)tinfo.pti_resident_size;
                                 pt[i].cpu.time = (double)(tinfo.pti_total_user + tinfo.pti_total_system) / 100000000.; // The time is in nanoseconds, we store it as 1/10s
                                 pt[i].threads.self = tinfo.pti_threadnum;
+                                pt[i].memory.usage_rss = (unsigned long long)tinfo.pti_resident_size;
                         }
+
+                        // Physical memory footprint (may require elevated priviliges and code signing to provide access to task info for other PIDs)
+                        task_t task;
+                        kern_return_t krv = task_for_pid(mach_task_self(), pt[i].pid, &task); // task_for_pid() requires elevated privileges => ignore errors
+                        if (krv == KERN_SUCCESS) {
+                                task_vm_info_data_t vmInfo;
+                                mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
+
+                                krv = task_info(task, TASK_VM_INFO, (task_info_t)&vmInfo, &count);
+                                if (krv != KERN_SUCCESS) {
+                                        Log_error("task_info for pid %d error -- %s\n", pt[i].pid, mach_error_string(krv));
+                                } else {
+                                        pt[i].memory.usage_rss = (unsigned long long)vmInfo.resident_size;
+                                        pt[i].memory.usage_pss = (unsigned long long)vmInfo.phys_footprint;
+                                }
+
+                                mach_port_deallocate(mach_task_self(), task);
+                        } else if (Run.debug >= 2) {
+                                DEBUG("task_for_pid for pid %d error -- %s\n", pt[i].pid, mach_error_string(krv));
+                        }
+
 #ifdef rusage_info_current
                         // Disk IO
                         rusage_info_current rusage;
@@ -284,9 +309,9 @@ int getloadavg_sysdep (double *loadv, int nelem) {
  */
 bool used_system_memory_sysdep(SystemInfo_T *si) {
         /* Memory */
-        vm_statistics_data_t page_info;
-        mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-        kern_return_t kret = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&page_info, &count);
+        vm_statistics64_data_t page_info;
+        mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+        kern_return_t kret = host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&page_info, &count);
         if (kret != KERN_SUCCESS) {
                 DEBUG("system statistic error -- cannot get memory usage\n");
                 return false;
@@ -321,7 +346,7 @@ bool used_system_cpu_sysdep(SystemInfo_T *si) {
         mach_msg_type_number_t    count;
 
         count = HOST_CPU_LOAD_INFO_COUNT;
-        kret  = host_statistics(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info_t)&cpu_info, &count);
+        kret  = host_statistics64(mach_host_self(), HOST_CPU_LOAD_INFO, (host_info64_t)&cpu_info, &count);
         if (kret == KERN_SUCCESS) {
                 for (int i = 0; i < CPU_STATE_MAX; i++)
                         total_new += cpu_info.cpu_ticks[i];
