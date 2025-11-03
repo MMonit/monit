@@ -2041,8 +2041,9 @@ State_Type check_remote_host(Service_T s) {
         /* Test each icmp type in the service's icmplist */
         for (Icmp_T icmp = s->icmplist; icmp; icmp = icmp->next) {
                 switch (icmp->type) {
-                        case ICMP_ECHO:
-                                icmp->responsetime.current = icmp_echo(s->path, icmp->family, &(icmp->outgoing), icmp->size, icmp->timeout, icmp->count);
+                        case ICMP_ECHO: {
+                                char error[STRLEN] = {};
+                                icmp->responsetime.current = icmp_echo(s->path, icmp->family, &(icmp->outgoing), icmp->size, icmp->timeout, icmp->count, error);
                                 if (icmp->responsetime.current == -2) {
                                         icmp->is_available = Connection_Init;
 #ifdef SOLARIS
@@ -2054,8 +2055,7 @@ State_Type check_remote_host(Service_T s) {
 #endif
                                 } else if (icmp->responsetime.current == -1) {
                                         rv = icmp->check_invers ? State_Succeeded : State_Failed;
-                                        icmp->is_available = Connection_Failed;
-                                        Event_post(s, Event_Icmp, rv, icmp->action, "ping test failed");
+                                        Event_post(s, Event_Icmp, rv, icmp->action, "ping test failed -- %s", STR_DEF(error) ? error : "unknown error");
                                 } else {
                                         rv = icmp->check_invers ? State_Failed : State_Succeeded;
                                         icmp->is_available = Connection_Ok;
@@ -2073,6 +2073,7 @@ State_Type check_remote_host(Service_T s) {
                                 }
                                 last_ping = icmp;
                                 break;
+                        }
                         default:
                                 Log_error("'%s' error -- unknown ICMP type: [%d]\n", s->name, icmp->type);
                                 return State_Failed;
@@ -2297,5 +2298,6 @@ State_Type check_net(Service_T s) {
         }
         return rv;
 }
+
 
 

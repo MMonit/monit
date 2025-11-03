@@ -74,8 +74,9 @@ int create_server_socket_unix(const char *path, int backlog, char error[STRLEN])
  * @param size The ping size
  * @param timeout If response will not come within timeout milliseconds abort
  * @param count How many pings to send
+ * @param error Error message
  * @return response time on success, -1 on error
  */
-double icmp_echo(const char *hostname, Socket_Family family, Outgoing_T *outgoing, int size, int timeout, int count);
+double icmp_echo(const char *hostname, Socket_Family family, Outgoing_T *outgoing, int size, int timeout, int count, char error[static STRLEN]);
 
 #endif
