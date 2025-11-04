@@ -292,11 +292,8 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         /* Paging */
         si->paging.lastpagein = si->paging.pagein;
         si->paging.lastpageout = si->paging.pageout;
-//FIXME: uncomment / drop?
-        // si.page.pagein = (unsigned long long)(mem.pgins);
-        // si.page.pageout = (unsigned long long)(mem.pgouts);
-        si.page.pagein = (unsigned long long)(mem.pgspins);
-        si.page.pageout = (unsigned long long)(mem.pgspouts);
+        si.page.pagein = (unsigned long long)(mem.pgspins); //FIXME: investigate pgspins vs pgins
+        si.page.pageout = (unsigned long long)(mem.pgspouts); //FIXME: investigate pgspouts vs pgouts
 
         return true;
 }
