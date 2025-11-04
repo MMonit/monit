@@ -679,50 +679,30 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.size = swap_total * 1024;
         si->swap.usage.bytes = (swap_total - swap_free) * 1024;
 
-        unsigned long long pagein = 0;
-        unsigned long long pageout = 0;
-        // Paging from /proc/stat
-        if (! file_readProc(buf, sizeof(buf), "stat", -1, NULL)) {
-                Log_error("system statistic error -- cannot read /proc/stat\n");
-                goto error2;
+        // Paging
+        if (! file_readProc(buf, sizeof(buf), "vmstat", -1, NULL)) {
+                Log_error("system statistic error -- cannot read /proc/vmstat\n");
+                goto error;
         }
-        ptr = strstr(buf, "swap ");
-        if (ptr) {
-                sscanf(ptr, "swap %llu %llu", &pagein, &pageout);
-        } else {
-                // Paging from /proc/vmstat
-                if (! file_readProc(buf, sizeof(buf), "vmstat", -1, NULL)) {
-                        Log_error("system statistic error -- cannot read /proc/vmstat\n");
-                        goto error2;
-                }
-                //FIXME: drop?
-                // ptr = strstr(buf, "pgpgin ");
-                // if (ptr) sscanf(ptr, "pgpgin %llu", &pagein);
-                // ptr = strstr(buf, "pgpgout ");
-                // if (ptr) sscanf(ptr, "pgpgout %llu", &pageout);
-                ptr = strstr(buf, "pswpin ");
-                if (ptr)
-                        sscanf(ptr, "pswpin %llu", &pagein);
-                ptr = strstr(buf, "pswpout ");
-                if (ptr)
-                        sscanf(ptr, "pswpout %llu", &pageout);
-        }
-
         si->paging.lastpagein = si->paging.pagein;
         si->paging.lastpageout = si->paging.pageout;
-        si->paging.pagein = pagein;
-        si->paging.pageout = pageout;
+        if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr, "pswpin %llu", &(si->paging.pagein)) != 1) { //FIXME: investigate pswpin vs pgpgin
+                Log_error("system statistic error -- cannot get pswpin amount\n");
+                goto error;
+        }
+        if (! (ptr = strstr(buf, "pswpout ")) || sscanf(ptr, "pswpout %llu", &(si->paging.pageout)) != 1) { //FIXME: investigate pswpout vs pgpgout
+                Log_error("system statistic error -- cannot get pswpout amount\n");
+                goto error;
+        }
 
         return true;
 
 error:
         si->memory.usage.bytes = 0ULL;
         si->swap.size = 0ULL;
+        si->paging.lastpagein = si->paging.pagein = 0ULL;
+        si->paging.lastpageout = si->paging.pageout = 0ULL;
         return false;
-
-error2: //FIXME: drop?
-        return true;
-
 }
 
 
