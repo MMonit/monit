@@ -130,28 +130,6 @@ bool init_systeminfo_sysdep(void) {
                 System_Info.booted = booted.tv_sec;
         }
 
-        size_t len = sizeof(unsigned long long);
-        unsigned long long pagein;
-        unsigned long long pageout;
-
-        if (sysctlbyname("vm.stats.vm.v_swappgsin", &pagein, &len, NULL, 0) == -1) {
-                Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsin failed: %s\n", STRERROR);
-                // return false; //FIXME: drop?
-                // Use default value.
-                pagein = 0;
-        }
-        if (sysctlbyname("vm.stats.vm.v_swappgsout", &pageout, &len, NULL, 0) == -1) {
-                Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsout failed: %s\n", STRERROR);
-                // return false; //FIXME: drop?
-                // Use default value.
-                pageout = 0;
-        }
-
-        System_Info.paging.pagein = pagein;
-        System_Info.paging.pageout = pageout;
-        System_Info.paging.lastpagein = System_Info.paging.pagein;
-        System_Info.paging.lastpageout = System_Info.paging.pageout;
-
         return true;
 }
 
@@ -288,26 +266,26 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         }
         si->swap.size = (unsigned long long)free * (unsigned long long)pagesize + si->swap.usage.bytes;
 
-        /* Page */
+        /* Paging */
         size_t len = sizeof(unsigned long long);
-        unsigned long long pagein = 0;
-        unsigned long long pageout = 0;
-
+        unsigned long long pagein;
+        unsigned long long pageout;
         if (sysctlbyname("vm.stats.vm.v_swappgsin", &pagein, &len, NULL, 0) == -1) {
                 Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsin failed: %s\n", STRERROR);
-                // return false; //FIXME: drop?
-                pagein = 0;
+                si->paging.lastpagein = si->paging.pagein = 0;
+                return false;
+        } else {
+                si->paging.lastpagein = si->paging.pagein;
+                si->paging.pagein = pagein;
         }
         if (sysctlbyname("vm.stats.vm.v_swappgsout", &pageout, &len, NULL, 0) == -1) {
                 Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsout failed: %s\n", STRERROR);
-                // return false; //FIXME: drop?
-                pageout = 0;
+                si->paging.lastpageout = si->paging.pageout = 0;
+                return false;
+        } else {
+                si->paging.lastpageout = si->paging.pageout;
+                si->paging.pageout = pageout;
         }
-
-        si->paging.lastpagein = si->paging.pagein;
-        si->paging.lastpageout = si->paging.pageout;
-        si->paging.pagein = pagein;
-        si->paging.pageout = pageout;
 
         return true;
 }

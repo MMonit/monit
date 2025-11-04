@@ -127,25 +127,6 @@ bool init_systeminfo_sysdep(void) {
                 System_Info.booted = booted.tv_sec;
         }
 
-        struct uvmexp vm;
-        mib[0] = CTL_VM;
-        mib[1] = VM_UVMEXP;
-        len = sizeof(struct uvmexp);
-        if (sysctl(mib, 2, &vm, &len, NULL, 0) == -1) {
-                DEBUG("system statistic error -- cannot get stat counters: %s\n", STRERROR);
-                // return false; //FIXME: drop?
-                // Use default value.
-                System_Info.paging.pagein = 0;
-                System_Info.paging.pageout = 0;
-                System_Info.paging.lastpagein = System_Info.paging.pagein;
-                System_Info.paging.lastpageout = System_Info.paging.pageout;
-        } else {
-                System_Info.paging.pagein = (unsigned long long)vm.pgswapin;
-                System_Info.paging.pageout = (unsigned long long)vm.pgswapout;
-                System_Info.paging.lastpagein = System_Info.paging.pagein;
-                System_Info.paging.lastpageout = System_Info.paging.pageout;
-        }
-
         return true;
 }
 
@@ -269,8 +250,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->memory.usage.bytes = (unsigned long long)(vm.active + vm.wired) * (unsigned long long)vm.pagesize;
         si->swap.size = (unsigned long long)vm.swpages * (unsigned long long)vm.pagesize;
         si->swap.usage.bytes = (unsigned long long)vm.swpginuse * (unsigned long long)vm.pagesize;
-
-        /* Page */
         si->paging.lastpagein = si->paging.pagein;
         si->paging.lastpageout = si->paging.pageout;
         si->paging.pagein = (unsigned long long)vm.pgswapin;

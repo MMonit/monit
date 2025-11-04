@@ -128,18 +128,15 @@ bool init_systeminfo_sysdep(void) {
 
         if (perfstat_memory_total(NULL, &mem, sizeof(perfstat_memory_total_t), 1) < 1) {
                 Log_error("system statistic error -- perfstat_memory_total failed: %s\n", STRERROR);
-
-                // Use default value. //FIXME: drop? should be reset on some global level if init_systeminfo_sysdep returns error?
-                System_Info.paging.pagein = 0;
-                System_Info.paging.pageout = 0;
-                System_Info.paging.lastpagein = System_Info.paging.pagein;
-                System_Info.paging.lastpageout = System_Info.paging.pageout;
-
                 return false;
         }
 
         page_size = getpagesize();
+
         System_Info.memory.size = (unsigned long long)mem.real_total * (unsigned long long)page_size;
+        System_Info.paging.lastpagein = System_Info.paging.pagein = (unsigned long long)(mem.pgspins); //FIXME: investigate pgspins vs pgins
+        System_Info.paging.lastpageout = System_Info.paging.pageout = (unsigned long long)(mem.pgspouts); //FIXME: investigate pgspouts vs pgouts
+
         System_Info.cpu.count = sysconf(_SC_NPROCESSORS_ONLN);
 
         setutxent();
@@ -148,14 +145,6 @@ bool init_systeminfo_sysdep(void) {
         if (booted)
                 System_Info.booted = booted->ut_tv.tv_sec;
         endutxent();
-
-//FIXME: uncomment / drop?
-        // System_Info.paging.pagein = (unsigned long long)(mem.pgins);
-        // System_Info.paging.pageout = (unsigned long long)(mem.pgouts);
-        System_Info.paging.pagein = (unsigned long long)(mem.pgspins);
-        System_Info.paging.pageout = (unsigned long long)(mem.pgspouts);
-        System_Info.paging.lastpagein = System_Info.paging.pagein;
-        System_Info.paging.lastpageout = System_Info.paging.pageout;
 
         return true;
 }
@@ -300,7 +289,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.size   = (unsigned long long)mem.pgsp_total * 4096;                   /* 4kB blocks */
         si->swap.usage.bytes = (unsigned long long)(mem.pgsp_total - mem.pgsp_free) * 4096; /* 4kB blocks */
 
-        /* Page */
+        /* Paging */
         si->paging.lastpagein = si->paging.pagein;
         si->paging.lastpageout = si->paging.pageout;
 //FIXME: uncomment / drop?

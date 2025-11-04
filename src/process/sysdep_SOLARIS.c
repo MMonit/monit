@@ -124,29 +124,8 @@ bool init_systeminfo_sysdep(void) {
                                         System_Info.booted = (unsigned long long)knamed->value.ul;
                         }
                 }
-
-                cpu_vminfo_t vmstat;
-                *kstat = kstat_lookup(kctl, "unix", 0, "vminfo");
-                if (kstat) {
-                        if (kstat_read(kctl, kstat, &vmstat) != -1) {
-                                // pagein = vmstat->pgpgin; //FIXME: drop?
-                                // pageout = vmstat->pgpgout;
-                                pagein = vmstat->pgswapin;
-                                pageout = vmstat->pgswapout;
-                        }
-                } else {
-                        // Use default value.
-                        pagein = 0;
-                        pageout = 0;
-                }
-
                 kstat_close(kctl);
         }
-
-        System_Info.paging.pagein = pagein;
-        System_Info.paging.pageout = pageout;
-        System_Info.paging.lastpagein = System_Info.paging.pagein;
-        System_Info.paging.lastpageout = System_Info.paging.pageout;
 
         return true;
 }
@@ -294,26 +273,20 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 }
         }
 
-        /* Page */
+        /* Paging */
         unsigned long long pagein = 0;
         unsigned long long pageout = 0;
-
         cpu_vminfo_t vmstat;
         *kstat = kstat_lookup(kctl, "unix", 0, "vminfo");
-        if (kstat) {
-                if (kstat_read(kctl, kstat, &vmstat) != -1) {
-                        // pagein = vmstat->pgpgin; //FIXME: drop?
-                        // pageout = vmstat->pgpgout;
-                        pagein = vmstat->pgswapin;
-                        pageout = vmstat->pgswapout;
-                }
+        if (kstat && kstat_read(kctl, kstat, &vmstat) != -1) {
+                si->paging.lastpagein = si->paging.pagein;
+                si->paging.lastpageout = si->paging.pageout;
+                si->paging.pagein = vmstat->pgswapin; //FIXME: investigate pgswapin vs pgpgin
+                si->paging.pageout = vmstat->pgswapout; //FIXME: investigate pgswapout vs pgpgout
+        } else {
+                si->paging.lastpagein = si->paging.pagein = 0;
+                si->paging.lastpageout = si->paging.pageout = 0;
         }
-
-        si->paging.lastpagein = si->paging.pagein;
-        si->paging.lastpageout = si->paging.pageout;
-        si->paging.pagein = pagein;
-        si->paging.pageout = pageout;
-
         kstat_close(kctl);
 
         /* Swap */

@@ -513,55 +513,7 @@ bool init_systeminfo_sysdep(void) {
 
         System_Info.booted = (long long)_getStartTime();
 
-        char buf[4096];
-        char *ptr;
-        unsigned long long pagein;
-        unsigned long long pageout;
-
-        /* Page, data from /proc/stat */
-        if (! file_readProc(buf, sizeof(buf), "stat", -1, NULL)) {
-                Log_error("system statistic error -- cannot read /proc/stat\n");
-                goto error;
-        }
-        ptr = strstr(buf, "swap ");
-        if (ptr) {
-                sscanf(ptr, "swap %llu %llu", &pagein, &pageout);
-        } else {
-                /* Page, data from /proc/vmstat */
-                if (! file_readProc(buf, sizeof(buf), "vmstat", -1, NULL)) {
-                        Log_error("system statistic error -- cannot read /proc/vmstat\n");
-                        goto error; //FIXME
-                }
-//FIXME: drop?
-                // ptr = strstr(buf, "pgpgin ");
-                // if (ptr)
-                //      sscanf(ptr, "pgpgin %llu", &pagein);
-                // ptr = strstr(buf, "pgpgout ");
-                // if (ptr)
-                //      sscanf(ptr, "pgpgout %llu", &pageout);
-                ptr = strstr(buf, "pswpin ");
-                if (ptr)
-                        sscanf(ptr, "pswpin %llu", &pagein);
-                ptr = strstr(buf, "pswpout ");
-                if (ptr)
-                        sscanf(ptr, "pswpout %llu", &pageout);
-        }
-
-        System_Info.paging.pagein = pagein;
-        System_Info.paging.pageout = pageout;
-        System_Info.paging.lastpagein = System_Info.paging.pagein;
-        System_Info.paging.lastpageout = System_Info.paging.pageout;
-
-        return true; //FIXME
-
-error: //FIXME
-        // Use default value.
-        System_Info.paging.pagein = 0;
-        System_Info.paging.pageout = 0;
-        System_Info.paging.lastpagein = System_Info.paging.pagein;
-        System_Info.paging.lastpageout = System_Info.paging.pageout;
-
-        return true; //FIXME
+        return true;
 }
 
 
@@ -727,12 +679,9 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.size = swap_total * 1024;
         si->swap.usage.bytes = (swap_total - swap_free) * 1024;
 
-        // char buf[4096];
-        // char *ptr;
         unsigned long long pagein = 0;
         unsigned long long pageout = 0;
-
-        /* Page, data from /proc/stat */
+        // Paging from /proc/stat
         if (! file_readProc(buf, sizeof(buf), "stat", -1, NULL)) {
                 Log_error("system statistic error -- cannot read /proc/stat\n");
                 goto error2;
@@ -741,7 +690,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         if (ptr) {
                 sscanf(ptr, "swap %llu %llu", &pagein, &pageout);
         } else {
-                /* Page, data from /proc/vmstat */
+                // Paging from /proc/vmstat
                 if (! file_readProc(buf, sizeof(buf), "vmstat", -1, NULL)) {
                         Log_error("system statistic error -- cannot read /proc/vmstat\n");
                         goto error2;

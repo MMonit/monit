@@ -704,26 +704,32 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         break;
 
                 case Resource_Pagein:
-                        {
-                                unsigned long long delta = Int_deltaUINT64(System_Info.paging.lastpagein, System_Info.paging.pagein); //FIXME: if lastpagein, skip (initializing)
+                        if (System_Info.paging.lastpagein && System_Info.paging.pagein) {
+                                unsigned long long delta = Int_deltaUINT64(System_Info.paging.lastpagein, System_Info.paging.pagein);
                                 if (Util_evalDoubleQExpression(r->operator, delta, r->limit)) {
                                         rv = State_Failed;
                                         snprintf(report, STRLEN, "pagein amount of %llu matches resource limit [pagein amount %s %.0f]", delta, OperatorShort_Names[r->operator], r->limit);
                                 } else {
                                         snprintf(report, STRLEN, "pagein amount check succeeded [current pagein amount = %llu]", delta);
                                 }
+                        } else {
+                                DEBUG("'%s' pagein check skipped (initializing)\n", s->name);
+                                return State_Init;
                         }
                         break;
 
                 case Resource_Pageout:
-                        {
-                                unsigned long long delta = Int_deltaUINT64(System_Info.paging.lastpageout, System_Info.paging.pageout); //FIXME: if lastpageout, skip (initializing)
+                        if (System_Info.paging.lastpageout && System_Info.paging.pageout) {
+                                unsigned long long delta = Int_deltaUINT64(System_Info.paging.lastpageout, System_Info.paging.pageout);
                                 if (Util_evalDoubleQExpression(r->operator, delta, r->limit)) {
                                         rv = State_Failed;
                                         snprintf(report, STRLEN, "pageout amount of %llu matches resource limit [pageout amount %s %.0f]", delta, OperatorShort_Names[r->operator], r->limit);
                                 } else {
                                         snprintf(report, STRLEN, "pageout amount check succeeded [current pageout amount = %llu]", delta);
                                 }
+                        } else {
+                                DEBUG("'%s' pageout check skipped (initializing)\n", s->name);
+                                return State_Init;
                         }
                         break;
 

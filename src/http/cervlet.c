@@ -459,15 +459,21 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                         StringBuffer_free(&sb);
                                         _formatStatus("memory usage", Event_Resource, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.memory.usage.bytes, (char[10]){}), System_Info.memory.usage.percent);
                                         _formatStatus("swap usage", Event_Resource, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.swap.usage.bytes, (char[10]){}), System_Info.swap.usage.percent);
-                                        _formatStatus("swap pagein count", Event_Resource, type, res, s, true, "%llu [%llu]", Int_deltaUINT64(System_Info.paging.lastpagein, System_Info.paging.pagein), System_Info.paging.pagein); //FIXME: if value=0, the counter is being initialized
-                                        _formatStatus("swap pageout count", Event_Resource, type, res, s, true, "%llu [%llu]", Int_deltaUINT64(System_Info.paging.lastpageout, System_Info.paging.pageout), System_Info.paging.pageout); //FIXME: if value=0, the counter is being initialized
+                                        if (System_Info.paging.lastpagein && System_Info.paging.pagein)
+                                                _formatStatus("swap pagein count", Event_Resource, type, res, s, true, "%llu [%llu]", Int_deltaUINT64(System_Info.paging.lastpagein, System_Info.paging.pagein), System_Info.paging.pagein);
+                                        else
+                                                _formatStatus("swap pagein count", Event_Resource, type, res, s, false, NULL);
+                                        if (System_Info.paging.lastpageout && System_Info.paging.pageout)
+                                                _formatStatus("swap pageout count", Event_Resource, type, res, s, true, "%llu [%llu]", Int_deltaUINT64(System_Info.paging.lastpageout, System_Info.paging.pageout), System_Info.paging.pageout);
+                                        else
+                                                _formatStatus("swap pageout count", Event_Resource, type, res, s, false, NULL);
                                         _formatStatus("uptime", Event_Uptime, type, res, s, System_Info.booted > 0, "%s", _getUptime(Time_now() - System_Info.booted, (char[256]){}));
                                         _formatStatus("boot time", Event_Null, type, res, s, true, "%s", Time_localStr(System_Info.booted, (char[32]){}));
                                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerSystem) {
                                                 if (System_Info.filedescriptors.maximum > 0)
                                                         _formatStatus("filedescriptors", Event_Resource, type, res, s, true, "%lld [%.1f%% of %lld limit]", System_Info.filedescriptors.allocated, (float)100 * (float)System_Info.filedescriptors.allocated / (float)System_Info.filedescriptors.maximum, System_Info.filedescriptors.maximum);
                                                 else
-                                                        _formatStatus("filedescriptors", Event_Resource, type, res, s, true, "N/A");
+                                                        _formatStatus("filedescriptors", Event_Resource, type, res, s, false, NULL);
                                         }
                                 }
                                 break;
