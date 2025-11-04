@@ -190,12 +190,12 @@ static char *_addressToString(const struct sockaddr *addr, socklen_t addrlen, ch
 }
 
 
-static bool _doConnect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout, char *error, int errorlen) {
+static bool _doConnect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout, char error[static STRLEN]) {
         int rv = connect(s, addr, addrlen);
         if (! rv) {
                 return true;
         } else if (errno != EINPROGRESS) {
-                snprintf(error, errorlen, "%s", STRERROR);
+                snprintf(error, STRLEN, "%s", STRERROR);
                 return false;
         }
         struct pollfd fds[1];
@@ -205,23 +205,23 @@ static bool _doConnect(int s, const struct sockaddr *addr, socklen_t addrlen, in
                 rv = poll(fds, 1, timeout);
         } while (rv == -1 && errno == EINTR);
         if (rv == 0) {
-                snprintf(error, errorlen, "Connection timed out");
+                snprintf(error, STRLEN, "Connection timed out");
                 return false;
         } else if (rv == -1) {
-                snprintf(error, errorlen, "Poll failed: %s", STRERROR);
+                snprintf(error, STRLEN, "Poll failed: %s", STRERROR);
                 return false;
         }
         if (fds[0].events & POLLIN || fds[0].events & POLLOUT) {
                 socklen_t rvlen = sizeof(rv);
                 if (getsockopt(s, SOL_SOCKET, SO_ERROR, &rv, &rvlen) < 0) {
-                        snprintf(error, errorlen, "Read of error details failed: %s", STRERROR);
+                        snprintf(error, STRLEN, "Read of error details failed: %s", STRERROR);
                         return false;
                 } else if (rv) {
-                        snprintf(error, errorlen, "%s", strerror(rv));
+                        snprintf(error, STRLEN, "%s", strerror(rv));
                         return false;
                 }
         } else {
-                snprintf(error, errorlen, "Not ready for I/O");
+                snprintf(error, STRLEN, "Not ready for I/O");
                 return false;
         }
         return true;
@@ -230,7 +230,7 @@ static bool _doConnect(int s, const struct sockaddr *addr, socklen_t addrlen, in
 
 static T _createIpSocket(const char *host, const struct sockaddr *addr, socklen_t addrlen, const struct sockaddr *localaddr, socklen_t localaddrlen, int family, int type, int protocol, int timeout) {
         assert(host);
-        char error[STRLEN];
+        char error[STRLEN] = {};
         int s = socket(family, type, protocol);
         if (s >= 0) {
                 if (localaddr) {
@@ -241,7 +241,7 @@ static T _createIpSocket(const char *host, const struct sockaddr *addr, socklen_
                 }
                 if (Net_setNonBlocking(s)) {
                         if (fcntl(s, F_SETFD, FD_CLOEXEC) != -1) {
-                                if (_doConnect(s, addr, addrlen, timeout, error, sizeof(error))) {
+                                if (_doConnect(s, addr, addrlen, timeout, error)) {
                                         T S;
                                         NEW(S);
                                         S->socket = s;
@@ -364,8 +364,8 @@ T Socket_createUnix(const char *path, Socket_Type type, int timeout) {
                 unixsocket_server.sun_family = AF_UNIX;
                 strncpy(unixsocket_server.sun_path, path, sizeof(unixsocket_server.sun_path) - 1);
                 if (Net_setNonBlocking(s)) {
-                        char error[STRLEN];
-                        if (_doConnect(s, (struct sockaddr *)&unixsocket_server, sizeof(unixsocket_server), timeout, error, sizeof(error))) {
+                        char error[STRLEN] = {};
+                        if (_doConnect(s, (struct sockaddr *)&unixsocket_server, sizeof(unixsocket_server), timeout, error)) {
                                 T S;
                                 NEW(S);
                                 S->connection_type = Connection_Client;

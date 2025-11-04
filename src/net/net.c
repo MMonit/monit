@@ -465,7 +465,7 @@ static double _receivePing(const char *hostname, int socket, struct addrinfo *ad
 }
 
 
-double icmp_echo(const char *hostname, Socket_Family family, Outgoing_T *outgoing, int size, int timeout, int maxretries) {
+double icmp_echo(const char *hostname, Socket_Family family, Outgoing_T *outgoing, int size, int timeout, int maxretries, char error[static STRLEN]) {
         assert(hostname);
         assert(size > 0);
         double response = -1.;
@@ -491,7 +491,7 @@ double icmp_echo(const char *hostname, Socket_Family family, Outgoing_T *outgoin
         }
         int status = getaddrinfo(hostname, NULL, &hints, &result);
         if (status) {
-                Log_error("Ping for %s -- getaddrinfo failed: %s\n", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
+                snprintf(error, STRLEN, "getaddrinfo failed for '%s' -- %s", hostname, status == EAI_SYSTEM ? STRERROR : gai_strerror(status));
                 return -1.;
         }
         int s = -1;
@@ -507,7 +507,8 @@ double icmp_echo(const char *hostname, Socket_Family family, Outgoing_T *outgoin
                                         break;
 #endif
                                 default:
-                                        Log_error("Ping for %s -- unknown address family: %d\n", hostname, addr->ai_family);
+                                        snprintf(error, STRLEN, "Ping for %s -- unknown address family: %d", hostname, addr->ai_family);
+                                        Log_error("%s\n", error);
                                         continue;
                         }
                         if (s >= 0) {
@@ -531,7 +532,8 @@ double icmp_echo(const char *hostname, Socket_Family family, Outgoing_T *outgoin
                                         DEBUG("Ping for %s -- cannot create socket: %s\n", hostname, STRERROR);
                                         response = -2.;
                                 } else {
-                                        Log_error("Ping for %s -- cannot create socket: %s\n", hostname, STRERROR);
+                                        snprintf(error, STRLEN, "Ping for '%s' -- cannot create socket: %s", hostname, STRERROR);
+                                        Log_error("%s\n", error);
                                 }
                                 goto error;
                         }

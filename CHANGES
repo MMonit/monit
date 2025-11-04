@@ -27,6 +27,9 @@ Fixed: Issue #1129: When Monit log was set to a device, such as "set logfile /de
 
 Fixed: Issue #1137: Hostname error in log when fetching status in XML format from Monit HTTP API via UNIX socket.
 
+Fixed: Monit now provides more detailed error reporting when the hostname resolution fails. Previously, when
+       testing a remote host using ping and the host did not resolve in DNS, Monit simply reported "ping failed"
+
 Fixed: The MongoDB protocol test did support only MongodDB < 5.1. The protocol test was updated to support
      the newer mongodb ping style.
 
