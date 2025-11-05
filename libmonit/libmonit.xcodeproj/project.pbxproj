@@ -44,6 +44,8 @@
 		52F8BB541ECE5A570007DF91 /* libz.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F8BB461ECE567A0007DF91 /* libz.1.dylib */; };
 		52FD226523B2638200279D23 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 52F8BB441ECE55D70007DF91 /* libz.tbd */; };
 		52FDD6B1189C205E008E3D5E /* CommandTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F7713A5212700FC4089 /* CommandTest.c */; };
+		93D5F8AA2EBB81CE009E458B /* Int.c in Sources */ = {isa = PBXBuildFile; fileRef = 93D5F8A92EBB81CE009E458B /* Int.c */; };
+		93D5F8AB2EBB81CE009E458B /* Int.h in Headers */ = {isa = PBXBuildFile; fileRef = 93D5F8A82EBB81CE009E458B /* Int.h */; };
 		93F6F8E52BF765B300BAFEC1 /* RandomTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 93F6F8E42BF765B300BAFEC1 /* RandomTest.c */; };
 /* End PBXBuildFile section */
 
@@ -224,6 +226,8 @@
 		52E737DB1EE71099007BF939 /* ProtocolException.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProtocolException.h; sourceTree = "<group>"; };
 		52F8BB441ECE55D70007DF91 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		52F8BB461ECE567A0007DF91 /* libz.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.dylib; path = ../../../../../usr/lib/libz.1.dylib; sourceTree = "<group>"; };
+		93D5F8A82EBB81CE009E458B /* Int.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Int.h; sourceTree = "<group>"; };
+		93D5F8A92EBB81CE009E458B /* Int.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = Int.c; sourceTree = "<group>"; };
 		93F6F8E02BF762D500BAFEC1 /* StringBufferTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StringBufferTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93F6F8E12BF762D500BAFEC1 /* InputstreamTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = InputstreamTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93F6F8E22BF765A500BAFEC1 /* Random.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Random.h; sourceTree = "<group>"; };
@@ -434,6 +438,8 @@
 		52D7967413A6CE560014CED2 /* util */ = {
 			isa = PBXGroup;
 			children = (
+				93D5F8A82EBB81CE009E458B /* Int.h */,
+				93D5F8A92EBB81CE009E458B /* Int.c */,
 				520CA0492D56520E00D851CD /* Array.h */,
 				520CA04A2D56520E00D851CD /* Array.c */,
 				52D7967613A6CE560014CED2 /* List.c */,
@@ -466,6 +472,7 @@
 			files = (
 				520CA04C2D56520E00D851CD /* Array.h in Headers */,
 				521ECE3921D85CFE00F8045E /* Fmt.h in Headers */,
+				93D5F8AB2EBB81CE009E458B /* Int.h in Headers */,
 				52E737DC1EE71099007BF939 /* ProtocolException.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -680,6 +687,7 @@
 				5256BCA22D5EA75B005FC07A /* Random.c in Sources */,
 				52D7968F13A6CE560014CED2 /* OutputStream.c in Sources */,
 				52D7969113A6CE560014CED2 /* Command.c in Sources */,
+				93D5F8AA2EBB81CE009E458B /* Int.c in Sources */,
 				521ECE3C21D85EC100F8045E /* FmtTest.c in Sources */,
 				52D7969313A6CE560014CED2 /* Mem.c in Sources */,
 				52D7969513A6CE560014CED2 /* Net.c in Sources */,
