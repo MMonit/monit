@@ -2055,7 +2055,7 @@ State_Type check_remote_host(Service_T s) {
 #endif
                                 } else if (icmp->responsetime.current == -1) {
                                         rv = icmp->check_invers ? State_Succeeded : State_Failed;
-                                        Event_post(s, Event_Icmp, rv, icmp->action, "ping test failed -- %s", STR_DEF(error) ? error : "unknown error");
+                                        Event_post(s, Event_Icmp, rv, icmp->action, "ping test failed -- %s", *error ? error : "unknown error");
                                 } else {
                                         rv = icmp->check_invers ? State_Failed : State_Succeeded;
                                         icmp->is_available = Connection_Ok;
