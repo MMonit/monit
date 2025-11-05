@@ -327,7 +327,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         struct xsw_usage swap;
         if (sysctl(mib, 2, &swap, &len, NULL, 0) == -1) {
                 DEBUG("system statistic error -- cannot get swap usage: %s\n", STRERROR);
-                si->swap.size = 0ULL;
                 return false;
         }
         si->swap.size = (unsigned long long)swap.xsu_total;

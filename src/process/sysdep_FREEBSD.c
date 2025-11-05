@@ -259,7 +259,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         size_t miblen = sizeof(mib) / sizeof(mib[0]);
         if (sysctlnametomib("vm.swap_info", mib, &miblen) == -1) {
                 Log_error("system statistics error -- cannot get swap usage: %s\n", STRERROR);
-                si->swap.size = 0ULL;
                 return false;
         }
         int n = 0;
@@ -271,7 +270,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                         break;
                 if (xsw.xsw_version != XSWDEV_VERSION) {
                         Log_error("system statistics error -- cannot get swap usage: xswdev version mismatch\n");
-                        si->swap.size = 0ULL;
                         return false;
                 }
                 total += xsw.xsw_nblks;

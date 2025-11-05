@@ -248,20 +248,17 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         unsigned int used;
         if (sysctlbyname("vm.swap_anon_use", &used, &len, NULL, 0) == -1) {
                 Log_error("system statistic error -- cannot get swap usage: %s\n", STRERROR);
-                si->swap.size = 0;
                 return false;
         }
         si->swap.usage.bytes = (unsigned long long)used * (unsigned long long)pagesize;
         if (sysctlbyname("vm.swap_cache_use", &used, &len, NULL, 0) == -1) {
                 Log_error("system statistic error -- cannot get swap usage: %s\n", STRERROR);
-                si->swap.size = 0;
                 return false;
         }
         si->swap.usage.bytes += (unsigned long long)used * (unsigned long long)pagesize;
         unsigned int free;
         if (sysctlbyname("vm.swap_size", &free, &len, NULL, 0) == -1) {
                 Log_error("system statistic error -- cannot get swap usage: %s\n", STRERROR);
-                si->swap.size = 0;
                 return false;
         }
         si->swap.size = (unsigned long long)free * (unsigned long long)pagesize + si->swap.usage.bytes;
