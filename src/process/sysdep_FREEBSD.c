@@ -280,7 +280,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.usage.bytes = (unsigned long long)used * (unsigned long long)pagesize;
 
         /* Paging */
-        size_t len = sizeof(unsigned long long);
+        len = sizeof(unsigned long long);
         if (sysctlbyname("vm.stats.vm.v_swappgsin", &(si->paging.previous.in.value), &len, NULL, 0) == -1) {
                 Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsin failed: %s\n", STRERROR);
                 return false;
