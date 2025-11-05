@@ -706,12 +706,12 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         if (System_Info.paging.previous.in.value && System_Info.paging.current.in.value) {
                                 if (Util_evalDoubleQExpression(r->operator, System_Info.paging.average.in, r->limit)) {
                                         rv = State_Failed;
-                                        snprintf(report, STRLEN, "pagein %llu per second matches resource limit [pagein %s %.0f per second]", System_Info.paging.average.in, OperatorShort_Names[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "swap pagein %llu per second matches resource limit [pagein %s %.0f per second]", System_Info.paging.average.in, OperatorShort_Names[r->operator], r->limit);
                                 } else {
-                                        snprintf(report, STRLEN, "pagein check succeeded [current pagein = %llu per second]", System_Info.paging.average.in);
+                                        snprintf(report, STRLEN, "swap pagein check succeeded [current pagein = %llu per second]", System_Info.paging.average.in);
                                 }
                         } else {
-                                DEBUG("'%s' pagein check skipped (initializing)\n", s->name);
+                                DEBUG("'%s' swap pagein check skipped (initializing)\n", s->name);
                                 return State_Init;
                         }
                         break;
@@ -720,12 +720,12 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         if (System_Info.paging.previous.out.value && System_Info.paging.current.out.value) {
                                 if (Util_evalDoubleQExpression(r->operator, System_Info.paging.average.out, r->limit)) {
                                         rv = State_Failed;
-                                        snprintf(report, STRLEN, "pageout %llu per second matches resource limit [pageout %s %.0f per second]", System_Info.paging.average.out, OperatorShort_Names[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "swap pageout %llu per second matches resource limit [pageout %s %.0f per second]", System_Info.paging.average.out, OperatorShort_Names[r->operator], r->limit);
                                 } else {
-                                        snprintf(report, STRLEN, "pageout check succeeded [current pageout = %llu per second]", System_Info.paging.average.out);
+                                        snprintf(report, STRLEN, "swap pageout check succeeded [current pageout = %llu per second]", System_Info.paging.average.out);
                                 }
                         } else {
-                                DEBUG("'%s' pageout check skipped (initializing)\n", s->name);
+                                DEBUG("'%s' swap pageout check skipped (initializing)\n", s->name);
                                 return State_Init;
                         }
                         break;

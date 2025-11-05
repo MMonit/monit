@@ -1280,6 +1280,14 @@ void Util_printService(Service_T s) {
                                 printf(" %-20s = ", "Disk write limit");
                                 break;
 
+                        case Resource_Pagein:
+                                printf(" %-20s = ", "Swap pagein limit");
+                                break;
+
+                        case Resource_Pageout:
+                                printf(" %-20s = ", "Swap pageout limit");
+                                break;
+
                         default:
                                 break;
                 }
@@ -1318,6 +1326,8 @@ void Util_printService(Service_T s) {
 
                         case Resource_Threads:
                         case Resource_Children:
+                        case Resource_Pagein:
+                        case Resource_Pageout:
                                 printf("%s", StringBuffer_toString(Util_printRule(false, buf, o->action, "if %s %.0f", Operator_Names[o->operator], o->limit)));
                                 break;
 

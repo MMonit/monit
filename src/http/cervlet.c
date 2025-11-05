@@ -2559,6 +2559,14 @@ static void print_service_rules_resource(HttpResponse res, Service_T s) {
                                 key = "Disk write limit";
                                 break;
 
+                        case Resource_Pagein:
+                                key = "Swap pagein limit";
+                                break;
+
+                        case Resource_Pageout:
+                                key = "Swap pageout limit";
+                                break;
+
                         default:
                                 break;
                 }
@@ -2597,6 +2605,8 @@ static void print_service_rules_resource(HttpResponse res, Service_T s) {
 
                         case Resource_Threads:
                         case Resource_Children:
+                        case Resource_Pagein:
+                        case Resource_Pageout:
                                 Util_printRule(false, sb, q->action, "If %s %.0f", Operator_Names[q->operator], q->limit);
                                 break;
 
