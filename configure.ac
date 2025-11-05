@@ -407,11 +407,21 @@ CFLAGS="$CFLAGS -D_GNU_SOURCE"
 # Compiler; tune warnings
 CFLAGS="$CFLAGS -Wall -Wunused ";
 
-# Require at least C99 and use C11 if available
+# Require at least C11 and use C17 if available
 AC_COMPUTE_INT([STDC_VERSION],[__STDC_VERSION__],,[STDC_VERSION=0])
-AS_IF([test "$STDC_VERSION" -ge 201112],[CFLAGS="$CFLAGS -std=c11"],[CFLAGS="$CFLAGS -std=c99"])
+AS_IF([test "$STDC_VERSION" -ge 201710],
+    [CFLAGS="$CFLAGS -std=c17"],
+    [AS_IF([test "$STDC_VERSION" -ge 201112],
+        [CFLAGS="$CFLAGS -std=c11"],
+        [AC_MSG_ERROR([Your compiler does not support C11 or later])]
+    )]
+)
+
+# Check for C99 headers
 AC_CHECK_HEADERS([stdint.h stdbool.h], [], [AC_MSG_ERROR([toolchain does not have C99 headers])])
 
+# Check for C11 atomic operations support
+AC_CHECK_HEADERS([stdatomic.h], [], [AC_MSG_ERROR([toolchain does not support C11 atomic operations])])
 
 # ------------------------------------------------------------------------
 # IPv6 Support
