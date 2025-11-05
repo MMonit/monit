@@ -2035,28 +2035,18 @@ postgresql      : username {
                   }
                 ;
 
-target          : TARGET MAILADDR {
-                        $<string>$ = $2;
-                  }
-                | TARGET STRING {
-                        $<string>$ = $2;
-                  }
-                ;
-
-maxforward      : MAXFORWARD NUMBER {
-                        $<number>$ = verifyMaxForward($2);
-                  }
-                ;
-
 siplist         : /* EMPTY */
                 | siplist sip
                 ;
 
-sip             : target {
-                        portset.parameters.sip.target = $<string>1;
+sip             : TARGET MAILADDR {
+                        portset.parameters.sip.target = $2;
                   }
-                | maxforward {
-                        portset.parameters.sip.maxforward = $<number>1;
+                | TARGET STRING {
+                        portset.parameters.sip.target = $2;
+                  }
+                | MAXFORWARD NUMBER {
+                        portset.parameters.sip.maxforward = verifyMaxForward($2);
                   }
                 ;
 
