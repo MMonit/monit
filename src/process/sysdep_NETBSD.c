@@ -244,7 +244,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         size_t len = sizeof(struct uvmexp_sysctl);
         if (sysctl(mib, 2, &vm, &len, NULL, 0) == -1) {
                 Log_error("system statistic error -- cannot get memory usage: %s\n", STRERROR);
-                si->swap.size = 0ULL;
                 return false;
         }
         si->memory.usage.bytes = (unsigned long long)(vm.active + vm.wired) * (unsigned long long)vm.pagesize;

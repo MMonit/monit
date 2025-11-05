@@ -274,16 +274,11 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         }
 
         /* Paging */
-        unsigned long long pagein = 0;
-        unsigned long long pageout = 0;
         cpu_vminfo_t vmstat;
         *kstat = kstat_lookup(kctl, "unix", 0, "vminfo");
         if (kstat && kstat_read(kctl, kstat, &vmstat) != -1) {
                 si->paging.current.in.value = vmstat->pgswapin; //FIXME: investigate pgswapin vs pgpgin
                 si->paging.current.out.value = vmstat->pgswapout; //FIXME: investigate pgswapout vs pgpgout
-        } else {
-                si->paging.previous.in.value = si->paging.current.in.value = 0;
-                si->paging.previous.out.value = si->paging.current.out.value = 0;
         }
         kstat_close(kctl);
 
@@ -295,7 +290,6 @@ again:
         }
         if (num == 0) {
                 DEBUG("system statistic -- no swap configured\n");
-                si->swap.size = 0ULL;
                 return true;
         }
         s = (swaptbl_t *)CALLOC(num, sizeof(swapent_t) + sizeof(struct swaptable));
@@ -305,7 +299,6 @@ again:
         s->swt_n = num + 1;
         if ((n = swapctl(SC_LIST, s)) < 0) {
                 Log_error("system statistic error -- swap usage data collection failed: %s\n", STRERROR);
-                si->swap.size = 0ULL;
                 FREE(s);
                 FREE(strtab);
                 return false;

@@ -283,21 +283,13 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
 
         /* Paging */
         size_t len = sizeof(unsigned long long);
-        unsigned long long pagein = 0;
-        unsigned long long pageout = 0;
-        if (sysctlbyname("vm.stats.vm.v_swappgsin", &pagein, &len, NULL, 0) == -1) {
+        if (sysctlbyname("vm.stats.vm.v_swappgsin", &(si->paging.previous.in.value), &len, NULL, 0) == -1) {
                 Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsin failed: %s\n", STRERROR);
-                si->paging.previous.in.value = si->paging.current.in.value = 0;
                 return false;
-        } else {
-                si->paging.current.in.value = pagein;
         }
-        if (sysctlbyname("vm.stats.vm.v_swappgsout", &pageout, &len, NULL, 0) == -1) {
+        if (sysctlbyname("vm.stats.vm.v_swappgsout", &(si->paging.current.out.value), &len, NULL, 0) == -1) {
                 Log_error("system statistics error -- sysctl vm.stats.vm.v_swappgsout failed: %s\n", STRERROR);
-                si->paging.previous.out.value = si->paging.current.out.value = 0;
                 return false;
-        } else {
-                si->paging.current.out.value = pageout;
         }
 
         return true;

@@ -260,7 +260,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         int mib[2] = {CTL_VM, VM_UVMEXP};
         size_t len = sizeof(struct uvmexp);
         if (sysctl(mib, 2, &vm, &len, NULL, 0) == -1) {
-                si->swap.size = 0ULL;
                 Log_error("system statistic error -- cannot get memory usage: %s\n", STRERROR);
                 return false;
         }
