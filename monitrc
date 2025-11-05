@@ -185,6 +185,7 @@ set httpd port 2812 and
 #    if cpu usage > 95% for 10 cycles then alert
 #    if memory usage > 75% then alert
 #    if swap usage > 25% then alert
+#    if pageout > 100 per second for 10 cycles then alert
 #
 #
 ## Check if a file exists, checksum, permissions, uid and gid. In addition
