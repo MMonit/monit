@@ -686,11 +686,11 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         }
         si->paging.lastpagein = si->paging.pagein;
         si->paging.lastpageout = si->paging.pageout;
-        if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr, "pswpin %llu", &(si->paging.pagein)) != 1) { //FIXME: investigate pswpin vs pgpgin
+        if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr, "pswpin %llu", &(si->paging.pagein)) != 1) {
                 Log_error("system statistic error -- cannot get pswpin amount\n");
                 goto error;
         }
-        if (! (ptr = strstr(buf, "pswpout ")) || sscanf(ptr, "pswpout %llu", &(si->paging.pageout)) != 1) { //FIXME: investigate pswpout vs pgpgout
+        if (! (ptr = strstr(buf, "pswpout ")) || sscanf(ptr, "pswpout %llu", &(si->paging.pageout)) != 1) {
                 Log_error("system statistic error -- cannot get pswpout amount\n");
                 goto error;
         }
