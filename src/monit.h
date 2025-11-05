@@ -1429,7 +1429,6 @@ struct Run_T {
 /* -------------------------------------------------------- Global variables */
 
 
-extern const char    *Prog;
 extern struct Run_T   Run;
 extern Service_T      Service_List;
 extern Service_T      Service_List_Conf;
