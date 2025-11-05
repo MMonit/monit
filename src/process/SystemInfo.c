@@ -92,7 +92,8 @@ bool SystemInfo_update(void) {
                         System_Info.paging.average.out = 0;
                 }
         }
-        System_Info.paging.initialized = true;
+        if (System_Info.paging.previous.timestamp && System_Info.paging.current.timestamp)
+                System_Info.paging.initialized = true;
 
         if (! used_system_cpu_sysdep(&System_Info)) {
                 Log_error("'%s' statistic error -- cpu usage data collection failed\n", Run.system->name);
