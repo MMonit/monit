@@ -75,6 +75,8 @@ bool SystemInfo_update(void) {
         System_Info.memory.usage.percent  = System_Info.memory.size > 0ULL ? (100. * (double)System_Info.memory.usage.bytes / (double)System_Info.memory.size) : 0.;
         System_Info.swap.usage.percent = System_Info.swap.size > 0ULL ? (100. * (double)System_Info.swap.usage.bytes / (double)System_Info.swap.size) : 0.;
 
+        System_Info.paging.previous.in.value = System_Info.paging.current.in.value;
+        System_Info.paging.previous.out.value = System_Info.paging.current.out.value;
         System_Info.paging.previous.timestamp = System_Info.paging.current.timestamp;
         System_Info.paging.current.timestamp = Time_now();
         time_t pageinTimestampDelta = System_Info.paging.current.timestamp - System_Info.paging.previous.timestamp;
@@ -90,6 +92,7 @@ bool SystemInfo_update(void) {
                         System_Info.paging.average.out = 0;
                 }
         }
+        System_Info.paging.initialized = true;
 
         if (! used_system_cpu_sysdep(&System_Info)) {
                 Log_error("'%s' statistic error -- cpu usage data collection failed\n", Run.system->name);
@@ -111,10 +114,14 @@ error2:
         System_Info.memory.usage.percent = 0.;
         System_Info.swap.usage.bytes = 0ULL;
         System_Info.swap.usage.percent = 0.;
+        System_Info.swap.size = 0ULL;
         System_Info.paging.current.in.value = 0ULL;
         System_Info.paging.current.out.value = 0ULL;
         System_Info.paging.previous.in.value = 0ULL;
         System_Info.paging.previous.out.value = 0ULL;
+        System_Info.paging.average.in = 0ULL;
+        System_Info.paging.average.out = 0ULL;
+        System_Info.paging.initialized = false;
 error3:
         System_Info.cpu.usage.user = 0.;
         System_Info.cpu.usage.system = 0.;

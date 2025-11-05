@@ -290,8 +290,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.usage.bytes = (unsigned long long)(mem.pgsp_total - mem.pgsp_free) * 4096; /* 4kB blocks */
 
         /* Paging */
-        si->paging.previous.in.value = si->paging.current.in.value;
-        si->paging.previous.out.value = si->paging.current.out.value;
         si.page.in.current = (unsigned long long)(mem.pgspins); //FIXME: investigate pgspins vs pgins
         si.page.out.current = (unsigned long long)(mem.pgspouts); //FIXME: investigate pgspouts vs pgouts
 

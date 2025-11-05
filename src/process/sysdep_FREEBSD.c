@@ -290,7 +290,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 si->paging.previous.in.value = si->paging.current.in.value = 0;
                 return false;
         } else {
-                si->paging.previous.in.value = si->paging.current.in.value;
                 si->paging.current.in.value = pagein;
         }
         if (sysctlbyname("vm.stats.vm.v_swappgsout", &pageout, &len, NULL, 0) == -1) {
@@ -298,7 +297,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 si->paging.previous.out.value = si->paging.current.out.value = 0;
                 return false;
         } else {
-                si->paging.previous.out.value = si->paging.current.out.value;
                 si->paging.current.out.value = pageout;
         }
 

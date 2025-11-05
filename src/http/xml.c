@@ -563,8 +563,8 @@ static void status_service(Service_T S, StringBuffer_T B, int V) {
                                             (unsigned long long)((double)System_Info.memory.usage.bytes / 1024.), // Send as kB for backward compatibility
                                             System_Info.swap.usage.percent,
                                             (unsigned long long)((double)System_Info.swap.usage.bytes / 1024.),   // Send as kB for backward compatibility
-                                            System_Info.paging.previous.in.value && System_Info.paging.current.in.value ? System_Info.paging.average.in : 0ULL,
-                                            System_Info.paging.previous.out.value && System_Info.paging.current.out.value ? System_Info.paging.average.out : 0ULL);
+                                            System_Info.paging.initialized ? System_Info.paging.average.in : 0ULL,
+                                            System_Info.paging.initialized ? System_Info.paging.average.out : 0ULL);
                 }
                 if (S->type == Service_Program && S->program->started) {
                         StringBuffer_append(B,

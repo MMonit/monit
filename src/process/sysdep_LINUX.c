@@ -631,7 +631,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
 
         if (! file_readProc(buf, sizeof(buf), "meminfo", -1, NULL)) {
                 Log_error("system statistic error -- cannot get system memory info\n");
-                goto error;
+                return false;
         }
 
         // Update memory total (physical memory can be added to the online system on some machines, also LXC/KVM containers MemTotal is dynamic and changes frequently
@@ -646,7 +646,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 DEBUG("'MemAvailable' value not available on this system. Attempting to calculate available memory manually...\n");
                 if (! (ptr = strstr(buf, "MemFree:")) || sscanf(ptr + 8, "%llu", &mem_free) != 1) {
                         Log_error("system statistic error -- cannot get real memory free amount\n");
-                        goto error;
+                        return false;
                 }
                 if (! (ptr = strstr(buf, "Buffers:")) || sscanf(ptr + 8, "%llu", &buffers) != 1)
                         DEBUG("system statistic error -- cannot get real memory buffers amount\n");
@@ -670,11 +670,11 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         // Swap
         if (! (ptr = strstr(buf, "SwapTotal:")) || sscanf(ptr + 10, "%llu", &swap_total) != 1) {
                 Log_error("system statistic error -- cannot get swap total amount\n");
-                goto error;
+                return false;
         }
         if (! (ptr = strstr(buf, "SwapFree:")) || sscanf(ptr + 9, "%llu", &swap_free) != 1) {
                 Log_error("system statistic error -- cannot get swap free amount\n");
-                goto error;
+                return false;
         }
         si->swap.size = swap_total * 1024;
         si->swap.usage.bytes = (swap_total - swap_free) * 1024;
@@ -682,27 +682,18 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         // Paging
         if (! file_readProc(buf, sizeof(buf), "vmstat", -1, NULL)) {
                 Log_error("system statistic error -- cannot read /proc/vmstat\n");
-                goto error;
+                return false;
         }
-        si->paging.previous.in.value = si->paging.current.in.value;
-        si->paging.previous.out.value = si->paging.current.out.value;
         if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr, "pswpin %llu", &(si->paging.current.in.value)) != 1) {
                 Log_error("system statistic error -- cannot get pswpin amount\n");
-                goto error;
+                return false;
         }
         if (! (ptr = strstr(buf, "pswpout ")) || sscanf(ptr, "pswpout %llu", &(si->paging.current.out.value)) != 1) {
                 Log_error("system statistic error -- cannot get pswpout amount\n");
-                goto error;
+                return false;
         }
 
         return true;
-
-error:
-        si->memory.usage.bytes = 0ULL;
-        si->swap.size = 0ULL;
-        si->paging.previous.in.value = si->paging.current.in.value = 0ULL;
-        si->paging.previous.out.value = si->paging.current.out.value = 0ULL;
-        return false;
 }
 
 

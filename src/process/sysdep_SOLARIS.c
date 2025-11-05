@@ -279,8 +279,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         cpu_vminfo_t vmstat;
         *kstat = kstat_lookup(kctl, "unix", 0, "vminfo");
         if (kstat && kstat_read(kctl, kstat, &vmstat) != -1) {
-                si->paging.previous.in.value = si->paging.current.in.value;
-                si->paging.previous.out.value = si->paging.current.out.value;
                 si->paging.current.in.value = vmstat->pgswapin; //FIXME: investigate pgswapin vs pgpgin
                 si->paging.current.out.value = vmstat->pgswapout; //FIXME: investigate pgswapout vs pgpgout
         } else {

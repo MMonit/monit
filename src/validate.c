@@ -703,7 +703,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         break;
 
                 case Resource_Pagein:
-                        if (System_Info.paging.previous.in.value && System_Info.paging.current.in.value) {
+                        if (System_Info.paging.initialized) {
                                 if (Util_evalDoubleQExpression(r->operator, System_Info.paging.average.in, r->limit)) {
                                         rv = State_Failed;
                                         snprintf(report, STRLEN, "swap pagein %llu per second matches resource limit [pagein %s %.0f per second]", System_Info.paging.average.in, OperatorShort_Names[r->operator], r->limit);
@@ -717,7 +717,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         break;
 
                 case Resource_Pageout:
-                        if (System_Info.paging.previous.out.value && System_Info.paging.current.out.value) {
+                        if (System_Info.paging.initialized) {
                                 if (Util_evalDoubleQExpression(r->operator, System_Info.paging.average.out, r->limit)) {
                                         rv = State_Failed;
                                         snprintf(report, STRLEN, "swap pageout %llu per second matches resource limit [pageout %s %.0f per second]", System_Info.paging.average.out, OperatorShort_Names[r->operator], r->limit);

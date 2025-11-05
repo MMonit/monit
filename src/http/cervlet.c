@@ -458,14 +458,13 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                         StringBuffer_free(&sb);
                                         _formatStatus("memory usage", Event_Resource, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.memory.usage.bytes, (char[10]){}), System_Info.memory.usage.percent);
                                         _formatStatus("swap usage", Event_Resource, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.swap.usage.bytes, (char[10]){}), System_Info.swap.usage.percent);
-                                        if (System_Info.paging.previous.in.value && System_Info.paging.current.in.value)
+                                        if (System_Info.paging.initialized) {
                                                 _formatStatus("swap pagein/s", Event_Resource, type, res, s, true, "%llu", System_Info.paging.average.in);
-                                        else
-                                                _formatStatus("swap pagein/s", Event_Resource, type, res, s, false, NULL);
-                                        if (System_Info.paging.previous.out.value && System_Info.paging.current.out.value)
                                                 _formatStatus("swap pageout/s", Event_Resource, type, res, s, true, "%llu", System_Info.paging.average.out);
-                                        else
+                                        } else {
+                                                _formatStatus("swap pagein/s", Event_Resource, type, res, s, false, NULL);
                                                 _formatStatus("swap pageout/s", Event_Resource, type, res, s, false, NULL);
+                                        }
                                         _formatStatus("uptime", Event_Uptime, type, res, s, System_Info.booted > 0, "%s", _getUptime(Time_now() - System_Info.booted, (char[256]){}));
                                         _formatStatus("boot time", Event_Null, type, res, s, true, "%s", Time_localStr(System_Info.booted, (char[32]){}));
                                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerSystem) {

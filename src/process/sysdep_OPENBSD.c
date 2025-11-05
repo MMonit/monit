@@ -267,8 +267,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->memory.usage.bytes = (unsigned long long)(vm.active + vm.wired) * (unsigned long long)pagesize;
         si->swap.size = (unsigned long long)vm.swpages * (unsigned long long)pagesize;
         si->swap.usage.bytes = (unsigned long long)vm.swpginuse * (unsigned long long)pagesize;
-        si->paging.previous.in.value = si->paging.current.in.value;
-        si->paging.previous.out.value = si->paging.current.out.value;
         si->paging.current.in.value = (unsigned long long)vm.pgswpin;
         si->paging.current.out.value = (unsigned long long)vm.pgswpout;
 

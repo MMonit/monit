@@ -605,6 +605,7 @@ typedef struct SystemInfo_T {
                 } usage;
         } memory;
         struct {
+                bool initialized;
                 struct Paging_T previous;
                 struct Paging_T current;
                 struct {
