@@ -568,6 +568,17 @@ typedef struct Auth_T {
 } *Auth_T;
 
 
+typedef struct Paging_T {
+        time_t timestamp;
+        struct {
+                unsigned long long value;
+        } in;
+        struct {
+                unsigned long long value;
+        } out;
+} *Paging_T;
+
+
 /** Defines data for systemwide statistic */
 typedef struct SystemInfo_T {
         Statistics_Flags statisticsAvailable; /**< List of statistics that are available on this system */
@@ -594,10 +605,12 @@ typedef struct SystemInfo_T {
                 } usage;
         } memory;
         struct {
-                unsigned long long lastpagein;
-                unsigned long long lastpageout;
-                unsigned long long pagein;
-                unsigned long long pageout;
+                struct Paging_T previous;
+                struct Paging_T current;
+                struct {
+                        unsigned long long in;
+                        unsigned long long out;
+                } average;
         } paging;
         struct {
                 unsigned long long size;                                       /**< Swap size */

@@ -684,13 +684,13 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 Log_error("system statistic error -- cannot read /proc/vmstat\n");
                 goto error;
         }
-        si->paging.lastpagein = si->paging.pagein;
-        si->paging.lastpageout = si->paging.pageout;
-        if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr, "pswpin %llu", &(si->paging.pagein)) != 1) {
+        si->paging.previous.in.value = si->paging.current.in.value;
+        si->paging.previous.out.value = si->paging.current.out.value;
+        if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr, "pswpin %llu", &(si->paging.current.in.value)) != 1) {
                 Log_error("system statistic error -- cannot get pswpin amount\n");
                 goto error;
         }
-        if (! (ptr = strstr(buf, "pswpout ")) || sscanf(ptr, "pswpout %llu", &(si->paging.pageout)) != 1) {
+        if (! (ptr = strstr(buf, "pswpout ")) || sscanf(ptr, "pswpout %llu", &(si->paging.current.out.value)) != 1) {
                 Log_error("system statistic error -- cannot get pswpout amount\n");
                 goto error;
         }
@@ -700,8 +700,8 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
 error:
         si->memory.usage.bytes = 0ULL;
         si->swap.size = 0ULL;
-        si->paging.lastpagein = si->paging.pagein = 0ULL;
-        si->paging.lastpageout = si->paging.pageout = 0ULL;
+        si->paging.previous.in.value = si->paging.current.in.value = 0ULL;
+        si->paging.previous.out.value = si->paging.current.out.value = 0ULL;
         return false;
 }
 

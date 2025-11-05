@@ -33,6 +33,10 @@
 #include "process_sysdep.h"
 #include "SystemInfo.h"
 
+// libmonit
+#include "util/Int.h"
+#include "system/Time.h"
+
 
 /**
  *  Initialize and update the global SystemInfo structure
@@ -63,20 +67,40 @@ bool SystemInfo_update(void) {
                 Log_error("'%s' statistic error -- load average data collection failed\n", Run.system->name);
                 goto error1;
         }
+
         if (! used_system_memory_sysdep(&System_Info)) {
                 Log_error("'%s' statistic error -- memory usage data collection failed\n", Run.system->name);
                 goto error2;
         }
         System_Info.memory.usage.percent  = System_Info.memory.size > 0ULL ? (100. * (double)System_Info.memory.usage.bytes / (double)System_Info.memory.size) : 0.;
         System_Info.swap.usage.percent = System_Info.swap.size > 0ULL ? (100. * (double)System_Info.swap.usage.bytes / (double)System_Info.swap.size) : 0.;
+
+        System_Info.paging.previous.timestamp = System_Info.paging.current.timestamp;
+        System_Info.paging.current.timestamp = Time_now();
+        time_t pageinTimestampDelta = System_Info.paging.current.timestamp - System_Info.paging.previous.timestamp;
+        if (pageinTimestampDelta > 0) {
+                if (System_Info.paging.previous.in.value && System_Info.paging.current.in.value) {
+                        System_Info.paging.average.in = Int_deltaUINT64(System_Info.paging.previous.in.value, System_Info.paging.current.in.value) / pageinTimestampDelta;
+                } else {
+                        System_Info.paging.average.in = 0;
+                }
+                if (System_Info.paging.previous.out.value && System_Info.paging.current.out.value) {
+                        System_Info.paging.average.out = Int_deltaUINT64(System_Info.paging.previous.out.value, System_Info.paging.current.out.value) / pageinTimestampDelta;
+                } else {
+                        System_Info.paging.average.out = 0;
+                }
+        }
+
         if (! used_system_cpu_sysdep(&System_Info)) {
                 Log_error("'%s' statistic error -- cpu usage data collection failed\n", Run.system->name);
                 goto error3;
         }
+
         if (! used_system_filedescriptors_sysdep(&System_Info)) {
                 Log_error("'%s' statistic error -- filedescriptors usage data collection failed\n", Run.system->name);
                 goto error4;
         }
+
         return true;
 error1:
         System_Info.loadavg[0] = 0;
@@ -87,10 +111,10 @@ error2:
         System_Info.memory.usage.percent = 0.;
         System_Info.swap.usage.bytes = 0ULL;
         System_Info.swap.usage.percent = 0.;
-        System_Info.paging.pagein = 0ULL;
-        System_Info.paging.pageout = 0ULL;
-        System_Info.paging.lastpagein = 0ULL;
-        System_Info.paging.lastpageout = 0ULL;
+        System_Info.paging.current.in.value = 0ULL;
+        System_Info.paging.current.out.value = 0ULL;
+        System_Info.paging.previous.in.value = 0ULL;
+        System_Info.paging.previous.out.value = 0ULL;
 error3:
         System_Info.cpu.usage.user = 0.;
         System_Info.cpu.usage.system = 0.;

@@ -107,7 +107,6 @@
 
 // libmonit
 #include "system/Time.h"
-#include "util/Int.h"
 #include "util/Fmt.h"
 #include "io/File.h"
 #include "io/InputStream.h"
@@ -704,13 +703,12 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         break;
 
                 case Resource_Pagein:
-                        if (System_Info.paging.lastpagein && System_Info.paging.pagein) {
-                                unsigned long long delta = Int_deltaUINT64(System_Info.paging.lastpagein, System_Info.paging.pagein);
-                                if (Util_evalDoubleQExpression(r->operator, delta, r->limit)) {
+                        if (System_Info.paging.previous.in.value && System_Info.paging.current.in.value) {
+                                if (Util_evalDoubleQExpression(r->operator, System_Info.paging.average.in, r->limit)) {
                                         rv = State_Failed;
-                                        snprintf(report, STRLEN, "pagein amount of %llu matches resource limit [pagein amount %s %.0f]", delta, OperatorShort_Names[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "pagein %llu per second matches resource limit [pagein %s %.0f per second]", System_Info.paging.average.in, OperatorShort_Names[r->operator], r->limit);
                                 } else {
-                                        snprintf(report, STRLEN, "pagein amount check succeeded [current pagein amount = %llu]", delta);
+                                        snprintf(report, STRLEN, "pagein check succeeded [current pagein = %llu per second]", System_Info.paging.average.in);
                                 }
                         } else {
                                 DEBUG("'%s' pagein check skipped (initializing)\n", s->name);
@@ -719,13 +717,12 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         break;
 
                 case Resource_Pageout:
-                        if (System_Info.paging.lastpageout && System_Info.paging.pageout) {
-                                unsigned long long delta = Int_deltaUINT64(System_Info.paging.lastpageout, System_Info.paging.pageout);
-                                if (Util_evalDoubleQExpression(r->operator, delta, r->limit)) {
+                        if (System_Info.paging.previous.out.value && System_Info.paging.current.out.value) {
+                                if (Util_evalDoubleQExpression(r->operator, System_Info.paging.average.out, r->limit)) {
                                         rv = State_Failed;
-                                        snprintf(report, STRLEN, "pageout amount of %llu matches resource limit [pageout amount %s %.0f]", delta, OperatorShort_Names[r->operator], r->limit);
+                                        snprintf(report, STRLEN, "pageout %llu per second matches resource limit [pageout %s %.0f per second]", System_Info.paging.average.out, OperatorShort_Names[r->operator], r->limit);
                                 } else {
-                                        snprintf(report, STRLEN, "pageout amount check succeeded [current pageout amount = %llu]", delta);
+                                        snprintf(report, STRLEN, "pageout check succeeded [current pageout = %llu per second]", System_Info.paging.average.out);
                                 }
                         } else {
                                 DEBUG("'%s' pageout check skipped (initializing)\n", s->name);

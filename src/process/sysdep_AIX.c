@@ -134,8 +134,8 @@ bool init_systeminfo_sysdep(void) {
         page_size = getpagesize();
 
         System_Info.memory.size = (unsigned long long)mem.real_total * (unsigned long long)page_size;
-        System_Info.paging.lastpagein = System_Info.paging.pagein = (unsigned long long)(mem.pgspins); //FIXME: investigate pgspins vs pgins
-        System_Info.paging.lastpageout = System_Info.paging.pageout = (unsigned long long)(mem.pgspouts); //FIXME: investigate pgspouts vs pgouts
+        System_Info.paging.previous.in.value = System_Info.paging.current.in.value = (unsigned long long)(mem.pgspins); //FIXME: investigate pgspins vs pgins
+        System_Info.paging.previous.out.value = System_Info.paging.current.out.value = (unsigned long long)(mem.pgspouts); //FIXME: investigate pgspouts vs pgouts
 
         System_Info.cpu.count = sysconf(_SC_NPROCESSORS_ONLN);
 
@@ -290,10 +290,10 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.usage.bytes = (unsigned long long)(mem.pgsp_total - mem.pgsp_free) * 4096; /* 4kB blocks */
 
         /* Paging */
-        si->paging.lastpagein = si->paging.pagein;
-        si->paging.lastpageout = si->paging.pageout;
-        si.page.pagein = (unsigned long long)(mem.pgspins); //FIXME: investigate pgspins vs pgins
-        si.page.pageout = (unsigned long long)(mem.pgspouts); //FIXME: investigate pgspouts vs pgouts
+        si->paging.previous.in.value = si->paging.current.in.value;
+        si->paging.previous.out.value = si->paging.current.out.value;
+        si.page.in.current = (unsigned long long)(mem.pgspins); //FIXME: investigate pgspins vs pgins
+        si.page.out.current = (unsigned long long)(mem.pgspouts); //FIXME: investigate pgspouts vs pgouts
 
         return true;
 }

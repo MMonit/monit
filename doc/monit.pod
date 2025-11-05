@@ -2153,13 +2153,20 @@ GB]. Example:
 
  if swap usage > 20% for 10 cycles then alert
 
-I<PAGEIN>, I<PAGEOUT> are the swap page counter of the system. Example:
+I<PAGEIN>, I<PAGEOUT> allows one to monitor the system's swap activity and memory pressure.
+When the system requires more memory, it may begin swapping memory pages in and out of the
+swap device. The swap device's I/O is significantly slower than RAM access, making it an
+indicator of the system's memory pressure. A general rule of thumb for swapping activity is:
+    0     pages/sec:           Healthy
+    1-10  pages/sec:           Minor paging, usually acceptable
+    >100  pages/sec sustained: Memory pressure, investigate
+    >1000 pages/sec:           Severe thrashing, immediate action needed
 
- if pagein > 50 pages then alert
- if pageout > 100 pages then alert
+Example:
 
-The respective counter is the difference between the page counters
-within a cycle.
+ if pageout > 50 per second for 20 cycles then alert
+ if pageout > 100 per second for 10 cycles then alert
+
 
 =head3 Process resource tests
 

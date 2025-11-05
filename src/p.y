@@ -398,7 +398,7 @@ int yydebug = 1;
 %token SECURITY ATTRIBUTE
 %token FILEDESCRIPTORS
 %token HARDLINK
-%token PAGEIN PAGEOUT PAGE
+%token PAGEIN PAGEOUT
 
 %left GREATER GREATEROREQUAL LESS LESSOREQUAL EQUAL NOTEQUAL
 
@@ -2041,28 +2041,18 @@ postgresql      : username {
                   }
                 ;
 
-target          : TARGET MAILADDR {
-                        $<string>$ = $2;
-                  }
-                | TARGET STRING {
-                        $<string>$ = $2;
-                  }
-                ;
-
-maxforward      : MAXFORWARD NUMBER {
-                        $<number>$ = verifyMaxForward($2);
-                  }
-                ;
-
 siplist         : /* EMPTY */
                 | siplist sip
                 ;
 
-sip             : target {
-                        portset.parameters.sip.target = $<string>1;
+sip             : TARGET MAILADDR {
+                        portset.parameters.sip.target = $2;
                   }
-                | maxforward {
-                        portset.parameters.sip.maxforward = $<number>1;
+                | TARGET STRING {
+                        portset.parameters.sip.target = $2;
+                  }
+                | MAXFORWARD NUMBER {
+                        portset.parameters.sip.maxforward = verifyMaxForward($2);
                   }
                 ;
 
@@ -2675,21 +2665,16 @@ resourceswap    : SWAP operator value unit {
                   }
                 ;
 
-resourcepage    : PAGEIN operator NUMBER page {
+resourcepage    : PAGEIN operator NUMBER SECOND {
                         resourceset.resource_id = Resource_Pagein;
                         resourceset.operator = $<number>2;
-                        resourceset.limit = $<number>3 * $<number>4;
+                        resourceset.limit = $<number>3;
                   }
-                | PAGEOUT operator NUMBER page {
+                | PAGEOUT operator NUMBER SECOND {
                         resourceset.resource_id = Resource_Pageout;
                         resourceset.operator = $<number>2;
-                        resourceset.limit = $<number>3 * $<number>4;
+                        resourceset.limit = $<number>3;
                   }
-                ;
-
-// Proper unit for the swap page counter.
-page            : /* empty */  { $<number>$ = 1; } //FIXME: rename to pageunit? //FIXME: allow paging [%]? (no need to set hardcoded value) //FIXME: memory pressure? what it exactly is?
-                | PAGE         { $<number>$ = 1; }
                 ;
 
 resourcethreads : THREADS operator NUMBER {
