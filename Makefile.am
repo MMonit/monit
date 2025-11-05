@@ -143,7 +143,7 @@ distclean-local:
 	-rm -f monit-[0-9].*tar.gz
 
 cleanall: clean distclean
-	-git clean -fxd
+	-git clean -fxd -e project.xcworkspace
 
 monit.1: doc/monit.pod
 	$(POD2MAN) $(POD2MANFLAGS) $< > $@
