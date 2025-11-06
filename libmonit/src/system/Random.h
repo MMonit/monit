@@ -37,19 +37,42 @@
 
 
 /**
- * Initialize the buf of size nbytes with random data.
- * @param buf The target buffer
- * @param nbtyes The target buffer size in bytes
- * @return true on success, otherwise false
+ * @brief Fills the specified buffer with random bytes.
+ *
+ * Uses the strongest available random number generator on the system.
+ * On platforms with cryptographically secure PRNGs, the data is suitable
+ * for most security purposes. If only weak PRNGs are available, this may
+ * not be true; see implementation notes.
+ *
+ * @param buf The pointer to the buffer to fill with random bytes.
+ * @param nbytes The number of bytes to fill.
+ * @return true if successful (buffer is filled with random data), false if an error occurs.
  */
 bool Random_bytes(void *buf, size_t nbytes);
 
 
 /**
- * Get a random number
- * @return random number
+ * @brief Returns a random unsigned 64-bit integer.
+ *
+ * The value is generated using the platform's strongest available random source.
+ * No specific range is guaranteed except the full width of 64 bits.
+ *
+ * @return A random unsigned 64-bit integer.
  */
 unsigned long long Random_number(void);
 
 
-#endif /* Random_h */
+/**
+ * @brief Returns a uniform random unsigned 64-bit integer in the range [min, max] (inclusive).
+ *
+ * @param min The lower bound of the range (inclusive).
+ * @param max The upper bound of the range (inclusive).
+ * If min == max, returns min.
+ * @return A random number N such that min <= N <= max.
+ * @exception AssertException If called with min > max
+ */
+unsigned long long Random_range(unsigned long long min, unsigned long long max);
+
+
+#endif // !RANDOM_INCLUDED
+

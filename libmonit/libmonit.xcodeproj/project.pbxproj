@@ -19,6 +19,8 @@
 		5256BCA22D5EA75B005FC07A /* Random.c in Sources */ = {isa = PBXBuildFile; fileRef = 93F6F8E32BF765A600BAFEC1 /* Random.c */; };
 		5267F1B52DC0115800B9AA15 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A31C821A6531D8009D3D83 /* libmonit.a */; };
 		5267F1BB2DC0118200B9AA15 /* ArrayTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 5267F1AE2DC010E300B9AA15 /* ArrayTest.c */; };
+		529DBAB32EBD3CDD00BECF5F /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A31C821A6531D8009D3D83 /* libmonit.a */; };
+		529DBAB92EBD3D3A00BECF5F /* RandomTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 93F6F8E42BF765B300BAFEC1 /* RandomTest.c */; };
 		52A31C841A653235009D3D83 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A31C821A6531D8009D3D83 /* libmonit.a */; };
 		52A31C851A65323A009D3D83 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A31C821A6531D8009D3D83 /* libmonit.a */; };
 		52A31C861A653254009D3D83 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A31C821A6531D8009D3D83 /* libmonit.a */; };
@@ -85,6 +87,13 @@
 			remoteGlobalIDString = 52A12C2A13A0FFAB00C6CEB7;
 			remoteInfo = libmonit;
 		};
+		529DBAAF2EBD3CDD00BECF5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52A12C2213A0FFAB00C6CEB7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 52A12C2A13A0FFAB00C6CEB7;
+			remoteInfo = libmonit;
+		};
 		52F8BB381ECE55270007DF91 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 52A12C2213A0FFAB00C6CEB7 /* Project object */;
@@ -123,6 +132,15 @@
 			runOnlyForDeploymentPostprocessing = 1;
 		};
 		5267F1B62DC0115800B9AA15 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		529DBAB42EBD3CDD00BECF5F /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -184,6 +202,7 @@
 		529D79B51A59EBFA003C3931 /* CommandTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CommandTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		529D79B61A59EBFA003C3931 /* TimeTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TimeTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		529D79B71A59EBFA003C3931 /* StrTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StrTest; sourceTree = BUILT_PRODUCTS_DIR; };
+		529DBAB82EBD3CDD00BECF5F /* RandomTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RandomTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		52A31C821A6531D8009D3D83 /* libmonit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libmonit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D7964A13A6CE560014CED2 /* Bootstrap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = Bootstrap.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52D7964B13A6CE560014CED2 /* Bootstrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Bootstrap.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -268,6 +287,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		529DBAB22EBD3CDD00BECF5F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				529DBAB32EBD3CDD00BECF5F /* libmonit.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		52A12C2813A0FFAB00C6CEB7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -346,6 +373,7 @@
 				93F6F8E02BF762D500BAFEC1 /* StringBufferTest */,
 				93F6F8E12BF762D500BAFEC1 /* InputstreamTest */,
 				5267F1BA2DC0115800B9AA15 /* ArrayTest */,
+				529DBAB82EBD3CDD00BECF5F /* RandomTest */,
 			);
 			sourceTree = "<group>";
 		};
@@ -552,6 +580,24 @@
 			productReference = 5267F1BA2DC0115800B9AA15 /* ArrayTest */;
 			productType = "com.apple.product-type.tool";
 		};
+		529DBAAD2EBD3CDD00BECF5F /* RandomTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 529DBAB52EBD3CDD00BECF5F /* Build configuration list for PBXNativeTarget "RandomTest" */;
+			buildPhases = (
+				529DBAB02EBD3CDD00BECF5F /* Sources */,
+				529DBAB22EBD3CDD00BECF5F /* Frameworks */,
+				529DBAB42EBD3CDD00BECF5F /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				529DBAAE2EBD3CDD00BECF5F /* PBXTargetDependency */,
+			);
+			name = RandomTest;
+			productName = CommandTest;
+			productReference = 529DBAB82EBD3CDD00BECF5F /* RandomTest */;
+			productType = "com.apple.product-type.tool";
+		};
 		52A12C2A13A0FFAB00C6CEB7 /* libmonit */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 52A12C2F13A0FFAB00C6CEB7 /* Build configuration list for PBXNativeTarget "libmonit" */;
@@ -635,6 +681,7 @@
 				52F8BB361ECE55270007DF91 /* StringBufferTest */,
 				520568A4249019A00091011E /* InputstreamTest */,
 				5267F1AF2DC0115800B9AA15 /* ArrayTest */,
+				529DBAAD2EBD3CDD00BECF5F /* RandomTest */,
 			);
 		};
 /* End PBXProject section */
@@ -669,6 +716,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				5267F1BB2DC0118200B9AA15 /* ArrayTest.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		529DBAB02EBD3CDD00BECF5F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				529DBAB92EBD3D3A00BECF5F /* RandomTest.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -744,6 +799,11 @@
 			isa = PBXTargetDependency;
 			target = 52A12C2A13A0FFAB00C6CEB7 /* libmonit */;
 			targetProxy = 529D79BC1A59EE30003C3931 /* PBXContainerItemProxy */;
+		};
+		529DBAAE2EBD3CDD00BECF5F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 52A12C2A13A0FFAB00C6CEB7 /* libmonit */;
+			targetProxy = 529DBAAF2EBD3CDD00BECF5F /* PBXContainerItemProxy */;
 		};
 		52F8BB371ECE55270007DF91 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -934,6 +994,57 @@
 			name = Debug;
 		};
 		5267F1B92DC0115800B9AA15 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = c11;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "";
+			};
+			name = Release;
+		};
+		529DBAB62EBD3CDD00BECF5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				GCC_C_LANGUAGE_STANDARD = c11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "";
+			};
+			name = Debug;
+		};
+		529DBAB72EBD3CDD00BECF5F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -1247,6 +1358,15 @@
 			buildConfigurations = (
 				5267F1B82DC0115800B9AA15 /* Debug */,
 				5267F1B92DC0115800B9AA15 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		529DBAB52EBD3CDD00BECF5F /* Build configuration list for PBXNativeTarget "RandomTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				529DBAB62EBD3CDD00BECF5F /* Debug */,
+				529DBAB72EBD3CDD00BECF5F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

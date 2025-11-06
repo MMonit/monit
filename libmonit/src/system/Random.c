@@ -103,3 +103,26 @@ unsigned long long Random_number(void) {
         return random;
 }
 
+
+/**
+ * Returns a random number in the inclusive range [min, max].
+ * If min == max, returns min.
+ * If min > max, the program will abort.
+ */
+unsigned long long Random_range(unsigned long long min, unsigned long long max) {
+        assert(min <= max);
+        if (min == max) {
+                return min;
+        }
+        // Handle the special case where the range covers the entire unsigned long long space
+        if (min == 0 && max == ULLONG_MAX) {
+                return Random_number(); // Any value is valid
+        }
+        // Use rejection sampling to avoid modulo bias.
+        unsigned long long range = max - min + 1;
+        unsigned long long r, limit = ULLONG_MAX - (ULLONG_MAX % range);
+        do {
+                r = Random_number();
+        } while (r >= limit);
+        return min + (r % range);
+}
