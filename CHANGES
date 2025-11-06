@@ -50,6 +50,8 @@ Fixed: The MongoDB protocol test did support only MongodDB < 5.1. The protocol t
 Fixed: The service restart counter wasn't reset on reboot, which could cause the restart timeout to falsely trigger
      when monit had a long polling cycle and the machine was repeatedly rebooted immediately after the first monit cycle.
 
+Fixed: Illumos build
+
 Changed: The "check program" output change test now sets the level to warning (yellow), instead of error (red).
 
 Changed: MacOS: Monit now utilizes the 64-bit system API to retrieve system memory usage information. The support for

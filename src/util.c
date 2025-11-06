@@ -323,7 +323,7 @@ static void printevents(unsigned int events) {
 /**
  * PAM conversation
  */
-#if defined(SOLARIS) || defined(AIX)
+#if (defined(SOLARIS) && ! defined(__illumos__)) || defined(AIX)
 static int PAMquery(int num_msg, struct pam_message **msg, struct pam_response **resp, void *appdata_ptr) {
 #else
 static int PAMquery(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *appdata_ptr) {
