@@ -106,6 +106,10 @@
 #include "ProcessTree.h"
 #include "process_sysdep.h"
 
+// libmonit
+#include "system/Time.h"
+
+
 /**
  *  System dependent resource data collecting code for AIX
  *
@@ -134,8 +138,8 @@ bool init_systeminfo_sysdep(void) {
         page_size = getpagesize();
 
         System_Info.memory.size = (unsigned long long)mem.real_total * (unsigned long long)page_size;
-        System_Info.paging.previous.in.value = System_Info.paging.current.in.value = (unsigned long long)(mem.pgspins); //FIXME: investigate pgspins vs pgins
-        System_Info.paging.previous.out.value = System_Info.paging.current.out.value = (unsigned long long)(mem.pgspouts); //FIXME: investigate pgspouts vs pgouts
+        System_Info.paging.previous.in.value = System_Info.paging.current.in.value = (unsigned long long)(mem.pgspins);
+        System_Info.paging.previous.out.value = System_Info.paging.current.out.value = (unsigned long long)(mem.pgspouts);
 
         System_Info.cpu.count = sysconf(_SC_NPROCESSORS_ONLN);
 
@@ -249,7 +253,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                                 char command[8192];
                                 if (! getargs(&procs[i], sizeof(struct procentry64), command, sizeof(command))) {
                                         // The arguments are separated with '\0' with the last one terminated by '\0\0' -> merge arguments into one string
-                                        for (int i = 0; i < sizeof(command) - 1; i++) {
+                                        for (unsigned i = 0; i < sizeof(command) - 1; i++) {
                                                 if (command[i] == '\0') {
                                                         if (command[i + 1] == '\0')
                                                                 break;
@@ -290,8 +294,8 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         si->swap.usage.bytes = (unsigned long long)(mem.pgsp_total - mem.pgsp_free) * 4096; /* 4kB blocks */
 
         /* Paging */
-        si.page.in.current = (unsigned long long)(mem.pgspins); //FIXME: investigate pgspins vs pgins
-        si.page.out.current = (unsigned long long)(mem.pgspouts); //FIXME: investigate pgspouts vs pgouts
+        si->paging.current.in.value = (unsigned long long)(mem.pgspins);
+        si->paging.current.out.value = (unsigned long long)(mem.pgspouts);
 
         return true;
 }
