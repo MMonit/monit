@@ -111,8 +111,6 @@ static long   old_total = 0;
 bool init_systeminfo_sysdep(void) {
         System_Info.cpu.count = sysconf( _SC_NPROCESSORS_ONLN);
         page_size = getpagesize();
-        unsigned long long pagein = 0;
-        unsigned long long pageout = 0;
         System_Info.memory.size = (unsigned long long)sysconf(_SC_PHYS_PAGES) * (unsigned long long)page_size;
         kstat_ctl_t *kctl = kstat_open();
         if (kctl) {
