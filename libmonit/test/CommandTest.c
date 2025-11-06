@@ -23,7 +23,7 @@
  */
 
 
-static void onExec(Process_T P) {
+static void _onExec(Process_T P) {
         assert(P);
         char buf[STRLEN];
         // Child process info
@@ -49,7 +49,7 @@ static void onExec(Process_T P) {
 }
 
 
-static void onTerminate(Process_T P) {
+static void _onTerminate(Process_T P) {
         assert(P);
         printf("\tTest terminate subprocess ((pid=%d)\n", Process_pid(P));
         assert(Process_isRunning(P));
@@ -58,15 +58,17 @@ static void onTerminate(Process_T P) {
         //         exits normally, after the child finished execution. When we wait a bit before sending signal to the child, everything works properly. It seems that the child
         //         is maybe not ready to run yet when we send the signal and NetBSD somehow loses it. Observed only on *NetBSD*
         Time_usleep(500000LL); // Sleep for 500 ms (500,000 µs)
-#endif
+#endif // NETBSD
         assert(Process_terminate(P));
-        printf("\tProcess exited with status: %d\n", Process_waitFor(P));
-        assert(Process_exitStatus(P) == SIGTERM);
+        int status = Process_waitFor(P);
+        printf("\tProcess exited with status: %d\n", status);
+        assert(status == SIGTERM);
+        assert(status == Process_exitStatus(P));
         Process_free(&P);
 }
 
 
-static void onKill(Process_T P) {
+static void _onKill(Process_T P) {
         assert(P);
         printf("\tTest kill subprocess ((pid=%d)\n", Process_pid(P));
         assert(Process_isRunning(P));
@@ -75,15 +77,17 @@ static void onKill(Process_T P) {
         //         exits normally, after the child finished execution. When we wait a bit before sending signal to the child, everything works properly. It seems that the child
         //         is maybe not ready to run yet when we send the signal and NetBSD somehow loses it. Observed only on *NetBSD*
         Time_usleep(500000LL); // Sleep for 500 ms (500,000 µs)
-#endif
+#endif // NETBSD
         assert(Process_kill(P));
-        printf("\tProcess exited with status: %d\n", Process_waitFor(P));
-        assert(Process_exitStatus(P) == SIGKILL);
+        int status = Process_waitFor(P);
+        printf("\tProcess exited with status: %d\n", status);
+        assert(status == SIGKILL);
+        assert(status == Process_exitStatus(P));
         Process_free(&P);
 }
 
 
-static void onEnv(Process_T P) {
+static void _onEnv(Process_T P) {
         assert(P);
         char buf[STRLEN];
         InputStream_T in = Process_inputStream(P);
@@ -96,7 +100,7 @@ static void onEnv(Process_T P) {
         assert(! P);
 }
 
-static void onDetach(Process_T P) {
+static void _onDetach(Process_T P) {
         assert(P);
         File_delete("/tmp/ondetach");
         // Assert the process is running, blocking on read
@@ -113,7 +117,7 @@ static void onDetach(Process_T P) {
         assert(File_delete("/tmp/ondetach"));
 }
 
-static void onChild(Process_T P) {
+static void _onChild(Process_T P) {
         assert(P);
         printf("\tStarted process (pid=%d)\n", Process_pid(P));
         // Verify process is running
@@ -242,7 +246,7 @@ int main(void) {
                 Command_T c = Command_new("/bin/sh", "-c", "not_a_program;");
                 Command_setDir(c, "/");
                 printf("\tThis should produce an error:\n");
-                onExec(Command_execute(c));
+                _onExec(Command_execute(c));
                 Command_free(&c);
                 // Nonexistent program
                 TRY
@@ -258,7 +262,7 @@ int main(void) {
         printf("=> Test8: execute valid program\n");
         {
                 Command_T c = Command_new("/bin/sh", "-c", "echo \"Please enter your name:\";read name;echo \"Hello $name\";");
-                onExec(Command_execute(c));
+                _onExec(Command_execute(c));
                 Command_free(&c);
         }
         printf("=> Test8: OK\n\n");
@@ -266,7 +270,7 @@ int main(void) {
         printf("=> Test9: terminate sub-process\n");
         {
                 Command_T c = Command_new("/bin/sh", "-c", "exec sleep 30;");
-                onTerminate(Command_execute(c));
+                _onTerminate(Command_execute(c));
                 Command_free(&c);
         }
         printf("=> Test9: OK\n\n");
@@ -274,7 +278,7 @@ int main(void) {
         printf("=> Test10: kill sub-process\n");
         {
                 Command_T c = Command_new("/bin/sh", "-c", "trap 1 2 15; sleep 30; ");
-                onKill(Command_execute(c));
+                _onKill(Command_execute(c));
                 Command_free(&c);
         }
         printf("=> Test10: OK\n\n");
@@ -284,7 +288,7 @@ int main(void) {
                 Command_T c = Command_new("/bin/sh", "-c", "echo $SULT");
                 // Set environment in sub-process only
                 Command_setEnv(c, "SULT", "Ylajali");
-                onEnv(Command_execute(c));
+                _onEnv(Command_execute(c));
                 Command_free(&c);
         }
         printf("=> Test11: OK\n\n");
@@ -322,7 +326,7 @@ int main(void) {
         printf("=> Test14: detach\n");
         {
                 Command_T c = Command_new("/bin/sh", "-c", "read msg; echo \"this write will fail but should not exit the script\"; echo \"$$ still alive\" > /tmp/ondetach; exit 0;");
-                onDetach(Command_execute(c));
+                _onDetach(Command_execute(c));
                 Command_free(&c);
         }
         printf("=> Test14: OK\n\n");
@@ -377,7 +381,7 @@ int main(void) {
         printf("=> Test17: SIGCHLD handling\n");
         {
                 Command_T c = Command_new("/bin/sh", "-c", "sleep 1; exit 0");
-                onChild(Command_execute(c));
+                _onChild(Command_execute(c));
                 Command_free(&c);
         }
         printf("=> Test17: OK\n\n");
