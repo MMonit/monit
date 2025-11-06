@@ -318,8 +318,8 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 return false;
         }
         si->memory.usage.bytes = (unsigned long long)(page_info.wire_count + page_info.active_count) * (unsigned long long)pagesize;
-        si->paging.current.in.value = page_info.swapins; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
-        si->paging.current.out.value = page_info.swapouts; //FIXME: investigate pageins vs swapins + swapouts vs pageouts
+        si->paging.current.in.value = page_info.swapins;
+        si->paging.current.out.value = page_info.swapouts;
 
         // Swap
         int mib[2] = {CTL_VM, VM_SWAPUSAGE};
