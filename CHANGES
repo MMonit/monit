@@ -4,8 +4,8 @@
 
 Version 5.36.0
 
-New: Added support for swap paging monitoring: PAGEIN and PAGEOUT tests in the "check system"
-     context. It allows one to monitor the system's swap activity and memory pressure.
+New: Issue #1132: Added support for swap paging monitoring: PAGEIN and PAGEOUT tests in the
+     "check system" context. It allows one to monitor the system's swap activity and memory pressure.
      When the system requires more memory, it may begin swapping memory pages in and out of the
      swap device. The swap device's I/O is significantly slower than RAM access, making it an
      indicator of the system's memory pressure. A general rule of thumb for swapping activity is:
