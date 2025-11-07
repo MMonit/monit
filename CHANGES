@@ -50,7 +50,9 @@ Fixed: The MongoDB protocol test did support only MongodDB < 5.1. The protocol t
 Fixed: The service restart counter wasn't reset on reboot, which could cause the restart timeout to falsely trigger
      when monit had a long polling cycle and the machine was repeatedly rebooted immediately after the first monit cycle.
 
-Fixed: Illumos build
+Fixed: Illumos build (tested on OmniOS r151054)
+
+Fixed: DragonflyBSD build (tested on DragonflyBSD 6.4)
 
 Changed: The "check program" output change test now sets the level to warning (yellow), instead of error (red).
 
