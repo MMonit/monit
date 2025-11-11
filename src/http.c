@@ -63,9 +63,6 @@
 #include "exceptions/AssertException.h"
 
 
-/* Private prototypes */
-static void *thread_wrapper(void *arg);
-
 /* The HTTP Thread */
 static Thread_T thread;
 
@@ -78,6 +75,18 @@ static volatile bool running = false;
  *
  *  @file
  */
+
+/* ----------------------------------------------------------------- Private */
+
+
+static void *_http_thread(__attribute__ ((unused)) void *arg) {
+        set_signal_block(false);
+        Engine_start();
+#ifdef HAVE_OPENSSL
+        Ssl_threadCleanup();
+#endif
+        return NULL;
+}
 
 
 /* ------------------------------------------------------------------ Public */
@@ -122,7 +131,7 @@ void monit_http(Httpd_Action action) {
                         if (Run.httpd.flags & Httpd_Unix)
                                 Log_debug("Starting Monit HTTP server at %s\n", Run.httpd.socket.unix.path);
                         Engine_setStopped(false);
-                        Thread_create(thread, thread_wrapper, NULL);
+                        Thread_create(thread, _http_thread, NULL);
                         Log_debug("Monit HTTP server started\n");
                         running = true;
                         break;
@@ -131,17 +140,3 @@ void monit_http(Httpd_Action action) {
                         break;
         }
 }
-
-
-/* ----------------------------------------------------------------- Private */
-
-
-static void *thread_wrapper(__attribute__ ((unused)) void *arg) {
-        set_signal_block(false);
-        Engine_start();
-#ifdef HAVE_OPENSSL
-        Ssl_threadCleanup();
-#endif
-        return NULL;
-}
-
