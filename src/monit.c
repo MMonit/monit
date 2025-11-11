@@ -260,11 +260,6 @@ static void do_init(void) {
         signal(SIGPIPE, SIG_IGN);
 
         /*
-         * Initialize the random number generator
-         */
-        srandom((unsigned)(Time_now() + getpid()));
-
-        /*
          * Initialize the Runtime mutex. This mutex
          * is used to synchronize handling of global
          * service data
