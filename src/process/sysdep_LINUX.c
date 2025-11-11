@@ -243,7 +243,7 @@ static bool _parseProcPidStatus(Proc_T proc) {
                 DEBUG("system statistic error -- cannot read process uid\n");
                 return false;
         }
-        if (! (tmp = strstr(buf, "Gid:"))) {
+        if (! (tmp = strstr(tmp, "Gid:"))) {
                 DEBUG("system statistic error -- cannot find process gid\n");
                 return false;
         }
@@ -665,7 +665,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 Log_error("system statistic error -- cannot get swap total amount\n");
                 return false;
         }
-        if (! (ptr = strstr(buf, "SwapFree:")) || sscanf(ptr + 9, "%llu", &swap_free) != 1) {
+        if (! (ptr = strstr(ptr, "SwapFree:")) || sscanf(ptr + 9, "%llu", &swap_free) != 1) {
                 Log_error("system statistic error -- cannot get swap free amount\n");
                 return false;
         }
@@ -677,11 +677,11 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 Log_error("system statistic error -- cannot read /proc/vmstat\n");
                 return false;
         }
-        if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr, "pswpin %llu", &(si->paging.current.in.value)) != 1) {
+        if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr + 7, "%llu", &(si->paging.current.in.value)) != 1) {
                 Log_error("system statistic error -- cannot get pswpin amount\n");
                 return false;
         }
-        if (! (ptr = strstr(buf, "pswpout ")) || sscanf(ptr, "pswpout %llu", &(si->paging.current.out.value)) != 1) {
+        if (! (ptr = strstr(ptr, "pswpout ")) || sscanf(ptr + 8, "%llu", &(si->paging.current.out.value)) != 1) {
                 Log_error("system statistic error -- cannot get pswpout amount\n");
                 return false;
         }
@@ -833,7 +833,7 @@ bool used_system_filedescriptors_sysdep(SystemInfo_T *si) {
                 }
                 fclose(f);
         } else {
-                DEBUG("system statistic error -- cannot open /proc/sys/fs/file-nr\n");
+                DEBUG("system statistic error, failed to open /proc/sys/fs/file-nr -- %s\n", STRERROR);
         }
         return rv;
 }
