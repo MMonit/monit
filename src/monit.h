@@ -847,6 +847,7 @@ typedef struct ActionRate_T {
 typedef struct Every_T {
         Every_Type type;
         time_t last_run;
+        _Atomic bool run_now;
         union {
                 struct {
                         int number; /**< Check this program at a given cycles */
