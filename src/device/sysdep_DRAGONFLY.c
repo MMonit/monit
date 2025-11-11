@@ -115,7 +115,7 @@ static unsigned long long _timevalToMilli(struct timeval *time) {
 // Parse the device path like /dev/da0p2 into name:instance -> da:0
 static bool _parseDevice(const char *path, Device_T device) {
         const char *base = File_basename(path);
-        for (int i = 0; base[i]; i++) {
+        for (unsigned i = 0; base[i]; i++) {
                 if (isdigit(*(base + i))) {
                         strncpy(device->key, base, i < sizeof(device->key) ? i : sizeof(device->key) - 1);
                         device->instance = Str_parseInt(base + i);
@@ -140,7 +140,7 @@ static bool _getStatistics(unsigned long long now) {
 }
 
 
-static bool _getDummyDiskActivity(void *_inf) {
+static bool _getDummyDiskActivity(__attribute__ ((unused)) void *_inf) {
         return true;
 }
 
@@ -226,7 +226,7 @@ static void _filesystemFlagsToString(Info_T inf, unsigned long long flags) {
                 {MNT_USER, "user"}
         };
         Util_swapFilesystemFlags(&(inf->filesystem->flags));
-        for (int i = 0, count = 0; i < sizeof(t) / sizeof(t[0]); i++) {
+        for (unsigned i = 0, count = 0; i < sizeof(t) / sizeof(t[0]); i++) {
                 if (flags & t[i].flag) {
                         snprintf(inf->filesystem->flags.current + strlen(inf->filesystem->flags.current), sizeof(inf->filesystem->flags.value[0]) - strlen(inf->filesystem->flags.current) - 1, "%s%s", count++ ? ", " : "", t[i].description);
                 }
@@ -268,7 +268,6 @@ static bool _setDevice(Info_T inf, const char *path, bool (*compare)(const char 
                 FREE(mnt);
         }
         Log_error("Lookup for '%s' filesystem failed\n", path);
-error:
         inf->filesystem->object.mounted = false;
         return false;
 }
