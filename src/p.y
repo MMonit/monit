@@ -2432,6 +2432,7 @@ every           : EVERY NUMBER CYCLE {
                                 yyerror2("Invalid cron specification");
                         current->every.type = Every_Cron;
                         current->every.spec.cron = $2;
+                        Run.hasCron = true;
                  }
                 | NOTEVERY TIMESPEC {
                         _sanityCheckEveryStatement(current);
@@ -2439,6 +2440,7 @@ every           : EVERY NUMBER CYCLE {
                                 yyerror2("Invalid cron specification");
                         current->every.type = Every_NotInCron;
                         current->every.spec.cron = $2;
+                        Run.hasCron = true;
                  }
                 ;
 
@@ -3596,6 +3598,8 @@ static void preparse(void) {
         Run.eventlist_dir            = NULL;
         Run.eventlist_slots          = -1;
         Run.system                   = NULL;
+        Run.hasCron                  = false;
+        Run.needHeartBeat            = false;
         Run.mmonits                  = NULL;
         Run.maillist                 = NULL;
         Run.mailservers              = NULL;
@@ -3697,6 +3701,9 @@ static void postparse(void) {
                         Log_warning("M/Monit enabled but no httpd allowed -- please add 'set httpd' statement\n");
                 }
         }
+
+        // Should Monit run with a heartbeat thread
+        Run.needHeartBeat = Run.hasCron || Run.mmonits != NULL;
 
         /* Check the sanity of any dependency graph */
         check_depend();

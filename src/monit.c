@@ -91,6 +91,7 @@
 #include "io/Dir.h"
 #include "io/File.h"
 #include "system/Time.h"
+#include "util/Num.h"
 #include "util/List.h"
 #include "exceptions/AssertException.h"
 
@@ -126,7 +127,7 @@ static void handle_wakeup(int);    /* Signalhandler for a daemon wakeup call */
 /* ------------------------------------------------------------------ Global */
 
 
-struct Run_T Run;                        /**< Struct holding runtime constants */
+struct Run_T Run = {};                   /**< Struct holding runtime constants */
 Service_T Service_List;                 /**< The service list (created in p.y) */
 Service_T Service_List_Conf;    /**< The service list in conf file (c. in p.y) */
 ServiceGroup_T Service_Group_List;/**< The service group list (created in p.y) */
@@ -202,7 +203,7 @@ bool do_wakeupcall(void) {
 
 
 bool interrupt(void) {
-        return Run.flags & Run_Stopped || Run.flags & Run_DoReload;
+        return Run.flags & Run_Stopped || Run.flags & Run_DoReload || Run.flags & Run_DoWakeup || Run.flags & Run_ActionPending;
 }
 
 
@@ -392,7 +393,7 @@ static void do_reinit(bool full) {
                 /* send the monit startup notification */
                 Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_START, "Monit reloaded");
 
-                if (Run.mmonits) {
+                if (Run.needHeartBeat) {
                         AtomicThread_create(&Heartbeat_Thread, do_heartbeat, NULL);
                 }
         }
@@ -654,21 +655,15 @@ reload:
                 /* send the monit startup notification */
                 Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_START, "Monit %s started", VERSION);
 
-                if (Run.mmonits) {
+                if (Run.needHeartBeat) {
                         AtomicThread_create(&Heartbeat_Thread, do_heartbeat, NULL);
                 }
 
                 while (true) {
                         validate();
 
-                        // Sleep, unless there is a pending action or monit was stopped/reloaded (sleep can be interrupted by signal)
-                        // Using Time_usleep instead of Time_sleep to handle signal interruptions properly.
-                        // Time_sleep only returns whole seconds remaining after interruption, discarding
-                        // fractional seconds. This can cause premature loop exit with frequent signals,
-                        // effectively preventing proper sleep timing. Time_usleep preserves microsecond
-                        // precision, ensuring correct remaining time calculation when interrupted.
                         for (long long remaining = Run.polltime * USEC_PER_SEC; remaining > 0; remaining = Time_usleep(remaining)) {
-                                if ((Run.flags & Run_ActionPending) || interrupt())
+                                if (interrupt())
                                         break;
                         }
 
@@ -984,15 +979,36 @@ static void version(void) {
 }
 
 
-// M/Monit heartbeat thread
+static void _crontab(time_t now) {
+        DEBUG("Running crontab at %s\n", Time_localStr(now, (char [64]){}));
+}
+
+
+// M/Monit heartbeat and cron thread
 static void *do_heartbeat(__attribute__ ((unused)) void *args) {
         set_signal_block(false);
         Log_info("M/Monit heartbeat started\n");
+        int frequency = Num_min(Run.polltime, 17); // At least once every 17s
+        time_t last_minute = 0;
+
         LOCK(Heartbeat_Thread.mutex)
         {
                 while (! interrupt()) {
-                        MMonit_send(NULL);
-                        struct timespec wait = {.tv_sec = Time_now() + Run.polltime};
+                        time_t now = Time_now();
+
+                        // Run _crontab once per minute
+                        if ((now / 60) != (last_minute / 60)) {
+                                _crontab(now);
+                                last_minute = now;
+                        }
+
+                        // Only send status to M/Monit if configured
+                        if (Run.mmonits) {
+                                MMonit_send(NULL);
+                        }
+
+                        // Sleep for frequency seconds or until signaled
+                        struct timespec wait = {.tv_sec = now + frequency};
                         Sem_timeWait(Heartbeat_Thread.sem, Heartbeat_Thread.mutex, wait);
                 }
         }
