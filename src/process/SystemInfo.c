@@ -34,7 +34,7 @@
 #include "SystemInfo.h"
 
 // libmonit
-#include "util/Int.h"
+#include "util/Num.h"
 #include "system/Time.h"
 
 
@@ -82,12 +82,12 @@ bool SystemInfo_update(void) {
         time_t pageinTimestampDelta = System_Info.paging.current.timestamp - System_Info.paging.previous.timestamp;
         if (pageinTimestampDelta > 0) {
                 if (System_Info.paging.previous.in.value && System_Info.paging.current.in.value) {
-                        System_Info.paging.average.in = Int_deltaUINT64(System_Info.paging.previous.in.value, System_Info.paging.current.in.value) / pageinTimestampDelta;
+                        System_Info.paging.average.in = Num_udelta(System_Info.paging.previous.in.value, System_Info.paging.current.in.value) / pageinTimestampDelta;
                 } else {
                         System_Info.paging.average.in = 0;
                 }
                 if (System_Info.paging.previous.out.value && System_Info.paging.current.out.value) {
-                        System_Info.paging.average.out = Int_deltaUINT64(System_Info.paging.previous.out.value, System_Info.paging.current.out.value) / pageinTimestampDelta;
+                        System_Info.paging.average.out = Num_udelta(System_Info.paging.previous.out.value, System_Info.paging.current.out.value) / pageinTimestampDelta;
                 } else {
                         System_Info.paging.average.out = 0;
                 }
