@@ -556,7 +556,7 @@ static void _perform_init_shutdown(void) {
 
 
 static void do_exit(bool saveState) {
-        set_signal_block(true);
+        set_thread_signal_block(true);
         Run.flags |= Run_Stopped;
         if ((Run.flags & Run_Daemon) && ! (Run.flags & Run_Once)) {
                 if (can_http()) {
@@ -986,14 +986,14 @@ static void _crontab(time_t now) {
 
 // M/Monit heartbeat and cron thread
 static void *do_heartbeat(__attribute__ ((unused)) void *args) {
-        set_signal_block(false);
+        set_thread_signal_block(false);
         Log_info("M/Monit heartbeat started\n");
         int frequency = Num_min(Run.polltime, 17); // At least once every 17s
         time_t last_minute = 0;
 
         LOCK(Heartbeat_Thread.mutex)
         {
-                while (! interrupt()) {
+                while (! (Run.flags & Run_Stopped)) {
                         time_t now = Time_now();
 
                         // Run _crontab once per minute

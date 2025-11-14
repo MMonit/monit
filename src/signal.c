@@ -72,9 +72,10 @@ Sigfunc *signal(int signo, Sigfunc *func) {
 
 
 /**
- * Set a collective thread signal block for signals honored or not by monit
+ * Block signals we only want the main thread
+ * to handle (or signals a thread should ignore)
  */
-void set_signal_block(bool isMainThread) {
+void set_thread_signal_block(bool isMainThread) {
         sigset_t mask;
         sigemptyset(&mask);
         sigaddset(&mask, SIGHUP);
@@ -82,8 +83,7 @@ void set_signal_block(bool isMainThread) {
         sigaddset(&mask, SIGINT);
         sigaddset(&mask, SIGUSR1);
         sigaddset(&mask, SIGTERM);
-        if (! isMainThread)
-                sigaddset(&mask, SIGCHLD);
+        if (! isMainThread) { sigaddset(&mask, SIGCHLD); }
         pthread_sigmask(SIG_BLOCK, &mask, NULL);
 }
 

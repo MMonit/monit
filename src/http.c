@@ -80,7 +80,7 @@ static volatile bool running = false;
 
 
 static void *_http_thread(__attribute__ ((unused)) void *arg) {
-        set_signal_block(false);
+        set_thread_signal_block(false);
         Engine_start();
 #ifdef HAVE_OPENSSL
         Ssl_threadCleanup();

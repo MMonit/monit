@@ -1493,7 +1493,7 @@ bool sendmail(Mail_T);
 void init_env(void);
 void monit_http(Httpd_Action);
 bool can_http(void);
-void set_signal_block(bool);
+void set_thread_signal_block(bool);
 State_Type check_process(Service_T);
 State_Type check_filesystem(Service_T);
 State_Type check_file(Service_T);
