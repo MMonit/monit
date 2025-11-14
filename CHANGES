@@ -4,6 +4,26 @@
 
 Version 5.36.0
 
+New: Implemented proper crontab behavior for Monit
+     The "(not) every" statement can now reliably be used with minute precision.
+     Like crontab, the every statement will run only once per minute, regardless
+     of poll-cycle time. This means that you can now (finally) use checks like
+     this and be sure it runs only one time at the intended time:
+     
+     check program weekly_report with path /var/monit/programs/weekly_report.sh
+         every "15 8 * * 1"
+         if status != 0 then alert
+     
+     This will run the above weekly_report.sh one time every Monday at 08:15
+     (or as soon as possible after that time if the validation loop is delayed).
+     
+     Cron matching is asynchronous to validation loop, ensuring checks run once
+     even if validate() takes longer than a minute to complete.
+     
+     This fixes the issue where services would execute repeatedly during the
+     matching minute (e.g., 12 times with a 5-second poll cycle) and ensures
+     run-once semantics even when the validation loop is delayed by slow checks.
+
 New: Issue #1132: Added support for swap paging monitoring: PAGEIN and PAGEOUT tests in the
      "check system" context. It allows one to monitor the system's swap activity and memory pressure.
      When the system requires more memory, it may begin swapping memory pages in and out of the
