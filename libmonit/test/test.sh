@@ -4,7 +4,7 @@ PATH="$PATH:."
 export PATH
 
 StrTest && \
-IntTest && \
+NumTest && \
 FmtTest && \
 TimeTest && \
 SystemTest && \

@@ -25,9 +25,11 @@
 
 #include "Config.h"
 
+#include "Num.h"
+
 
 /**
- * Implementation of the Int interface
+ * Implementation of the Num interface
  *
  * @author https://www.tildeslash.com/
  * @see https://mmonit.com/
@@ -38,11 +40,6 @@
 /* -------------------------------------------------------- Public Methods */
 
 
-uint64_t Int_deltaUINT64(uint64_t previous, uint64_t current) {
-        if (current < previous) {
-                // Counter wrapped
-                return (UINT64_MAX - previous) + current + 1;
-        }
-        return current - previous;
-}
+
+
 
