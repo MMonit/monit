@@ -981,6 +981,26 @@ static void version(void) {
 
 static void _crontab(time_t now) {
         DEBUG("Running crontab at %s\n", Time_localStr(now, (char [64]){}));
+        bool cron_match = false;
+        for (Service_T s = Service_List; s; s = s->next) {
+                switch (s->every.type) {
+                        case Every_Cron:
+                                s->every.run_now = cron_match = (Time_incron(s->every.spec.cron, now) == 1);
+                                if (! s->every.run_now)
+                                        DEBUG("'%s' test skipped - waiting for cron schedule to match\n", s->name);
+                                break;
+                        case Every_NotInCron:
+                                s->every.run_now = cron_match = (Time_incron(s->every.spec.cron, now) == 0);
+                                if (! s->every.run_now)
+                                        DEBUG("'%s' test skipped - waiting for cron schedule to match\n", s->name);
+                                break;
+                        default:
+                                break;
+                }
+        }
+        if (cron_match) {
+                kill(getpid(), SIGUSR1);
+        }
 }
 
 

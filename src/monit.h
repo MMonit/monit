@@ -842,7 +842,6 @@ typedef struct ActionRate_T {
  cycle based every statement and the new cron-format version */
 typedef struct Every_T {
         Every_Type type;
-        time_t last_run;
         _Atomic bool run_now;
         union {
                 struct {

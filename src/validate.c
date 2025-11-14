@@ -1519,23 +1519,11 @@ static void _checkTimeout(Service_T s) {
 }
 
 
-static bool _incron(Service_T s, time_t now) {
-        if ((now - s->every.last_run) > 59) { // Minute is the lowest resolution, so only run once per minute
-                if (Time_incron(s->every.spec.cron, now) == 1) {
-                        s->every.last_run = now;
-                        return true;
-                }
-        }
-        return false;
-}
-
-
 /**
  * Returns true if validation should be skipped for this service in this cycle, otherwise false. Handle every statement
  */
 static bool _checkSkip(Service_T s) {
         assert(s);
-        time_t now = Time_now();
         if (s->every.type == Every_SkipCycles) {
                 s->every.spec.cycle.counter++;
                 if (s->every.spec.cycle.counter < s->every.spec.cycle.number) {
@@ -1544,20 +1532,18 @@ static bool _checkSkip(Service_T s) {
                         return true;
                 }
                 s->every.spec.cycle.counter = 0;
-        } else if (s->every.type == Every_Cron && ! _incron(s, now)) {
-                s->monitor |= Monitor_Waiting;
-                if ((now - s->every.last_run) > 59)
-                        DEBUG("'%s' test skipped as current time (%s) does not match every's cron spec \"%s\"\n", s->name, Time_localStr(now, (char[26]){}), s->every.spec.cron);
-                return true;
-        } else if (s->every.type == Every_NotInCron && Time_incron(s->every.spec.cron, now) == 1) {
-                s->monitor |= Monitor_Waiting;
-                if ((now - s->every.last_run) > 59)
-                        DEBUG("'%s' test skipped as current time (%s) matches every's cron spec \"not %s\"\n", s->name, Time_localStr(now, (char[26]){}), s->every.spec.cron);
-                return true;
+        } else if (s->every.type == Every_Cron || s->every.type == Every_NotInCron) {
+                // Cron matching is now handled by the heartbeat thread in monit.c:_crontab()
+                // which sets run_now based on the cron schedule. The heartbeat thread is
+                // the sole owner of this flag and updates it every minute.
+                if (! s->every.run_now) {
+                        s->monitor |= Monitor_Waiting;
+                        return true;
+                }
         }
         s->monitor &= ~Monitor_Waiting;
         // Skip if parent is not initialized
-        for (Dependant_T d = s->dependantlist; d; d = d->next ) {
+        for (Dependant_T d = s->dependantlist; d; d = d->next) {
                 Service_T parent = Util_getService(d->dependant);
                 if (parent) {
                         if (parent->monitor != Monitor_Yes) {
@@ -1568,6 +1554,10 @@ static bool _checkSkip(Service_T s) {
                                 return true;
                         }
                 }
+        }
+        if (s->every.type == Every_Cron || s->every.type == Every_NotInCron) {
+                // Reset the flag so the service only runs once per cron match
+                s->every.run_now = false;
         }
         return false;
 }
