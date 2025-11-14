@@ -243,7 +243,7 @@ static bool _parseProcPidStatus(Proc_T proc) {
                 DEBUG("system statistic error -- cannot read process uid\n");
                 return false;
         }
-        if (! (tmp = strstr(buf, "Gid:"))) {
+        if (! (tmp = strstr(tmp, "Gid:"))) {
                 DEBUG("system statistic error -- cannot find process gid\n");
                 return false;
         }
@@ -283,67 +283,60 @@ static bool _parseProcPidSmapsRollup(Proc_T proc) {
 static bool _parseProcPidIO(Proc_T proc) {
         char buf[4096];
         char *tmp = NULL;
-        if (_statistics.hasIOStatistics) {
-                if (file_readProc(buf, sizeof(buf), "io", proc->data.pid, NULL)) {
-                        // read bytes (total)
-                        if (! (tmp = strstr(buf, "rchar:"))) {
-                                DEBUG("system statistic error -- cannot find process read bytes\n");
-                                return false;
-                        }
-                        if (sscanf(tmp + 6, "\t%llu", &(proc->data.read.bytes)) != 1) {
-                                DEBUG("system statistic error -- cannot get process read bytes\n");
-                                return false;
-                        }
-                        // write bytes (total)
-                        if (! (tmp = strstr(tmp, "wchar:"))) {
-                                DEBUG("system statistic error -- cannot find process write bytes\n");
-                                return false;
-                        }
-                        if (sscanf(tmp + 6, "\t%llu", &(proc->data.write.bytes)) != 1) {
-                                DEBUG("system statistic error -- cannot get process write bytes\n");
-                                return false;
-                        }
-                        // read operations
-                        if (! (tmp = strstr(tmp, "syscr:"))) {
-                                DEBUG("system statistic error -- cannot find process read system calls count\n");
-                                return false;
-                        }
-                        if (sscanf(tmp + 6, "\t%llu", &(proc->data.read.operations)) != 1) {
-                                DEBUG("system statistic error -- cannot get process read system calls count\n");
-                                return false;
-                        }
-                        // write operations
-                        if (! (tmp = strstr(tmp, "syscw:"))) {
-                                DEBUG("system statistic error -- cannot find process write system calls count\n");
-                                return false;
-                        }
-                        if (sscanf(tmp + 6, "\t%llu", &(proc->data.write.operations)) != 1) {
-                                DEBUG("system statistic error -- cannot get process write system calls count\n");
-                                return false;
-                        }
-                        // read bytes (physical I/O)
-                        if (! (tmp = strstr(tmp, "read_bytes:"))) {
-                                DEBUG("system statistic error -- cannot find process physical read bytes\n");
-                                return false;
-                        }
-                        if (sscanf(tmp + 11, "\t%llu", &(proc->data.read.bytesPhysical)) != 1) {
-                                DEBUG("system statistic error -- cannot get process physical read bytes\n");
-                                return false;
-                        }
-                        // write bytes (physical I/O)
-                        if (! (tmp = strstr(tmp, "write_bytes:"))) {
-                                DEBUG("system statistic error -- cannot find process physical write bytes\n");
-                                return false;
-                        }
-                        if (sscanf(tmp + 12, "\t%llu", &(proc->data.write.bytesPhysical)) != 1) {
-                                DEBUG("system statistic error -- cannot get process physical write bytes\n");
-                                return false;
-                        }
-                } else {
-                        // file_readProc() already printed a DEBUG() message
-                        // return false;
-                        // sometimes no io data is available, this is not a problem.
-                        return true;
+        if (_statistics.hasIOStatistics && file_readProc(buf, sizeof(buf), "io", proc->data.pid, NULL)) {
+                // read bytes (total)
+                if (! (tmp = strstr(buf, "rchar:"))) {
+                        DEBUG("system statistic error -- cannot find process read bytes\n");
+                        return false;
+                }
+                if (sscanf(tmp + 6, "\t%llu", &(proc->data.read.bytes)) != 1) {
+                        DEBUG("system statistic error -- cannot get process read bytes\n");
+                        return false;
+                }
+                // write bytes (total)
+                if (! (tmp = strstr(tmp, "wchar:"))) {
+                        DEBUG("system statistic error -- cannot find process write bytes\n");
+                        return false;
+                }
+                if (sscanf(tmp + 6, "\t%llu", &(proc->data.write.bytes)) != 1) {
+                        DEBUG("system statistic error -- cannot get process write bytes\n");
+                        return false;
+                }
+                // read operations
+                if (! (tmp = strstr(tmp, "syscr:"))) {
+                        DEBUG("system statistic error -- cannot find process read system calls count\n");
+                        return false;
+                }
+                if (sscanf(tmp + 6, "\t%llu", &(proc->data.read.operations)) != 1) {
+                        DEBUG("system statistic error -- cannot get process read system calls count\n");
+                        return false;
+                }
+                // write operations
+                if (! (tmp = strstr(tmp, "syscw:"))) {
+                        DEBUG("system statistic error -- cannot find process write system calls count\n");
+                        return false;
+                }
+                if (sscanf(tmp + 6, "\t%llu", &(proc->data.write.operations)) != 1) {
+                        DEBUG("system statistic error -- cannot get process write system calls count\n");
+                        return false;
+                }
+                // read bytes (physical I/O)
+                if (! (tmp = strstr(tmp, "read_bytes:"))) {
+                        DEBUG("system statistic error -- cannot find process physical read bytes\n");
+                        return false;
+                }
+                if (sscanf(tmp + 11, "\t%llu", &(proc->data.read.bytesPhysical)) != 1) {
+                        DEBUG("system statistic error -- cannot get process physical read bytes\n");
+                        return false;
+                }
+                // write bytes (physical I/O)
+                if (! (tmp = strstr(tmp, "write_bytes:"))) {
+                        DEBUG("system statistic error -- cannot find process physical write bytes\n");
+                        return false;
+                }
+                if (sscanf(tmp + 12, "\t%llu", &(proc->data.write.bytesPhysical)) != 1) {
+                        DEBUG("system statistic error -- cannot get process physical write bytes\n");
+                        return false;
                 }
         }
         return true;
@@ -672,7 +665,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 Log_error("system statistic error -- cannot get swap total amount\n");
                 return false;
         }
-        if (! (ptr = strstr(buf, "SwapFree:")) || sscanf(ptr + 9, "%llu", &swap_free) != 1) {
+        if (! (ptr = strstr(ptr, "SwapFree:")) || sscanf(ptr + 9, "%llu", &swap_free) != 1) {
                 Log_error("system statistic error -- cannot get swap free amount\n");
                 return false;
         }
@@ -684,11 +677,11 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 Log_error("system statistic error -- cannot read /proc/vmstat\n");
                 return false;
         }
-        if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr, "pswpin %llu", &(si->paging.current.in.value)) != 1) {
+        if (! (ptr = strstr(buf, "pswpin ")) || sscanf(ptr + 7, "%llu", &(si->paging.current.in.value)) != 1) {
                 Log_error("system statistic error -- cannot get pswpin amount\n");
                 return false;
         }
-        if (! (ptr = strstr(buf, "pswpout ")) || sscanf(ptr, "pswpout %llu", &(si->paging.current.out.value)) != 1) {
+        if (! (ptr = strstr(ptr, "pswpout ")) || sscanf(ptr + 8, "%llu", &(si->paging.current.out.value)) != 1) {
                 Log_error("system statistic error -- cannot get pswpout amount\n");
                 return false;
         }
@@ -840,7 +833,7 @@ bool used_system_filedescriptors_sysdep(SystemInfo_T *si) {
                 }
                 fclose(f);
         } else {
-                DEBUG("system statistic error -- cannot open /proc/sys/fs/file-nr\n");
+                DEBUG("system statistic error, failed to open /proc/sys/fs/file-nr -- %s\n", STRERROR);
         }
         return rv;
 }

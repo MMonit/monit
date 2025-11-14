@@ -397,6 +397,18 @@ static unsigned char *_getCachingSha2Password(unsigned char result[static SHA256
         // SHA256(SHA256(password))
         SHA256(stage1, SHA256_DIGEST_LENGTH, stage2);
 
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
+        // SHA256(SHA256(SHA256(password)), Nonce)
+        SHA256_CTX ctx;
+        SHA256_Init(&ctx);
+        SHA256_Update(&ctx, stage2, SHA256_DIGEST_LENGTH);
+        SHA256_Update(&ctx, salt, strlen(salt));
+        SHA256_Final(stage3, &ctx);
+
+        // XOR(SHA256(password), SHA256(SHA256(SHA256(password)), Nonce))
+        for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+                result[i] = stage1[i] ^ stage3[i];
+#else
         // SHA256(SHA256(SHA256(password)), Nonce)
         EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
         if (mdctx != NULL) {
@@ -414,6 +426,7 @@ static unsigned char *_getCachingSha2Password(unsigned char result[static SHA256
                         THROW(ProtocolException, "MYSQL: failed to get caching_sha2_password hash");
                 }
         }
+#endif
 
 #else
         THROW(ProtocolException, "MYSQL: caching_sha2_password authentication requires monit to be compiled with SSL library");
