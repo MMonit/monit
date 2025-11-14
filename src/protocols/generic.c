@@ -37,10 +37,9 @@
 // libmonit
 #include "exceptions/IOException.h"
 #include "exceptions/ProtocolException.h"
+#include "util/Num.h"
 #include "util/Str.h"
 
-
-#define MIN(x,y) ((x) < (y) ? (x) : (y))
 
 // Escape zero i.e. '\0' in the buffer with "\0". If there are no '\0' in
 // the buffer it is returned as it is. In the case that the buffer is not
@@ -54,7 +53,7 @@ static char *_escapeZero(char *buf, int bufferLength, int contentLength) {
                         // nul-terminated escape sequence, we won't perform the escaping and this zero will become the string terminator)
                         if (currentByteIndex + 1 < bufferLength - 1) {
                                 // Shift the remaining content by one to the right, to make space for '\'. If there's no space for all remaining bytes, we'll truncate the data
-                                memmove(buf + currentByteIndex + 1, buf + currentByteIndex, MIN(contentLength - bytesProcessed, bufferLength - currentByteIndex - 1));
+                                memmove(buf + currentByteIndex + 1, buf + currentByteIndex, Num_min(contentLength - bytesProcessed, bufferLength - currentByteIndex - 1));
                                 // Escape 0 with "\0"
                                 buf[currentByteIndex] = '\\';
                                 buf[currentByteIndex + 1] = '0';

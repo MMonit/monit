@@ -54,6 +54,7 @@
 #include "state.h"
 
 // libmonit
+#include "util/Num.h"
 #include "exceptions/IOException.h"
 
 
@@ -282,7 +283,7 @@ static void _updateTimestamp(Service_T S, unsigned long long atime, unsigned lon
                                         t->lastTimestamp = (time_t)mtime;
                                         break;
                                 default:
-                                        t->lastTimestamp = (time_t)MAX(ctime, mtime);
+                                        t->lastTimestamp = (time_t)Num_max(ctime, mtime);
                                         break;
                         }
                         t->initialized = true;

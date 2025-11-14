@@ -107,6 +107,7 @@
 
 // libmonit
 #include "system/Time.h"
+#include "util/Num.h"
 #include "util/Fmt.h"
 #include "io/File.h"
 #include "io/InputStream.h"
@@ -1022,7 +1023,7 @@ static State_Type _checkTimestamps(Service_T s, time_t atime, time_t ctime, time
                                         rv = _checkTimestamp(s, t, mtime);
                                         break;
                                 default:
-                                        rv = _checkTimestamp(s, t, MAX(mtime, ctime));
+                                        rv = _checkTimestamp(s, t, Num_max(mtime, ctime));
                                         break;
                         }
                         if (rv == State_Failed) {
