@@ -20,6 +20,10 @@ New: Implemented proper crontab behavior for Monit
      Cron matching is asynchronous to validation loop, ensuring checks run once
      even if validate() takes longer than a minute to complete.
      
+     This fixes the issue where checks with an every statement could be skipped
+     entirely due to misalignment with poll cycle settings or validation loop
+     delays.
+
 New: Issue #1132: Added support for swap paging monitoring: PAGEIN and PAGEOUT tests in the
      "check system" context. It allows one to monitor the system's swap activity and memory pressure.
      When the system requires more memory, it may begin swapping memory pages in and out of the
