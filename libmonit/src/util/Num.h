@@ -29,7 +29,7 @@
 
 
 /**
- * General purpose <b>Numeric</b> utility <b>class methods</b>.
+ * General purpose <b>Numeric</b> methods.
  *
  * @author https://www.tildeslash.com/
  * @see https://mmonit.com/
@@ -109,6 +109,31 @@
     __auto_type _a = (a); \
     __auto_type _b = (b); \
     _a < _b ? _b - _a : _a - _b; \
+})
+
+
+/**
+ * @brief Clamp a value between a minimum and maximum bound
+ *
+ * Constrains a value to lie within the inclusive range [lo, hi]. If the value is less
+ * than lo, returns lo. If the value is greater than hi, returns hi. Otherwise returns
+ * the value unchanged. Works with any numeric type (integral or floating-point). Uses
+ * compound statement expression to ensure type safety and avoid double evaluation.
+ *
+ * Example: Num_clamp(15, 0, 10) returns 10
+ *          Num_clamp(-5, 0, 10) returns 0
+ *          Num_clamp(5, 0, 10) returns 5
+ *
+ * @param v The value to clamp
+ * @param lo The minimum bound (inclusive)
+ * @param hi The maximum bound (inclusive)
+ * @return The clamped value: lo if v < lo, hi if v > hi, otherwise v
+ */
+#define Num_clamp(v, lo, hi) ({ \
+    __auto_type _v = (v); \
+    __auto_type _lo = (lo); \
+    __auto_type _hi = (hi); \
+    _v < _lo ? _lo : (_v > _hi ? _hi : _v); \
 })
 
 

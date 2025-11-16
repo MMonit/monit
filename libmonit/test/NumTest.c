@@ -174,6 +174,64 @@ int main(void) {
         }
         printf("=> Test4: OK\n\n");
 
+        printf("=> Test5: Num_clamp\n");
+        {
+                // Basic integer clamping
+                assert(Num_clamp(5, 0, 10) == 5);      // Within range
+                assert(Num_clamp(15, 0, 10) == 10);    // Above range
+                assert(Num_clamp(-5, 0, 10) == 0);     // Below range
+                assert(Num_clamp(0, 0, 10) == 0);      // At lower bound
+                assert(Num_clamp(10, 0, 10) == 10);    // At upper bound
+                
+                // Negative ranges
+                assert(Num_clamp(-5, -10, -1) == -5);  // Within negative range
+                assert(Num_clamp(-15, -10, -1) == -10); // Below negative range
+                assert(Num_clamp(0, -10, -1) == -1);   // Above negative range
+                assert(Num_clamp(-10, -10, -1) == -10); // At lower bound
+                assert(Num_clamp(-1, -10, -1) == -1);  // At upper bound
+                
+                // Mixed positive/negative ranges
+                assert(Num_clamp(0, -5, 5) == 0);      // Within mixed range
+                assert(Num_clamp(-10, -5, 5) == -5);   // Below mixed range
+                assert(Num_clamp(10, -5, 5) == 5);     // Above mixed range
+                
+                // Single-point range (lo == hi)
+                assert(Num_clamp(0, 5, 5) == 5);       // Below single point
+                assert(Num_clamp(5, 5, 5) == 5);       // At single point
+                assert(Num_clamp(10, 5, 5) == 5);      // Above single point
+                
+                // Unsigned integers
+                assert(Num_clamp(50U, 0U, 100U) == 50U);      // Within range
+                assert(Num_clamp(150U, 0U, 100U) == 100U);    // Above range
+                assert(Num_clamp(0U, 10U, 100U) == 10U);      // Below range
+                assert(Num_clamp(UINT32_MAX, 0U, 1000U) == 1000U); // Large value clamped
+                
+                // Large integer values
+                assert(Num_clamp(0, INT32_MIN, INT32_MAX) == 0);
+                assert(Num_clamp(INT32_MAX, 0, 1000) == 1000);
+                assert(Num_clamp(INT32_MIN, -100, 100) == -100);
+                assert(Num_clamp(500, 0, INT32_MAX) == 500);
+                
+                // Floating-point
+                assert(Num_clamp(5.5, 0.0, 10.0) == 5.5);     // Within range
+                assert(Num_clamp(15.5, 0.0, 10.0) == 10.0);   // Above range
+                assert(Num_clamp(-5.5, 0.0, 10.0) == 0.0);    // Below range
+                assert(Num_clamp(3.14, 2.71, 3.14) == 3.14);  // At upper bound
+                assert(Num_clamp(2.0, 2.71, 3.14) == 2.71);   // Below range
+                assert(Num_clamp(4.0, 2.71, 3.14) == 3.14);   // Above range
+                
+                // Floating-point with negative values
+                assert(Num_clamp(-2.5, -5.0, 5.0) == -2.5);   // Within range
+                assert(Num_clamp(-10.0, -5.0, 5.0) == -5.0);  // Below range
+                assert(Num_clamp(10.0, -5.0, 5.0) == 5.0);    // Above range
+                
+                // Edge case: very small floating-point range
+                assert(Num_clamp(0.5, 0.0, 1.0) == 0.5);
+                assert(Num_clamp(-0.1, 0.0, 1.0) == 0.0);
+                assert(Num_clamp(1.1, 0.0, 1.0) == 1.0);
+        }
+        printf("=> Test5: OK\n\n");
+
         printf("============> Num Tests: OK\n\n");
         return 0;
 }
