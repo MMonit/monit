@@ -1507,8 +1507,7 @@ Example 2: Run a report (once) every monday at 08:15
     if status != 0 then alert
 
 Example 3: Do not run the check in the backup window on Sunday between
-0AM to 3AM, otherwise run the check with the regular poll cycle
-frequency.
+0AM to 3AM, otherwise run the check with one minute frequency.
 
  check process mysqld with pidfile /var/run/mysqld.pid
     not every "* 0-3 * * 0"
