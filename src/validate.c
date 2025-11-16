@@ -1533,9 +1533,6 @@ static bool _checkSkip(Service_T s) {
                 }
                 s->every.spec.cycle.counter = 0;
         } else if (s->every.type == Every_Cron || s->every.type == Every_NotInCron) {
-                // Cron matching is now handled by the heartbeat thread in monit.c:_crontab()
-                // which sets run_now based on the cron schedule. The heartbeat thread is
-                // the sole owner of this flag and updates it every minute.
                 if (! s->every.run_now) {
                         s->monitor |= Monitor_Waiting;
                         return true;
