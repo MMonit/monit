@@ -1497,37 +1497,31 @@ The special characters:
 Example 1: Check once per two cycles
 
  check process nginx with pidfile /var/run/nginx.pid
-       every 2 cycles
+    every 2 cycles
 
-Example 2: Check every workday between 8AM to 7PM
+Example 2: Run a report (once) every monday at 08:15
 
- check program checkOracleDatabase
-        with path /var/monit/programs/checkoracle.pl
-       every "* 8-19 * * 1-5"
+ check program weekly_report with 
+        path /var/monit/programs/weekly_report.sh
+    every "15 8 * * 1"
+    if status != 0 then alert
 
 Example 3: Do not run the check in the backup window on Sunday between
 0AM to 3AM, otherwise run the check with the regular poll cycle
 frequency.
 
  check process mysqld with pidfile /var/run/mysqld.pid
-       not every "* 0-3 * * 0"
+    not every "* 0-3 * * 0"
 
-Limitations:
+Frequency note:
 
-The current scheduler is poll cycle based. If a service check is
-scheduled with the I<every cron> statement, Monit will check if the
-current time match the cron-string pattern. If it does, then the check
-is performed otherwise it is skipped. The cron specification does not
-guarantee when exactly the test will run, this depends on the default
-poll time and the length of the check cycle. In other words, we cannot
-guarantee that Monit will run on a specific time. Therefore we
-B<strongly> recommend to use an asterix in the minute field or at
-minimum a range, e..g. 0-15. B<Never> use a specific minute as Monit
-may not run on that minute.
-
-We will address this limitation in a future release and convert the
-scheduler from serial polling into a parallel non-blocking scheduler
-where checks are guaranteed to run on time and with seconds resolution.
+When the every statement is used with cron-style scheduling, Monit
+behaves like crontab and will execute the check at most once per minute
+at the scheduled time. In contrast, checks without an every statement
+run at every poll cycle, which may be more frequently than once per
+minute depending on the poll cycle setting. This once-per-minute
+behavior is ideal for scheduled tasks that should run at a specific
+time, such as the weekly report in example 2 above.
 
 
 =head1 SERVICE GROUPS
