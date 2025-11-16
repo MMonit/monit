@@ -1017,9 +1017,9 @@ static void *do_heartbeat(__attribute__ ((unused)) void *args) {
                         time_t now = Time_now();
 
                         // Run _crontab once per minute
-                        if ((now / 60) != (last_minute / 60)) {
+                        if ((now / 60) != last_minute) {
                                 _crontab(now);
-                                last_minute = now;
+                                last_minute = now / 60;
                         }
 
                         // Only send status to M/Monit if configured
