@@ -135,29 +135,145 @@ int main(void) {
 
         printf("=> Test7: Time_incron\n");
         {
-                // Cannot test match on time as the TZ this test
-                // runs in is unknown. Time_incron converts time
-                // to local time.
-
-                // const char *exactmatch = "27 11 5 7 2";
+                // Set timezone to GMT to ensure predictable test results
+                // since Time_build creates UTC time but Time_incron converts to local time
+                setenv("TZ", "GMT", 1);
+                tzset();
+                
+                const char *exactmatch = "27 11 5 7 2";
                 const char *matchall = "* * * * *";
                 const char *invalid1 = "a bc d";
-                const char *invalid2 = "* * * *  "; // Too few fields
-                const char *invalid3 = "* * * * * * "; // Too many fields
-                // const char *range1 = "* 10-11 1-5 * 1-5";
-                // const char *rangeoutside = "1-10 9-10 1-5 * 1-5";
-                // const char *sequence = "* 10,11 1-3,5,6 * *";
-                // const char *sequenceoutside = "* 10,11,12 4,5,6 * 0,6";
+                const char *invalid2 = "* * * *  ";
+                const char *invalid3 = "* * * * * * ";
+                const char *range1 = "* 10-11 1-5 * 1-5";
+                const char *rangeoutside = "1-10 9-10 1-5 * 1-5";
+                const char *sequence = "* 10,11 1-3,5,6 * *";
+                const char *sequenceoutside = "* 10,11,12 4,5,6 * 0,6";
+                const char *sequenceandrange = "* 0-3,4-23 * * *";
+
                 time_t time = Time_build(2011, 7, 5, 11, 27, 5);
-                // assert(Time_incron(exactmatch, time));
+                assert(Time_incron(exactmatch, time));
                 assert(Time_incron(matchall, time));
                 assert(! Time_incron(invalid1, time));
                 assert(! Time_incron(invalid2, time));
                 assert(! Time_incron(invalid3, time));
-                // assert(Time_incron(range1, time));
-                // assert(! Time_incron(rangeoutside, time));
-                // assert(Time_incron(sequence, time));
-                //assert(! Time_incron(sequenceoutside, time));
+                assert(Time_incron(range1, time));
+                assert(! Time_incron(rangeoutside, time));
+                assert(Time_incron(sequence, time));
+                assert(! Time_incron(sequenceoutside, time));
+                assert(Time_incron(sequenceandrange, time));
+
+                // Test step values: */N
+                printf("\tTesting step values (*/N):\n");
+                
+                // Every 5 minutes: should match :00, :05, :10, :15, :20, :25, :30, :35, :40, :45, :50, :55
+                const char *every5min = "*/5 * * * *";
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 0, 0)));  // :00 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 5, 0)));  // :05 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 10, 0))); // :10 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 15, 0))); // :15 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 30, 0))); // :30 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 55, 0))); // :55 - match
+                assert(!Time_incron(every5min, Time_build(2024, 1, 15, 10, 1, 0)));  // :01 - no match
+                assert(!Time_incron(every5min, Time_build(2024, 1, 15, 10, 7, 0)));  // :07 - no match
+                assert(!Time_incron(every5min, Time_build(2024, 1, 15, 10, 23, 0))); // :23 - no match
+                
+                // Every 15 minutes
+                const char *every15min = "*/15 * * * *";
+                assert(Time_incron(every15min, Time_build(2024, 1, 15, 10, 0, 0)));  // :00 - match
+                assert(Time_incron(every15min, Time_build(2024, 1, 15, 10, 15, 0))); // :15 - match
+                assert(Time_incron(every15min, Time_build(2024, 1, 15, 10, 30, 0))); // :30 - match
+                assert(Time_incron(every15min, Time_build(2024, 1, 15, 10, 45, 0))); // :45 - match
+                assert(!Time_incron(every15min, Time_build(2024, 1, 15, 10, 5, 0)));  // :05 - no match
+                assert(!Time_incron(every15min, Time_build(2024, 1, 15, 10, 10, 0))); // :10 - no match
+                
+                // Every 3 hours: 0, 3, 6, 9, 12, 15, 18, 21
+                const char *every3hours = "0 */3 * * *";
+                assert(Time_incron(every3hours, Time_build(2024, 1, 15, 0, 0, 0)));  // 00:00 - match
+                assert(Time_incron(every3hours, Time_build(2024, 1, 15, 3, 0, 0)));  // 03:00 - match
+                assert(Time_incron(every3hours, Time_build(2024, 1, 15, 6, 0, 0)));  // 06:00 - match
+                assert(Time_incron(every3hours, Time_build(2024, 1, 15, 9, 0, 0)));  // 09:00 - match
+                assert(Time_incron(every3hours, Time_build(2024, 1, 15, 12, 0, 0))); // 12:00 - match
+                assert(Time_incron(every3hours, Time_build(2024, 1, 15, 15, 0, 0))); // 15:00 - match
+                assert(Time_incron(every3hours, Time_build(2024, 1, 15, 18, 0, 0))); // 18:00 - match
+                assert(Time_incron(every3hours, Time_build(2024, 1, 15, 21, 0, 0))); // 21:00 - match
+                assert(!Time_incron(every3hours, Time_build(2024, 1, 15, 1, 0, 0)));  // 01:00 - no match
+                assert(!Time_incron(every3hours, Time_build(2024, 1, 15, 10, 0, 0))); // 10:00 - no match
+                
+                // Every 2 days - day of month starts at 1, so */2 matches 2,4,6,8...
+                const char *every2days = "0 0 */2 * *";
+                assert(Time_incron(every2days, Time_build(2024, 1, 2, 0, 0, 0)));  // 2nd - match
+                assert(Time_incron(every2days, Time_build(2024, 1, 4, 0, 0, 0)));  // 4th - match
+                assert(Time_incron(every2days, Time_build(2024, 1, 6, 0, 0, 0)));  // 6th - match
+                assert(Time_incron(every2days, Time_build(2024, 1, 10, 0, 0, 0))); // 10th - match
+                assert(Time_incron(every2days, Time_build(2024, 1, 30, 0, 0, 0))); // 30th - match
+                assert(!Time_incron(every2days, Time_build(2024, 1, 1, 0, 0, 0)));  // 1st - no match
+                assert(!Time_incron(every2days, Time_build(2024, 1, 3, 0, 0, 0)));  // 3rd - no match
+                assert(!Time_incron(every2days, Time_build(2024, 1, 15, 0, 0, 0))); // 15th - no match
+
+                // Test range with step: N-M/S
+                printf("\tTesting range with step (N-M/S):\n");
+                
+                // Every 10 minutes from 0 to 30: 0, 10, 20, 30
+                const char *range_step1 = "0-30/10 9 * * *";
+                assert(Time_incron(range_step1, Time_build(2024, 1, 15, 9, 0, 0)));  // 09:00 - match
+                assert(Time_incron(range_step1, Time_build(2024, 1, 15, 9, 10, 0))); // 09:10 - match
+                assert(Time_incron(range_step1, Time_build(2024, 1, 15, 9, 20, 0))); // 09:20 - match
+                assert(Time_incron(range_step1, Time_build(2024, 1, 15, 9, 30, 0))); // 09:30 - match
+                assert(!Time_incron(range_step1, Time_build(2024, 1, 15, 9, 5, 0)));  // 09:05 - no match
+                assert(!Time_incron(range_step1, Time_build(2024, 1, 15, 9, 15, 0))); // 09:15 - no match
+                assert(!Time_incron(range_step1, Time_build(2024, 1, 15, 9, 25, 0))); // 09:25 - no match
+                assert(!Time_incron(range_step1, Time_build(2024, 1, 15, 9, 40, 0))); // 09:40 - outside range
+                assert(!Time_incron(range_step1, Time_build(2024, 1, 15, 10, 0, 0))); // 10:00 - wrong hour
+                
+                // Every 5 minutes between 8-18 hours: should match 8:00, 8:05, ..., 18:55
+                const char *range_step2 = "*/5 8-18 * * 1-5";
+                // Monday (1) at various times
+                assert(Time_incron(range_step2, Time_build(2024, 1, 15, 8, 0, 0)));   // 08:00 Mon - match
+                assert(Time_incron(range_step2, Time_build(2024, 1, 15, 8, 5, 0)));   // 08:05 Mon - match
+                assert(Time_incron(range_step2, Time_build(2024, 1, 15, 12, 30, 0))); // 12:30 Mon - match
+                assert(Time_incron(range_step2, Time_build(2024, 1, 15, 18, 55, 0))); // 18:55 Mon - match
+                assert(!Time_incron(range_step2, Time_build(2024, 1, 15, 7, 0, 0)));   // 07:00 Mon - before range
+                assert(!Time_incron(range_step2, Time_build(2024, 1, 15, 19, 0, 0)));  // 19:00 Mon - after range
+                assert(!Time_incron(range_step2, Time_build(2024, 1, 15, 8, 3, 0)));   // 08:03 Mon - not step match
+                // Sunday (0) should not match
+                assert(!Time_incron(range_step2, Time_build(2024, 1, 14, 8, 0, 0)));   // 08:00 Sun - wrong day
+                
+                // Every 2 hours from 9-17: 9, 11, 13, 15, 17
+                const char *range_step3 = "0 9-17/2 * * *";
+                assert(Time_incron(range_step3, Time_build(2024, 1, 15, 9, 0, 0)));  // 09:00 - match
+                assert(Time_incron(range_step3, Time_build(2024, 1, 15, 11, 0, 0))); // 11:00 - match
+                assert(Time_incron(range_step3, Time_build(2024, 1, 15, 13, 0, 0))); // 13:00 - match
+                assert(Time_incron(range_step3, Time_build(2024, 1, 15, 15, 0, 0))); // 15:00 - match
+                assert(Time_incron(range_step3, Time_build(2024, 1, 15, 17, 0, 0))); // 17:00 - match
+                assert(!Time_incron(range_step3, Time_build(2024, 1, 15, 8, 0, 0)));  // 08:00 - before range
+                assert(!Time_incron(range_step3, Time_build(2024, 1, 15, 10, 0, 0))); // 10:00 - not on step
+                assert(!Time_incron(range_step3, Time_build(2024, 1, 15, 12, 0, 0))); // 12:00 - not on step
+                assert(!Time_incron(range_step3, Time_build(2024, 1, 15, 14, 0, 0))); // 14:00 - not on step
+                assert(!Time_incron(range_step3, Time_build(2024, 1, 15, 16, 0, 0))); // 16:00 - not on step
+                assert(!Time_incron(range_step3, Time_build(2024, 1, 15, 18, 0, 0))); // 18:00 - after range
+                
+                // Every 5 days from 1-15: 1, 6, 11
+                const char *range_step4 = "0 12 1-15/5 * *";
+                assert(Time_incron(range_step4, Time_build(2024, 3, 1, 12, 0, 0)));  // 1st - match
+                assert(Time_incron(range_step4, Time_build(2024, 3, 6, 12, 0, 0)));  // 6th - match
+                assert(Time_incron(range_step4, Time_build(2024, 3, 11, 12, 0, 0))); // 11th - match
+                assert(!Time_incron(range_step4, Time_build(2024, 3, 3, 12, 0, 0)));  // 3rd - not on step
+                assert(!Time_incron(range_step4, Time_build(2024, 3, 16, 12, 0, 0))); // 16th - outside range
+                
+                // Combine with sequences: every 10 minutes in range OR specific values
+                const char *mixed = "0-20/10,45 9 * * *";
+                assert(Time_incron(mixed, Time_build(2024, 1, 15, 9, 0, 0)));  // 09:00 - match (range)
+                assert(Time_incron(mixed, Time_build(2024, 1, 15, 9, 10, 0))); // 09:10 - match (range)
+                assert(Time_incron(mixed, Time_build(2024, 1, 15, 9, 20, 0))); // 09:20 - match (range)
+                assert(Time_incron(mixed, Time_build(2024, 1, 15, 9, 45, 0))); // 09:45 - match (sequence)
+                assert(!Time_incron(mixed, Time_build(2024, 1, 15, 9, 5, 0)));  // 09:05 - no match
+                assert(!Time_incron(mixed, Time_build(2024, 1, 15, 9, 15, 0))); // 09:15 - no match
+                assert(!Time_incron(mixed, Time_build(2024, 1, 15, 9, 30, 0))); // 09:30 - no match
+                
+                // Restore timezone
+//                setenv("TZ", "Europe/Oslo", 1);
+//                tzset();
         }
         printf("=> Test7: OK\n\n");
 

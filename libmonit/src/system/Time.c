@@ -1477,8 +1477,8 @@ char *Time_uptime(long sec, char result[static 24]) {
 
 /*
  cron string is on format "minute hour day month wday"
- where fields may have a numeric type, an asterix, a
- sequence of numbers or a range. Return -1 on parse error
+ where fields may have a numeric type, an asterix, a range, or step values
+ With cron we compute the time in local time
  */
 int Time_incron(const char *cron, time_t time) {
         assert(cron);
@@ -1486,6 +1486,7 @@ int Time_incron(const char *cron, time_t time) {
 #undef YYLIMIT
 #undef YYMARKER
 #define YYCURSOR cron
+#define YYCTYPE  char
 #define YYLIMIT  end
 #define YYMARKER m
 #define YYTOKEN  t
@@ -1502,112 +1503,150 @@ parse:
         if (YYCURSOR >= YYLIMIT)
                 return found == 5;
         YYTOKEN = YYCURSOR;
-
+    
 {
-	unsigned char yych;
-	yych = *YYCURSOR;
-	switch (yych) {
-	case '\t':
-	case '\n':
-	case '\r':
-	case ' ':	goto yy55;
-	case '*':	goto yy57;
-	case ',':	goto yy59;
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':	goto yy61;
-	default:	goto yy53;
-	}
-yy53:
-	++YYCURSOR;
-	{
+        YYCTYPE yych;
+        unsigned int yyaccept = 0;
+        static const unsigned char yybm[] = {
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                128, 128, 128, 128, 128, 128, 128, 128,
+                128, 128,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+                  0,   0,   0,   0,   0,   0,   0,   0,
+        };
+        if ((YYLIMIT - YYCURSOR) < 3) {}
+        yych = *YYCURSOR;
+        if (yybm[0+yych] & 128) {
+                goto yy46;
+        }
+        if (yych <= 0x1F) {
+                if (yych <= '\n') {
+                        if (yych >= '\t') goto yy42;
+                } else {
+                        if (yych == '\r') goto yy42;
+                }
+        } else {
+                if (yych <= '*') {
+                        if (yych <= ' ') goto yy42;
+                        if (yych >= '*') goto yy43;
+                } else {
+                        if (yych == ',') goto yy45;
+                }
+        }
+        ++YYCURSOR;
+        {
                 return false;
         }
-yy55:
-	++YYCURSOR;
-	{
+yy42:
+        ++YYCURSOR;
+        {
                 goto parse;
         }
-yy57:
-	++YYCURSOR;
-	{
+yy43:
+        yyaccept = 0;
+        yych = *(YYMARKER = ++YYCURSOR);
+        if (yych == '/') goto yy48;
+yy44:
+        {
                 n++;
                 found++;
                 goto parse;
         }
-yy59:
-	++YYCURSOR;
-	{
+yy45:
+        ++YYCURSOR;
+        {
                 n--; // backtrack on fields advance
-                if (n < 0 || n >= 5)
-                        return -1;
+                assert(n < 5 && n >= 0);
                 goto parse;
         }
-yy61:
-	yych = *(YYMARKER = ++YYCURSOR);
-	switch (yych) {
-	case '-':	goto yy64;
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':	goto yy61;
-	default:	goto yy63;
-	}
-yy63:
-	{
+yy46:
+        yyaccept = 1;
+        YYMARKER = ++YYCURSOR;
+        if ((YYLIMIT - YYCURSOR) < 2) {};
+        yych = *YYCURSOR;
+        if (yybm[0+yych] & 128) {
+                goto yy46;
+        }
+        if (yych == '-') goto yy50;
+yy47:
+        {
                 if (fields[n] == Str_parseInt(YYTOKEN))
                         found++;
                 n++;
                 goto parse;
         }
-yy64:
-	yych = *++YYCURSOR;
-	switch (yych) {
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':	goto yy66;
-	default:	goto yy65;
-	}
-yy65:
-	YYCURSOR = YYMARKER;
-	goto yy63;
-yy66:
-	yych = *++YYCURSOR;
-	switch (yych) {
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':	goto yy66;
-	default:	goto yy68;
-	}
-yy68:
-	{
+yy48:
+        yych = *++YYCURSOR;
+        if (yych <= '/') goto yy49;
+        if (yych <= '9') goto yy51;
+yy49:
+        YYCURSOR = YYMARKER;
+        if (yyaccept <= 1) {
+                if (yyaccept == 0) {
+                        goto yy44;
+                } else {
+                        goto yy47;
+                }
+        } else {
+                goto yy54;
+        }
+yy50:
+        yych = *++YYCURSOR;
+        if (yych <= '/') goto yy49;
+        if (yych <= '9') goto yy53;
+        goto yy49;
+yy51:
+        ++YYCURSOR;
+        if (YYLIMIT <= YYCURSOR) {};
+        yych = *YYCURSOR;
+        if (yych <= '/') goto yy52;
+        if (yych <= '9') goto yy51;
+yy52:
+        {
+                // Step value: */N means "every Nth value in the valid range"
+                int step = Str_parseInt(strchr(YYTOKEN, '/') + 1);
+                if (step > 0 && (fields[n] % step) == 0)
+                        found++;
+                n++;
+                goto parse;
+        }
+yy53:
+        yyaccept = 2;
+        YYMARKER = ++YYCURSOR;
+        if ((YYLIMIT - YYCURSOR) < 2) {};
+        yych = *YYCURSOR;
+        if (yych <= '.') goto yy54;
+        if (yych <= '/') goto yy55;
+        if (yych <= '9') goto yy53;
+yy54:
+        {
                 int from = Str_parseInt(YYTOKEN);
                 int to = Str_parseInt(strchr(YYTOKEN, '-') + 1);
                 if ((fields[n] <= to) && (fields[n] >= from))
@@ -1615,10 +1654,33 @@ yy68:
                 n++;
                 goto parse;
         }
+yy55:
+        yych = *++YYCURSOR;
+        if (yych <= '/') goto yy49;
+        if (yych >= ':') goto yy49;
+yy56:
+        ++YYCURSOR;
+        if (YYLIMIT <= YYCURSOR) {};
+        yych = *YYCURSOR;
+        if (yych <= '/') goto yy57;
+        if (yych <= '9') goto yy56;
+yy57:
+        {
+                // Range with step: N-M/S
+                int from = Str_parseInt(YYTOKEN);
+                const char *dash = strchr(YYTOKEN, '-');
+                const char *slash = strchr(YYTOKEN, '/');
+                int to = Str_parseInt(dash + 1);
+                int step = Str_parseInt(slash + 1);
+                if (step > 0 && fields[n] >= from && fields[n] <= to &&
+                    ((fields[n] - from) % step) == 0)
+                        found++;
+                n++;
+                goto parse;
+        }
 }
         return found == 5;
 }
-
 
 bool Time_backoff(bool predicate(void *args), void *args) {
         for (int i = 0, steps = 10; i < steps; i++) {

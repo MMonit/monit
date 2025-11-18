@@ -301,38 +301,38 @@ char *Time_uptime(long sec, char result[static 24]);
  * format string, otherwise 0. The cron string consists of 5 fields separated
  * with white-space. All fields are required:
  *
- * <table>
- * <tr>
- * <th>Name</th>
- * <th>Allowed values</th>
- * <th>Special characters</th>
- * </tr>
- * <tr>
- * <td>Minutes</td>
- * <td>0-59</td>
- * <td>* , -</td>
- * </tr>
- * <tr>
- * <td>Hours</td>
- * <td>0-23</td>
- * <td>* , -</td>
- * </tr>
- * <tr>
- * <td>Day of month</td>
- * <td>1-31</td>
- * <td>* , -</td>
- * </tr>
- * <tr>
- * <td>Month</td>
- * <td>1-12 (1=jan, 12=dec)</td>
- * <td>* , -</td>
- * </tr>
- * <tr>
- * <td>Day of week</td>
- * <td>0-6 (0=sunday, 6=saturday)</td>
- * <td>* , -</td>
- * </tr>
- * </table>
+ <table>
+ <tr>
+ <th>Field name</th>
+ <th>Allowed values</th>
+ <th>Allowed special characters</th>
+ </tr>
+ <tr>
+ <td>Minutes</td>
+ <td>0-59</td>
+ <td>* , - /</td>
+ </tr>
+ <tr>
+ <td>Hours</td>
+ <td>0-23</td>
+ <td>* , - /</td>
+ </tr>
+ <tr>
+ <td>Day of month</td>
+ <td>1-31</td>
+ <td>* , - /</td>
+ </tr>
+ <tr>
+ <td>Month</td>
+ <td>1-12 (1=jan, 12=dec)</td>
+ <td>* , - /</td>
+ </tr>
+ <tr>
+ <td>Day of week</td>
+ <td>0-6 (0=sunday, 6=saturday)</td>
+ <td>* , - /</td>
+ </tr>
+ </table>
  * <h3>Special characters</h3>
  * <ul>
  * <li>* The asterisk indicates that the expression will match
@@ -343,19 +343,28 @@ char *Time_uptime(long sec, char result[static 24]);
  * range is from time1 until and including time2. That is, from 8AM
  * and until 10AM unless minutes are set. Another example, 1-5 in the
  * weekday field, specify from monday to friday (including friday).
+ * <li>/ (slash) Slashes are used to define step values. For example,
+ * <code>*&#47;5</code> in the minute field indicates every 5 minutes (0, 5, 10, 15, ...).
+ * Step values can also be used with ranges: <code>0-30/5</code> in the minute field
+ * indicates every 5 minutes from 0 to 30 (0, 5, 10, 15, 20, 25, 30).
  * <li>, (comma) Comma are used to specify a sequence. For example,
  * 17,18 in the day field indicate the 17th and 18th day of the month.
  * A sequence can also include ranges. For example, using
  * 1-5,0 in the weekday field indicate monday to friday and sunday.
+ 
  * </ul>
  * <h3>Example</h3>
  * <ul>
- * <li><code>"* 9-10 * * 1-5"</code> Matches 9AM-10AM every weekday
- * <li><code>"* 0-5,23 * * 0,6"</code> Matches between 0AM-5AM and 11PM each saturday and sunday
+ * <li><code>"* 9-10 * * 1-5"</code> Matches 09:00-10:59 (every minute in hours 9 and 10) every weekday
+ * <li><code>"0 9-10 * * 1-5"</code> Matches 09:00 and 10:00 (on the hour only) every weekday
+ * <li><code>"* 0-5,23 * * 0,6"</code> Matches 00:00-05:59 and 23:00-23:59 each saturday and sunday
+ * <li><code>"*&#47;15 * * * *"</code> Matches every 15 minutes
+ * <li><code>"0-30/10 9 * * *"</code> Matches at 9:00, 9:10, 9:20, and 9:30 every day
  * </ul>
  * @param cron A crontab format string. e.g. "* 8-9 * * *"
- * @param time The time to test if in range of the cron format
- * @return 1 if time is in cron range, 0 if not, -1 if parsing failed.
+ * @param time The time to test if in range of the cron format. The
+ * time is converted to `local time`.
+ * @return 1 if time is in cron range, otherwise 0.
  */
 int Time_incron(const char *cron, time_t time);
 
