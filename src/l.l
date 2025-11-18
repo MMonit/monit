@@ -982,7 +982,7 @@ group[ \t]+       {
                     return NUMBER;
                   }
 
-  ['"]{ws}?[0-9,*-]+{ws}[0-9,*-]+{ws}[0-9,*-]+{ws}[0-9,*-]+{ws}[0-9,*-]+{ws}?['"] { // A minimal syntax check of the cron format string; 5 fields separated with white-space
+  ['"]{ws}?[0-9,*/-]+{ws}[0-9,*/-]+{ws}[0-9,*/-]+{ws}[0-9,*/-]+{ws}[0-9,*/-]+{ws}?['"] { // A minimal syntax check of the cron format string; 
                     yylval.string = Str_dup(Str_unquote(yytext));
                     BEGIN(INITIAL);
                     save_arg();
