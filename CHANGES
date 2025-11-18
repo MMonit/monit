@@ -5,7 +5,7 @@
 Version 5.36.0
 
 New: Implemented proper crontab behavior for Monit
-     The "(not) every" statement can now reliably be used with minute precision.
+     The "every" statement can now reliably be used with minute precision.
      Like crontab, the every statement will run only once per minute, regardless
      of poll-cycle time. This means that you can now (finally) use checks like
      this and be sure it runs only one time at the intended time:

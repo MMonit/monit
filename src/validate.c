@@ -1532,9 +1532,15 @@ static bool _checkSkip(Service_T s) {
                         return true;
                 }
                 s->every.spec.cycle.counter = 0;
-        } else if (s->every.type == Every_Cron || s->every.type == Every_NotInCron) {
+        } else if (s->every.type == Every_Cron) {
                 if (! s->every.run_now) {
                         s->monitor |= Monitor_Waiting;
+                        return true;
+                }
+        } else if (s->every.type == Every_NotInCron) {
+                if (Time_incron(s->every.spec.cron, Time_now()) == 1) {
+                        s->monitor |= Monitor_Waiting;
+                        DEBUG("'%s' test skipped - waiting for cron schedule to not match\n", s->name);
                         return true;
                 }
         }
@@ -1552,7 +1558,7 @@ static bool _checkSkip(Service_T s) {
                         }
                 }
         }
-        if (s->every.type == Every_Cron || s->every.type == Every_NotInCron) {
+        if (s->every.type == Every_Cron) {
                 // Reset the flag so the service only runs once per cron match
                 s->every.run_now = false;
         }

@@ -1437,12 +1437,12 @@ Example:
 =head1 SERVICE POLL TIME
 
 Services are checked regularly in an interval defined by the C<set
-daemon n> statement. Checks are performed in the same order as they are
-written in the C<.monitrc> file, except if dependencies are setup
+daemon n> statement. Checks are performed in the same order as they
+are written in the C<.monitrc> file, except if dependencies are setup
 between services, where pre-requisite services are tested first.
 
-It is possible to modify a service check schedule by using the C<every>
-statement.
+It is possible to modify a service check schedule by using the
+C<every> statement.
 
 There are three variants:
 
@@ -1467,11 +1467,11 @@ All fields are required:
 
  Name:        | Allowed values:            | Special characters:
  ---------------------------------------------------------------
- Minutes      | 0-59                       | * - ,
- Hours        | 0-23                       | * - ,
- Day of month | 1-31                       | * - ,
- Month        | 1-12 (1=jan, 12=dec)       | * - ,
- Day of week  | 0-6 (0=sunday, 6=saturday) | * - ,
+ Minutes      | 0-59                       | * - , /
+ Hours        | 0-23                       | * - , /
+ Day of month | 1-31                       | * - , /
+ Month        | 1-12 (1=jan, 12=dec)       | * - , /
+ Day of week  | 0-6 (0=sunday, 6=saturday) | * - , /
 
 The special characters:
 
@@ -1483,16 +1483,24 @@ The special characters:
               | indicate every month.
  - (hyphen)   | Hyphens are used to define ranges. For example,
               | 8-9 in the hour field indicate between 8AM and
-              | 9AM. Note that range is from start time until and
-              | including end time. That is, from 8AM and until
-              | 10AM unless minutes are set. Another example,
-              | 1-5 in the weekday field, specify from monday to
-              | friday (including friday).
- , (comma)    | Comma are used to specify a sequence. For example
-              | 17,18 in the day field indicate the 17th and 18th
-              | day of the month. A sequence can also include
-              | ranges. For example, using 1-5,0 in the weekday
-              | field indicate monday to friday and sunday.
+              | 9AM. Note that range is from start time until
+              | and including end time. That is, from 8AM and
+              | until 10AM unless minutes are set. Another
+              | example, 1-5 in the weekday field, specify from
+              | monday to friday (including friday).
+ , (comma)    | Comma are used to specify a sequence. For
+              | example 17,18 in the day field indicate the
+              | 17th and 18th day of the month. A sequence can
+              | also include ranges. For example, using 1-5,0
+              | in the weekday field indicate monday to friday
+              | and sunday.
+ / (slash)    | Slash specifies step values. Used with asterisk
+              | or ranges to define intervals. For example,
+              | */5 in the minute field means "every 5
+              | minutes" (0,5,10,15...). The format N-M/S
+              | means "every S-th value in the range N to M".
+              | For example, 10-30/5 in the minute field means
+              | 10,15,20,25,30.
 
 Example 1: Check once per two cycles
 
@@ -1506,21 +1514,42 @@ Example 2: Run a report (once) every monday at 08:15
     every "15 8 * * 1"
     if status != 0 then alert
 
-Example 3: Do not run the check in the backup window on Sunday between
-0AM to 3AM, otherwise run the check with one minute frequency.
+Example 3: Check every 5 minutes
+
+ check process app with pidfile /var/run/app.pid
+    every "*/5 * * * *"
+
+Example 4: Check every 15 minutes during business hours (9AM-5PM)
+on weekdays
+
+ check process webapp with pidfile /var/run/webapp.pid
+    every "*/15 9-17 * * 1-5"
+
+Example 5: Do not run checks during backup window (Sunday 0AM-3AM).
+Note: We recommend using "not every" with hourly/daily ranges
+rather than minute-level precision, as checks will run every poll
+cycle when outside the exclusion window.
 
  check process mysqld with pidfile /var/run/mysqld.pid
     not every "* 0-3 * * 0"
 
 Frequency note:
 
-When the every statement is used with cron-style scheduling, Monit
-behaves like crontab and will execute the check at most once per minute
-at the scheduled time. In contrast, checks without an every statement
-run at every poll cycle, which may be more frequently than once per
-minute depending on the poll cycle setting. This once-per-minute
-behavior is ideal for scheduled tasks that should run at a specific
-time, such as the weekly report in example 2 above.
+The "every" statement with cron-style scheduling follows crontab
+semantics: Monit will execute the check at most once per minute at
+the scheduled time, regardless of the poll cycle setting. For example,
+if the poll cycle is 30 seconds and the check is scheduled with
+"every '15 8 * * 1'", it will run only once at 08:15 on Monday, not
+twice within that minute. This once-per-minute behavior is ideal for
+scheduled tasks that should run at a specific time, such as the
+weekly report in example 2 above.
+
+In contrast, the "not every" statement is evaluated on every poll
+cycle, making it ideal for defining maintenance or backup windows.
+For example, "not every '* 2-5 * * *'" will skip checks during the
+2AM-5AM window, testing on every poll cycle whether to skip or
+proceed. This is more efficient than minute-level cron scheduling
+for exclusion windows.
 
 
 =head1 SERVICE GROUPS
