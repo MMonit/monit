@@ -152,31 +152,41 @@ int main(void) {
                 const char *sequenceandrange = "* 0-3,4-23 * * *";
 
                 time_t time = Time_build(2011, 7, 5, 11, 27, 5);
-                assert(Time_incron(exactmatch, time));
-                assert(Time_incron(matchall, time));
-                assert(! Time_incron(invalid1, time));
-                assert(! Time_incron(invalid2, time));
-                assert(! Time_incron(invalid3, time));
-                assert(Time_incron(range1, time));
-                assert(! Time_incron(rangeoutside, time));
-                assert(Time_incron(sequence, time));
-                assert(! Time_incron(sequenceoutside, time));
-                assert(Time_incron(sequenceandrange, time));
+                assert(Time_incron(exactmatch, time) == 1);
+                assert(Time_incron(matchall, time) == 1);
+                assert(Time_incron(range1, time) == 1);
+                assert(Time_incron(rangeoutside, time) == 0);
+                assert(Time_incron(sequence, time) == 1);
+                assert(Time_incron(sequenceoutside, time) == 0);
+                assert(Time_incron(sequenceandrange, time) == 1);
+                
+                // Test error cases - should return -1 for parse errors
+                printf("\tTesting parse error detection:\n");
+                assert(Time_incron(invalid1, time) == -1);      // Invalid characters
+                assert(Time_incron(invalid2, time) == -1);      // Too few fields
+                assert(Time_incron(invalid3, time) == -1);      // Too many fields
+                assert(Time_incron("1 2 3 4 5 6 7", time) == -1); // Way too many fields
+                assert(Time_incron("@ @ @ @ @", time) == -1);    // Invalid special chars
+                assert(Time_incron("10,,,20 * * * *", time) == -1); // Multiple consecutive commas (backtrack error)
+                assert(Time_incron("* * * *", time) == -1);      // Too few fields
+                assert(Time_incron("", time) == -1);             // Empty string
+                assert(Time_incron("   ", time) == -1);          // Only whitespace
+                printf("\tParse error detection: OK\n");
 
                 // Test step values: */N
                 printf("\tTesting step values (*/N):\n");
                 
                 // Every 5 minutes: should match :00, :05, :10, :15, :20, :25, :30, :35, :40, :45, :50, :55
                 const char *every5min = "*/5 * * * *";
-                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 0, 0)));  // :00 - match
-                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 5, 0)));  // :05 - match
-                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 10, 0))); // :10 - match
-                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 15, 0))); // :15 - match
-                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 30, 0))); // :30 - match
-                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 55, 0))); // :55 - match
-                assert(!Time_incron(every5min, Time_build(2024, 1, 15, 10, 1, 0)));  // :01 - no match
-                assert(!Time_incron(every5min, Time_build(2024, 1, 15, 10, 7, 0)));  // :07 - no match
-                assert(!Time_incron(every5min, Time_build(2024, 1, 15, 10, 23, 0))); // :23 - no match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 0, 0)) == 1);  // :00 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 5, 0)) == 1);  // :05 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 10, 0)) == 1); // :10 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 15, 0)) == 1); // :15 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 30, 0)) == 1); // :30 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 55, 0)) == 1); // :55 - match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 1, 0)) == 0);  // :01 - no match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 7, 0)) == 0);  // :07 - no match
+                assert(Time_incron(every5min, Time_build(2024, 1, 15, 10, 23, 0)) == 0); // :23 - no match
                 
                 // Every 15 minutes
                 const char *every15min = "*/15 * * * *";
