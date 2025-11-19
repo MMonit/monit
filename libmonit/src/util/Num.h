@@ -85,12 +85,12 @@
  * @param current The current counter reading (same type as previous)
  * @return The delta, accounting for wrap-around (same type as input)
  */
-#define Num_udelta(previous, current) _Generic((previous), \
-    uint8_t:            ((current) < (previous) ? (UINT8_MAX  - (previous)) + (current) + 1 : (current) - (previous)), \
-    uint16_t:           ((current) < (previous) ? (UINT16_MAX - (previous)) + (current) + 1 : (current) - (previous)), \
-    uint32_t:           ((current) < (previous) ? (UINT32_MAX - (previous)) + (current) + 1 : (current) - (previous)), \
-    uint64_t:           ((current) < (previous) ? (UINT64_MAX - (previous)) + (current) + 1 : (current) - (previous)), \
-    unsigned long long: ((current) < (previous) ? (UINT64_MAX - (previous)) + (current) + 1 : (current) - (previous))  \
+#define Num_udelta(previous, current) _Generic((previous),    \
+    uint8_t:            ((uint8_t)((current) - (previous))),  \
+    uint16_t:           ((uint16_t)((current) - (previous))), \
+    uint32_t:           ((uint32_t)((current) - (previous))), \
+    uint64_t:           ((uint64_t)((current) - (previous))), \
+    unsigned long long: ((unsigned long long)((current) - (previous))) \
 )
 
 /**
