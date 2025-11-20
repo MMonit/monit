@@ -28,25 +28,21 @@
 #include <stdint.h>
 
 
-/**
- * General purpose <b>Numeric</b> methods.
- *
- * @author https://www.tildeslash.com/
- * @see https://mmonit.com/
- * @file
- */
+/// General purpose <b>Numeric</b> methods.
+///
+/// @author https://www.tildeslash.com/
+/// @see https://mmonit.com/
+/// @file
 
 
-/**
- * @brief Return the minimum of two values
- * 
- * Works with any numeric type (integral or floating-point). Uses compound statement 
- * expression to ensure type safety and avoid double evaluation.
- * 
- * @param a First value
- * @param b Second value
- * @return The smaller of the two values
- */
+/// @brief Return the minimum of two values
+///
+/// Works with any numeric type (integral or floating-point). Uses compound
+/// statement * expression to ensure type safety and avoid double evaluation.
+///
+/// @param a First value
+/// @param b Second value
+/// @return The smaller of the two values
 #define Num_min(a, b) ({ \
     __auto_type _a = (a); \
     __auto_type _b = (b); \
@@ -54,16 +50,14 @@
 })
 
 
-/**
- * @brief Return the maximum of two values
- * 
- * Works with any numeric type (integral or floating-point). Uses compound statement 
- * expression to ensure type safety and avoid double evaluation.
- * 
- * @param a First value
- * @param b Second value
- * @return The larger of the two values
- */
+/// @brief Return the maximum of two values
+///
+/// Works with any numeric type (integral or floating-point). Uses compound
+/// statement expression to ensure type safety and avoid double evaluation.
+///
+/// @param a First value
+/// @param b Second value
+/// @return The larger of the two values
 #define Num_max(a, b) ({ \
     __auto_type _a = (a); \
     __auto_type _b = (b); \
@@ -71,20 +65,18 @@
 })
 
 
-/**
- * @brief Calculate the delta between monotonically increasing unsigned counter readings
- * 
- * This type-generic macro correctly handles counter wrap-around for uint8_t, uint16_t, 
- * uint32_t, and uint64_t types. When current < previous, it assumes wrap-around and 
- * calculates the delta across the boundary.
- * 
- * Example: For uint8_t with previous=250, current=5, returns 11 (not -245) because 
- * the counter wrapped: 250→255(+5) then 0→5(+6) = 11 total
- * 
- * @param previous The previous counter reading (unsigned integer type)
- * @param current The current counter reading (same type as previous)
- * @return The delta, accounting for wrap-around (same type as input)
- */
+/// @brief Calculate the delta between monotonically increasing unsigned counter
+/// readings
+///
+/// This type-generic macro correctly handles counter wrap-around for uint8_t,
+/// uint16_t, uint32_t, and uint64_t types.
+///
+/// Example: For uint8_t with previous=250, current=5, returns 11 (not -245)
+/// because the counter wrapped: 250 -> 255(+5) then 0 -> 5(+6) = 11 total
+///
+/// @param previous The previous counter reading (unsigned integer type)
+/// @param current The current counter reading (same type as previous)
+/// @return The delta, accounting for wrap-around (same type as input)
 #define Num_udelta(previous, current) _Generic((previous),          \
     unsigned char:      ((unsigned char)((current) - (previous))),  \
     unsigned short:     ((unsigned short)((current) - (previous))), \
@@ -93,19 +85,17 @@
     unsigned long long: ((unsigned long long)((current) - (previous))) \
 )
 
-/**
- * @brief Calculate the absolute difference between two values
- * 
- * Returns the positive distance between two values regardless of order. Works with any 
- * numeric type (integral or floating-point). Unlike Num_udelta, this does NOT handle 
- * counter wrap-around.
- * 
- * Example: Num_delta(10, 7) returns 3, and Num_delta(7, 10) also returns 3
- * 
- * @param a First value
- * @param b Second value
- * @return The absolute difference |a - b|
- */
+/// @brief Calculate the absolute difference between two values
+///
+/// Returns the positive distance between two values regardless of order. Works
+/// with any numeric type (integral or floating-point). Unlike Num_udelta, this
+/// does NOT handle counter wrap-around.
+///
+/// Example: Num_delta(10, 7) returns 3, and Num_delta(7, 10) also returns 3
+///
+/// @param a First value
+/// @param b Second value
+/// @return The absolute difference |a - b|
 #define Num_delta(a, b) ({ \
     __auto_type _a = (a); \
     __auto_type _b = (b); \
@@ -113,23 +103,22 @@
 })
 
 
-/**
- * @brief Clamp a value between a minimum and maximum bound
- *
- * Constrains a value to lie within the inclusive range [lo, hi]. If the value is less
- * than lo, returns lo. If the value is greater than hi, returns hi. Otherwise returns
- * the value unchanged. Works with any numeric type (integral or floating-point). Uses
- * compound statement expression to ensure type safety and avoid double evaluation.
- *
- * Example: Num_clamp(15, 0, 10) returns 10
- *          Num_clamp(-5, 0, 10) returns 0
- *          Num_clamp(5, 0, 10) returns 5
- *
- * @param v The value to clamp
- * @param lo The minimum bound (inclusive)
- * @param hi The maximum bound (inclusive)
- * @return The clamped value: lo if v < lo, hi if v > hi, otherwise v
- */
+/// @brief Clamp a value between a minimum and maximum bound
+///
+/// Constrains a value to lie within the inclusive range [lo, hi]. If the value
+/// is less than lo, returns lo. If the value is greater than hi, returns hi.
+/// Otherwise returns the value unchanged. Works with any numeric type (integral
+/// or floating-point). Uses compound statement expression to ensure type safety
+/// and avoid double evaluation.
+///
+/// Example: Num_clamp(15, 0, 10) returns 10
+///          Num_clamp(-5, 0, 10) returns 0
+///          Num_clamp(5, 0, 10) returns 5
+///
+/// @param v The value to clamp
+/// @param lo The minimum bound (inclusive)
+/// @param hi The maximum bound (inclusive)
+/// @return The clamped value: lo if v < lo, hi if v > hi, otherwise v
 #define Num_clamp(v, lo, hi) ({ \
     __auto_type _v = (v); \
     __auto_type _lo = (lo); \

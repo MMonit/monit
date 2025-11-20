@@ -27,121 +27,106 @@
 #define TIME_INCLUDED
 
 
-/**
- * <b>Time</b> is an abstraction of date and time. Time is stored internally
- * as the number of seconds and microseconds since the epoch, <i>January 1,
- * 1970 00:00 UTC</i>.
- *
- * @author https://tildeslash.com
- * @see https://mmonit.com
- * @file
- */
+/// <b>Time</b> is an abstraction of date and time. Time is stored internally
+/// as the number of seconds and microseconds since the epoch, <i>January 1,
+/// 1970 00:00 UTC</i>.
+///
+/// @author https://tildeslash.com
+/// @see https://mmonit.com
+/// @file
 
 
-/** @name class methods */
+/// @name class methods
 //@{
 
-/**
- * Factory method for building a specific time in UTC (GMT).
- * @param year the year ~ (1970..2037) for this time
- * @param month the month (January=1..December=12)
- * @param day the day of the month (1..31)
- * @param hour the hour (0..23)
- * @param min the minutes (0..59)
- * @param sec the seconds of the minute (0..61). Yes, seconds can range
- * from 0 to 61. This allows the system to inject leap seconds.
- * @return A time_t representing the specified time in UTC
- * @exception AssertException If a parameter is outside the valid range
- */
+/// Factory method for building a specific time in UTC (GMT).
+/// @param year the year ~ (1970..2037) for this time
+/// @param month the month (January=1..December=12)
+/// @param day the day of the month (1..31)
+/// @param hour the hour (0..23)
+/// @param min the minutes (0..59)
+/// @param sec the seconds of the minute (0..61). Yes, seconds can range
+/// from 0 to 61. This allows the system to inject leap seconds.
+/// @return A time_t representing the specified time in UTC
+/// @exception AssertException If a parameter is outside the valid range
 time_t Time_build(int year, int month, int day, int hour, int min, int sec);
 
 
-/**
- * Returns a Unix timestamp representation of an ISO-8601 or RFC 7231 date
- * string in the GMT timezone. If the given string contains timezone offset
- * the time is expected to be in local time and the offset is added to the
- * returned timestamp to make the time UTC. If the string does not contain
- * timezone information, the time is expected and assumed to be in the GTM
- * timezone, i.e. in UTC. Example:
- * <pre>
- *  Time_toTimestamp("2013-12-15 00:12:58") -> 1387066378
- *  Time_toTimestamp("2013-12-14 19:12:58-05:00") -> 1387066378
- *  Time_toTimestamp("Sun, 15 Dec 2013 00:12:58 GMT") -> 1387066378
- * </pre>
- * @param s The Date String to parse. Time is expected to be in UTC,
- * but local time with timezone information is also allowed. The format
- * of the date string should be ISO-8601 or RFC 7231 IMF-fixdate
- * @return A UTC time representation of <code>s</code>
- * @exception AssertException If the parameter value cannot be converted
- * to a valid timestamp
- */
+/// Returns a Unix timestamp representation of an ISO-8601 or RFC 7231 date
+/// string in the GMT timezone. If the given string contains timezone offset
+/// the time is expected to be in local time and the offset is added to the
+/// returned timestamp to make the time UTC. If the string does not contain
+/// timezone information, the time is expected and assumed to be in the GTM
+/// timezone, i.e. in UTC. Example:
+/// <pre>
+///  Time_toTimestamp("2013-12-15 00:12:58") -> 1387066378
+///  Time_toTimestamp("2013-12-14 19:12:58-05:00") -> 1387066378
+///  Time_toTimestamp("Sun, 15 Dec 2013 00:12:58 GMT") -> 1387066378
+/// </pre>
+/// @param s The Date String to parse. Time is expected to be in UTC,
+/// but local time with timezone information is also allowed. The format
+/// of the date string should be ISO-8601 or RFC 7231 IMF-fixdate
+/// @return A UTC time representation of <code>s</code>
+/// @exception AssertException If the parameter value cannot be converted
+/// to a valid timestamp
 time_t Time_toTimestamp(const char *s);
 
 
-/**
- * Returns a Date, Time or DateTime representation of an ISO-8601 or RFC 7231
- * date string. Fields follows the convention of the tm structure where,
- * tm_hour = hours since midnight [0-23], tm_min = minutes after the hour
- * [0-59], tm_sec = seconds after the minute [0-60], tm_mday = day of the month
- * [1-31] and tm_mon = months since January [0-11]. tm_gmtoff is set to the
- * offset from UTC in seconds if the time string contains timezone information,
- * otherwise tm_gmtoff is set to 0. <i>On systems without tm_gmtoff, (Solaris),
- * the member, tm_wday is set to gmt offset instead as this property is ignored
- * by mktime on input.</i>The exception is tm_year which contains the year
- * literal and <i>not years since 1900</i> which is the convention. All other
- * fields in the structure are set to zero. If the given date string
- * <code>s</code> contains both date and time all the fields mentioned above
- * are set, otherwise only the Date or Time fields are set.
- * @param s The Date String to parse. Time is expected to be in UTC,
- * but local time with timezone information is also allowed. The format
- * of the date string should be ISO-8601 or RFC 7231 IMF-fixdate
- * @param t A pointer to a tm structure
- * @return A pointer to the tm structure representing the date of <code>s</code>
- * @exception AssertException If the parameter value cannot be converted
- * to a valid Date, Time or DateTime
- */
+/// Returns a Date, Time or DateTime representation of an ISO-8601 or RFC 7231
+/// date string. Fields follows the convention of the tm structure where,
+/// tm_hour = hours since midnight [0-23], tm_min = minutes after the hour
+/// [0-59], tm_sec = seconds after the minute [0-60], tm_mday = day of the month
+/// [1-31] and tm_mon = months since January [0-11]. tm_gmtoff is set to the
+/// offset from UTC in seconds if the time string contains timezone information,
+/// otherwise tm_gmtoff is set to 0. <i>On systems without tm_gmtoff, (Solaris),
+/// the member, tm_wday is set to gmt offset instead as this property is ignored
+/// by mktime on input.</i>The exception is tm_year which contains the year
+/// literal and <i>not years since 1900</i> which is the convention. All other
+/// fields in the structure are set to zero. If the given date string
+/// <code>s</code> contains both date and time all the fields mentioned above
+/// are set, otherwise only the Date or Time fields are set.
+/// @param s The Date String to parse. Time is expected to be in UTC,
+/// but local time with timezone information is also allowed. The format
+/// of the date string should be ISO-8601 or RFC 7231 IMF-fixdate
+/// @param t A pointer to a tm structure
+/// @return A pointer to the tm structure representing the date of
+/// <code>s</code>
+/// @exception AssertException If the parameter value cannot be converted
+/// to a valid Date, Time or DateTime
 struct tm *Time_toDateTime(const char *s, struct tm *t);
 
 
-/**
- * Returns the time since the epoch measured in seconds.
- * @return A time_t representing the systems notion of seconds since the
- * <strong>epoch</strong> (January 1, 1970, 00:00:00 GMT) in Coordinated
- * Universal Time (UTC).
- * @exception AssertException If time could not be obtained
- */
+/// Returns the time since the epoch measured in seconds.
+/// @return A time_t representing the systems notion of seconds since the
+/// <strong>epoch</strong> (January 1, 1970, 00:00:00 GMT) in Coordinated
+/// Universal Time (UTC).
+/// @exception AssertException If time could not be obtained
 time_t Time_now(void);
 
 
-/**
- * Returns the time since the epoch measured in milliseconds.
- * @return A 64 bits long representing the systems notion of milliseconds
- * since the <strong>epoch</strong> (January 1, 1970, 00:00:00 GMT) in
- * Coordinated Universal Time (UTC).
- * @exception AssertException If time could not be obtained
- */
+/// Returns the time since the epoch measured in milliseconds.
+/// @return A 64 bits long representing the systems notion of milliseconds
+/// since the <strong>epoch</strong> (January 1, 1970, 00:00:00 GMT) in
+/// Coordinated Universal Time (UTC).
+/// @exception AssertException If time could not be obtained
 long long Time_milli(void);
 
 
-/**
- * Returns the time since the epoch measured in microseconds.
- * @return A 64 bits long representing the systems notion of microseconds
- * since the <strong>epoch</strong> (January 1, 1970, 00:00:00 GMT) in
- * Coordinated Universal Time (UTC).
- * @exception AssertException If time could not be obtained
- */
+/// Returns the time since the epoch measured in microseconds.
+/// @return A 64 bits long representing the systems notion of microseconds
+/// since the <strong>epoch</strong> (January 1, 1970, 00:00:00 GMT) in
+/// Coordinated Universal Time (UTC).
+/// @exception AssertException If time could not be obtained
 long long Time_micro(void);
 
 
-/**
- * Returns a monotonic time at some unspecified starting point as a
- * structure with various temporal resolution of the <b>same</b> time.
- * This time is not affected by NTP time jumps, but may change in
- * frequency on platforms that don't support CLOCK_MONOTONIC_RAW.
- * @return A time_monotonic_t structure with various resolutions of the
- * same time since the clock started.
- * @exception AssertException If time could not be obtained
- */
+/// Returns a monotonic time at some unspecified starting point as a
+/// structure with various temporal resolution of the <b>same</b> time.
+/// This time is not affected by NTP time jumps, but may change in
+/// frequency on platforms that don't support CLOCK_MONOTONIC_RAW.
+/// @return A time_monotonic_t structure with various resolutions of the
+/// same time since the clock started.
+/// @exception AssertException If time could not be obtained
 struct time_monotonic_t {
     time_t seconds;
     long long milliseconds;
@@ -150,288 +135,259 @@ struct time_monotonic_t {
 } Time_monotonic(void);
 
 
-/**
- * Returns the second of the minute for time.
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @return The second of the minute (0..61) in local time
- */
+/// Returns the second of the minute for time.
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @return The second of the minute (0..61) in local time
 int Time_seconds(time_t time);
 
 
-/**
- * Returns the minute of the hour for time.
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @return The minute of the hour (0..59) in local time
- */
+/// Returns the minute of the hour for time.
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @return The minute of the hour (0..59) in local time
 int Time_minutes(time_t time);
 
 
-/**
- * Returns the hour of the day for time.
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @return The hour of the day (0..23) in local time
- */
+/// Returns the hour of the day for time.
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @return The hour of the day (0..23) in local time
 int Time_hour(time_t time);
 
 
-/**
- * Returns the day of week expressed as number of days since Sunday.
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @return The day of the week (Sunday=0..Saturday=6) in local time
- */
+/// Returns the day of week expressed as number of days since Sunday.
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @return The day of the week (Sunday=0..Saturday=6) in local time
 int Time_weekday(time_t time);
 
 
-/**
- * Returns the day of the month for time.
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @return The day of the month (1..31) in local time
- */
+/// Returns the day of the month for time.
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @return The day of the month (1..31) in local time
 int Time_day(time_t time);
 
 
-/**
- * Returns the month of the year.
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @return The month of the year (January=1..December=12) in local time
- */
+/// Returns the month of the year.
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @return The month of the year (January=1..December=12) in local time
 int Time_month(time_t time);
 
 
-/**
- * Returns the year of time.
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @return The year of time in the range ~ (1970..2037) in local time
- */
+/// Returns the year of time.
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @return The year of time in the range ~ (1970..2037) in local time
 int Time_year(time_t time);
 
 
-/**
- * Returns a RFC1123 formated date string minus the timezone for the given
- * time. The returned string is computed in the local timezone. The result
- * buffer must be large enough to hold at least 26 bytes. Example:
- * <pre>
- * Tue, 15 Sep 2009 22:01:25
- * </pre>
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @param result The buffer to write the date string too
- * @return a pointer to the result buffer or NULL if <code>result</code>
- * was NULL
- */
+/// Returns a RFC1123 formated date string minus the timezone for the given
+/// time. The returned string is computed in the local timezone. The result
+/// buffer must be large enough to hold at least 26 bytes. Example:
+/// <pre>
+/// Tue, 15 Sep 2009 22:01:25
+/// </pre>
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @param result The buffer to write the date string too
+/// @return a pointer to the result buffer or NULL if <code>result</code>
+/// was NULL
 char *Time_localStr(time_t time, char result[static 26]);
 
 
-/**
- * Returns a RFC1123 formated date string for the given GMT time. The returned
- * string represent the specified time in UTC. The submitted result buffer must
- * be large enough to hold at least 30 bytes. Result example:
- * <pre>
- * Tue, 15 Sep 2009 21:01:25 GMT
- * </pre>
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @param result The buffer to write the date string too
- * @return a pointer to the result buffer or NULL if <code>result</code>
- * was NULL
- */
+/// Returns a RFC1123 formated date string for the given GMT time. The returned
+/// string represent the specified time in UTC. The submitted result buffer must
+/// be large enough to hold at least 30 bytes. Result example:
+/// <pre>
+/// Tue, 15 Sep 2009 21:01:25 GMT
+/// </pre>
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @param result The buffer to write the date string too
+/// @return a pointer to the result buffer or NULL if <code>result</code>
+/// was NULL
 char *Time_str(time_t time, char result[static 30]);
 
 
-/**
-* Returns <code>time</code> as a date string in local time zone. The <code>format</code>
-* parameter determines the format of the string. The format specifiers
-* are the same as those used by <code>strftime(3)</code>. For instance to
-* specify a RFC822 time string on the format "Wed, 05 Feb 2003 01:16:44
-* +0100" the following format string is used:
-* <code>"%a, %d %b %Y %H:%M:%S %z"</code>
-* @param result The buffer to write the date string too
-* @param size Size of the result buffer
-* @param format A <code>strftime</code> format string
-* @param time Number of seconds since the Epoch
-* (00:00:00 UTC, January 1, 1970)
-* @return A pointer to the result buffer
-* @exception AssertException If <code>format</code> or <code>result</code>
-* is NULL
-*/
+/// Returns <code>time</code> as a date string in local time zone. The
+/// <code>format</code>
+/// parameter determines the format of the string. The format specifiers
+/// are the same as those used by <code>strftime(3)</code>. For instance to
+/// specify a RFC822 time string on the format "Wed, 05 Feb 2003 01:16:44
+/// +0100" the following format string is used:
+/// <code>"%a, %d %b %Y %H:%M:%S %z"</code>
+/// @param result The buffer to write the date string too
+/// @param size Size of the result buffer
+/// @param format A <code>strftime</code> format string
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @return A pointer to the result buffer
+/// @exception AssertException If <code>format</code> or <code>result</code>
+/// is NULL
 char *Time_localFmt(char *result, int size, const char *format, time_t time);
 
-/**
- * Returns <code>time</code> as a date string in UTC. The <code>format</code>
- * parameter determines the format of the string. The format specifiers
- * are the same as those used by <code>strftime(3)</code>. For instance to
- * specify a RFC822 time string on the format "Wed, 05 Feb 2003 01:16:44
- * +0100" the following format string is used:
- * <code>"%a, %d %b %Y %H:%M:%S %z"</code>
- * @param result The buffer to write the date string too
- * @param size Size of the result buffer
- * @param format A <code>strftime</code> format string
- * @param time Number of seconds since the Epoch
- * (00:00:00 UTC, January 1, 1970)
- * @return A pointer to the result buffer
- * @exception AssertException If <code>format</code> or <code>result</code>
- * is NULL
- */
+/// Returns <code>time</code> as a date string in UTC. The <code>format</code>
+/// parameter determines the format of the string. The format specifiers
+/// are the same as those used by <code>strftime(3)</code>. For instance to
+/// specify a RFC822 time string on the format "Wed, 05 Feb 2003 01:16:44
+/// +0100" the following format string is used:
+/// <code>"%a, %d %b %Y %H:%M:%S %z"</code>
+/// @param result The buffer to write the date string too
+/// @param size Size of the result buffer
+/// @param format A <code>strftime</code> format string
+/// @param time Number of seconds since the Epoch
+/// (00:00:00 UTC, January 1, 1970)
+/// @return A pointer to the result buffer
+/// @exception AssertException If <code>format</code> or <code>result</code>
+/// is NULL
 char *Time_fmt(char *result, int size, const char *format, time_t time);
 
 
-/**
- * Returns a uptime formatted string for the given seconds. That is, convert
- * <code>sec</code> to days, hours and minutes and return a string on the
- * form, <code>7d, 17h, 34m</code>. The submitted result buffer must be
- * large enough to hold at least 24 bytes.
- * @param sec Number of seconds to split up into, days, hours, minutes and
- * seconds.
- * @param result The buffer to write the uptime string too
- * @return a pointer to the result buffer or NULL if <code>result</code>
- * was NULL
- */
+/// Returns a uptime formatted string for the given seconds. That is, convert
+/// <code>sec</code> to days, hours and minutes and return a string on the
+/// form, <code>7d, 17h, 34m</code>. The submitted result buffer must be
+/// large enough to hold at least 24 bytes.
+/// @param sec Number of seconds to split up into, days, hours, minutes and
+/// seconds.
+/// @param result The buffer to write the uptime string too
+/// @return a pointer to the result buffer or NULL if <code>result</code>
+/// was NULL
 char *Time_uptime(long sec, char result[static 24]);
 
 
-/**
- * Returns 1 if the given time is in the range of the specified cron
- * format string, otherwise 0. The cron string consists of 5 fields separated
- * with white-space. All fields are required:
- *
- <table>
- <tr>
- <th>Field name</th>
- <th>Allowed values</th>
- <th>Allowed special characters</th>
- </tr>
- <tr>
- <td>Minutes</td>
- <td>0-59</td>
- <td>* , - /</td>
- </tr>
- <tr>
- <td>Hours</td>
- <td>0-23</td>
- <td>* , - /</td>
- </tr>
- <tr>
- <td>Day of month</td>
- <td>1-31</td>
- <td>* , - /</td>
- </tr>
- <tr>
- <td>Month</td>
- <td>1-12 (1=jan, 12=dec)</td>
- <td>* , - /</td>
- </tr>
- <tr>
- <td>Day of week</td>
- <td>0-6 (0=sunday, 6=saturday)</td>
- <td>* , - /</td>
- </tr>
- </table>
- * <h3>Special characters</h3>
- * <ul>
- * <li>* The asterisk indicates that the expression will match
- * for all values of the field; e.g., using an asterisk in the 4th
- * field (month) would indicate every month.
- * <li>- (hyphen) Hyphens are used to define ranges. For example,
- * 8-9 in the hour field indicate between 8AM and 9AM. Note that
- * range is from time1 until and including time2. That is, from 8AM
- * and until 10AM unless minutes are set. Another example, 1-5 in the
- * weekday field, specify from monday to friday (including friday).
- * <li>/ (slash) Slashes are used to define step values. For example,
- * <code>*&#47;5</code> in the minute field indicates every 5 minutes (0, 5, 10, 15, ...).
- * Step values can also be used with ranges: <code>0-30/5</code> in the minute field
- * indicates every 5 minutes from 0 to 30 (0, 5, 10, 15, 20, 25, 30).
- * <li>, (comma) Comma are used to specify a sequence. For example,
- * 17,18 in the day field indicate the 17th and 18th day of the month.
- * A sequence can also include ranges. For example, using
- * 1-5,0 in the weekday field indicate monday to friday and sunday.
- 
- * </ul>
- * <h3>Example</h3>
- * <ul>
- * <li><code>"* 9-10 * * 1-5"</code> Matches 09:00-10:59 (every minute in hours 9 and 10) every weekday
- * <li><code>"0 9-10 * * 1-5"</code> Matches 09:00 and 10:00 (on the hour only) every weekday
- * <li><code>"* 0-5,23 * * 0,6"</code> Matches 00:00-05:59 and 23:00-23:59 each saturday and sunday
- * <li><code>"*&#47;15 * * * *"</code> Matches every 15 minutes
- * <li><code>"0-30/10 9 * * *"</code> Matches at 9:00, 9:10, 9:20, and 9:30 every day
- * </ul>
- * @param cron A crontab format string. e.g. "* 8-9 * * *"
- * @param time The time to test if in range of the cron format. The
- * time is converted to `local time`.
- * @return 1 if time is in cron range, 0 if not, -1 if parsing failed.
- */
+/// Returns 1 if the given time is in the range of the specified cron
+/// format string, otherwise 0. The cron string consists of 5 fields separated
+/// with white-space. All fields are required:
+///
+/// <table>
+/// <tr>
+/// <th>Field name</th>
+/// <th>Allowed values</th>
+/// <th>Allowed special characters</th>
+/// </tr>
+/// <tr>
+/// <td>Minutes</td>
+/// <td>0-59</td>
+/// <td>* , - /</td>
+/// </tr>
+/// <tr>
+/// <td>Hours</td>
+/// <td>0-23</td>
+/// <td>* , - /</td>
+/// </tr>
+/// <tr>
+/// <td>Day of month</td>
+/// <td>1-31</td>
+/// <td>* , - /</td>
+/// </tr>
+/// <tr>
+/// <td>Month</td>
+/// <td>1-12 (1=jan, 12=dec)</td>
+/// <td>* , - /</td>
+/// </tr>
+/// <tr>
+/// <td>Day of week</td>
+/// <td>0-6 (0=sunday, 6=saturday)</td>
+/// <td>* , - /</td>
+/// </tr>
+/// </table>
+/// <h3>Special characters</h3>
+/// <ul>
+/// <li>* The asterisk indicates that the expression will match
+/// for all values of the field; e.g., using an asterisk in the 4th
+/// field (month) would indicate every month.
+/// <li>- (hyphen) Hyphens are used to define ranges. For example,
+/// 8-9 in the hour field indicate between 8AM and 9AM. Note that
+/// range is from time1 until and including time2. That is, from 8AM
+/// and until 10AM unless minutes are set. Another example, 1-5 in the
+/// weekday field, specify from monday to friday (including friday).
+/// <li>/ (slash) Slashes are used to define step values. For example,
+/// <code>*/5</code> in the minute field indicates every 5 minutes (0, 5,
+/// 10, 15, ...).
+/// Step values can also be used with ranges: <code>0-30/5</code> in the minute
+/// field
+/// indicates every 5 minutes from 0 to 30 (0, 5, 10, 15, 20, 25, 30).
+/// <li>, (comma) Comma are used to specify a sequence. For example,
+/// 17,18 in the day field indicate the 17th and 18th day of the month.
+/// A sequence can also include ranges. For example, using
+/// 1-5,0 in the weekday field indicate monday to friday and sunday.
+///
+/// </ul>
+/// <h3>Example</h3>
+/// <ul>
+/// <li><code>"* 9-10 * * 1-5"</code> Matches 09:00-10:59 (every minute in hours
+/// 9 and 10) every weekday
+/// <li><code>"0 9-10 * * 1-5"</code> Matches 09:00 and 10:00 (on the hour only)
+/// every weekday
+/// <li><code>"* 0-5,23 * * 0,6"</code> Matches 00:00-05:59 and 23:00-23:59 each
+/// saturday and sunday
+/// <li><code>"*/15 * * * *"</code> Matches every 15 minutes
+/// <li><code>"0-30/10 9 * * *"</code> Matches at 9:00, 9:10, 9:20, and 9:30
+/// every day
+/// </ul>
+/// @param cron A crontab format string. e.g. "* 8-9 * * *"
+/// @param time The time to test if in range of the cron format. The
+/// time is converted to `local time`.
+/// @return 1 if time is in cron range, 0 if not, -1 if parsing failed.
 int Time_incron(const char *cron, time_t time);
 
 
-/**
- * Suspends the calling process or thread for the specified
- * duration in microseconds. If sleep is interrupted by a signal,
- * the function aborts sleep and returns the number of remaining
- * microseconds.
- * @param microseconds The duration of the sleep in microseconds
- * @return 0 if sleep was completed, -1 if microseconds is invalid
- *         (negative or would overflow timespec on 32-bit systems),
- *         or remaining microseconds if interrupted by a signal
- */
+/// Suspends the calling process or thread for the specified
+/// duration in microseconds. If sleep is interrupted by a signal,
+/// the function aborts sleep and returns the number of remaining
+/// microseconds.
+/// @param microseconds The duration of the sleep in microseconds
+/// @return 0 if sleep was completed, -1 if microseconds is invalid
+///         (negative or would overflow timespec on 32-bit systems),
+///         or remaining microseconds if interrupted by a signal
 long long Time_usleep(long long microseconds);
 
 
-/**
- * Suspends the calling process or thread for the specified
- * duration in microseconds. Unlike Time_usleep, this function is
- * resilient to interruptions by signals. If a signal interrupts
- * sleep, the function will continue to sleep for the remainder
- * of the specified duration after handling of the signal.
- * @param microseconds The duration of the sleep in microseconds
- * @return true if sleep was completed, false if microseconds is invalid
- */
+/// Suspends the calling process or thread for the specified
+/// duration in microseconds. Unlike Time_usleep, this function is
+/// resilient to interruptions by signals. If a signal interrupts
+/// sleep, the function will continue to sleep for the remainder
+/// of the specified duration after handling of the signal.
+/// @param microseconds The duration of the sleep in microseconds
+/// @return true if sleep was completed, false if microseconds is invalid
 bool Time_usleepComplete(long long microseconds);
 
 
-/**
- * Suspends the calling process or thread for the specified
- * duration in seconds. If sleep is interrupted by a signal,
- * the function aborts sleep and returns the number of remaining
- * seconds.
- * @param seconds The duration of the sleep in seconds
- * @return 0 if sleep was completed, -1 if seconds is invalid,
- *         or remaining seconds if interrupted by a signal
- */
+/// Suspends the calling process or thread for the specified
+/// duration in seconds. If sleep is interrupted by a signal,
+/// the function aborts sleep and returns the number of remaining
+/// seconds.
+/// @param seconds The duration of the sleep in seconds
+/// @return 0 if sleep was completed, -1 if seconds is invalid,
+///         or remaining seconds if interrupted by a signal
 long Time_sleep(long seconds);
 
 
-/**
- * Suspends the calling process or thread for the specified
- * duration in seconds. Unlike Time_sleep, this function is
- * resilient to interruptions by signals. If a signal interrupts
- * sleep, the function will continue to sleep for the remainder
- * of the specified duration after handling of the signal.
- * @param seconds The duration of the sleep in seconds
- * @return true if sleep was completed, false if seconds is invalid
- */
+/// Suspends the calling process or thread for the specified
+/// duration in seconds. Unlike Time_sleep, this function is
+/// resilient to interruptions by signals. If a signal interrupts
+/// sleep, the function will continue to sleep for the remainder
+/// of the specified duration after handling of the signal.
+/// @param seconds The duration of the sleep in seconds
+/// @return true if sleep was completed, false if seconds is invalid
 bool Time_sleepComplete(long seconds);
 
 
-/**
- * Executes a predicate function with exponential backoff, retrying
- * up to 10 times with increasing wait intervals. Initially, minimal
- * wait times are applied for quick retries, with subsequent wait times
- * growing exponentially. The total worst-case wait time is approximately
- * 5 seconds, optimizing between retry speed and recovery time.
- * @param predicate The predicate function to be executed, returning true
- * on success.
- * @param args Optional arguments for the predicate, or NULL if not needed.
- * @return True if the predicate succeeds within the retries, otherwise false.
- */
+/// Executes a predicate function with exponential backoff, retrying
+/// up to 10 times with increasing wait intervals. Initially, minimal
+/// wait times are applied for quick retries, with subsequent wait times
+/// growing exponentially. The total worst-case wait time is approximately
+/// 5 seconds, optimizing between retry speed and recovery time.
+/// @param predicate The predicate function to be executed, returning true
+/// on success.
+/// @param args Optional arguments for the predicate, or NULL if not needed.
+/// @return True if the predicate succeeds within the retries, otherwise false.
 bool Time_backoff(bool predicate(void *args), void *args);
 
 
 //@}
 
-#endif
+#endif // !TIME_INCLUDED
