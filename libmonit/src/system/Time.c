@@ -1383,8 +1383,6 @@ yy50:
         {
                 n++;
                 found++;
-                if (n > 5)
-                        return -1;
                 goto parse;
          }
 yy51:
@@ -1414,11 +1412,11 @@ yy52:
         }
 yy53:
         {
+                if (n >= 5)
+                        return -1;
                 if (fields[n] == Str_parseInt(yytoken))
                         found++;
                 n++;
-                if (n > 5)
-                        return -1;
                 goto parse;
          }
 yy54:
@@ -1475,13 +1473,12 @@ yy57:
         }
 yy58:
         {
-                // Step value: */N means "every Nth value in the valid range"
+                if (n >= 5)
+                        return -1;
                 int step = Str_parseInt(strchr(yytoken, '/') + 1);
                 if (step > 0 && (fields[n] % step) == 0)
                         found++;
                 n++;
-                if (n > 5)
-                        return -1;
                 goto parse;
          }
 yy59:
@@ -1503,13 +1500,13 @@ yy59:
         }
 yy60:
         {
+                if (n >= 5)
+                        return -1;
                 int from = Str_parseInt(yytoken);
                 int to = Str_parseInt(strchr(yytoken, '-') + 1);
                 if ((fields[n] <= to) && (fields[n] >= from))
                         found++;
                 n++;
-                if (n > 5)
-                        return -1;
                 goto parse;
          }
 yy61:
@@ -1544,7 +1541,8 @@ yy62:
         }
 yy63:
         {
-                // Range with step: N-M/S
+                if (n >= 5)
+                        return -1;
                 int from = Str_parseInt(yytoken);
                 const char *dash = strchr(yytoken, '-');
                 const char *slash = strchr(yytoken, '/');
@@ -1554,8 +1552,6 @@ yy63:
                     ((fields[n] - from) % step) == 0)
                         found++;
                 n++;
-                if (n > 5)
-                        return -1;
                 goto parse;
          }
 yy64:
@@ -1563,8 +1559,6 @@ yy64:
                 return -1;
          }
 }
-
-
         return found == 5;
 }
 
