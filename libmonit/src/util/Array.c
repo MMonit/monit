@@ -74,8 +74,6 @@ T Array_new(int hint) {
         T S = CALLOC(1, sizeof (*S) + primes[i - 1] * sizeof (S->buckets[0]));
         S->size = primes[i-1];
         S->buckets = (struct binding **)(S + 1);
-        for (i = 0; i < S->size; i++)
-                S->buckets[i] = NULL;
         S->length = 0;
         S->timestamp = 0;
         return S;
