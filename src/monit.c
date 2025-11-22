@@ -1004,7 +1004,7 @@ static void *do_heartbeat(__attribute__ ((unused)) void *args) {
 
         LOCK(Heartbeat_Thread.mutex)
         {
-                while (! (Run.flags & Run_Stopped)) {
+                while (! (Run.flags & Run_Stopped) && ! (Run.flags & Run_DoReload)) {
                         time_t now = Time_now();
 
                         // Run _crontab once per minute
