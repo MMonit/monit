@@ -169,6 +169,20 @@
 			remoteGlobalIDString = 52DDC12013C59D45003AA75C;
 			remoteInfo = libmonit;
 		};
+		52EBFD1F2ED7DED500732E12 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 529DBAB82EBD3CDD00BECF5F;
+			remoteInfo = RandomTest;
+		};
+		52EBFD212ED7DED500732E12 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 52FDA95A2EC6A76000971039;
+			remoteInfo = NumTest;
+		};
 		52F675FC19B873A100E1FF1E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
@@ -609,6 +623,8 @@
 				52AE7B981FEC8EBD00B838B3 /* StringBufferTest */,
 				52A20916299AD408004FFCB4 /* InputstreamTest */,
 				525ADD7F2EBBAC290000850F /* ArrayTest */,
+				52EBFD202ED7DED500732E12 /* RandomTest */,
+				52EBFD222ED7DED500732E12 /* NumTest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -938,6 +954,20 @@
 			fileType = archive.ar;
 			path = libmonit.a;
 			remoteRef = 52DDC12913C59D46003AA75C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		52EBFD202ED7DED500732E12 /* RandomTest */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = RandomTest;
+			remoteRef = 52EBFD1F2ED7DED500732E12 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		52EBFD222ED7DED500732E12 /* NumTest */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = NumTest;
+			remoteRef = 52EBFD212ED7DED500732E12 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		52F675FD19B873A100E1FF1E /* StrTest */ = {

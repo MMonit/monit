@@ -128,27 +128,7 @@ int main(void) {
         }
         printf("=> Test7: OK\n\n");
 
-        printf("=> Test8: toLowerCase\n");
-        {
-                char s6[] = "AbC";
-                printf("\tResult: %s\n", Str_toLower(s6));
-                assert(Str_isEqual(s6, "abc"));
-                printf("\tTesting for NULL argument\n");
-                assert(!Str_toLower(NULL));
-        }
-        printf("=> Test8: OK\n\n");
-
-        printf("=> Test9: toUpperCase\n");
-        {
-                char s7[] = "aBc";
-                printf("\tResult: %s\n", Str_toUpper(s7));
-                assert(Str_isEqual(s7, "ABC"));
-                printf("\tTesting for NULL argument\n");
-                assert(!Str_toUpper(NULL));
-        }
-        printf("=> Test9: OK\n\n");
-
-        printf("=> Test10: parseInt, parseLLong, parseDouble\n");
+        printf("=> Test8: parseInt, parseLLong, parseDouble\n");
         {
                 char i[STRLEN] = "   -2812 bla";
                 char ll[STRLEN] = "  2147483642 blabla";
@@ -256,9 +236,9 @@ int main(void) {
                 }
                 END_TRY;
         }
-        printf("=> Test10: OK\n\n");
+        printf("=> Test8: OK\n\n");
 
-        printf("=> Test11: replace\n");
+        printf("=> Test9: replace\n");
         {
                 char s9[] = "abccba";
                 printf("\tResult: %s\n", Str_replaceChar(s9, 'b', 'X'));
@@ -266,9 +246,9 @@ int main(void) {
                 printf("\tTesting for NULL argument\n");
                 assert(!Str_replaceChar(NULL, 'b', 'X'));
         }
-        printf("=> Test11: OK\n\n");
+        printf("=> Test9: OK\n\n");
 
-        printf("=> Test12: startsWith\n");
+        printf("=> Test10: startsWith\n");
         {
                 char *a = "mysql://localhost:3306/zild?user=root&password=swordfish";
                 printf("\tResult: starts with mysql - %s\n", Str_startsWith(a, "mysql") ? "yes" : "no");
@@ -284,9 +264,9 @@ int main(void) {
                 assert(Str_startsWith("", ""));
                 assert(!Str_startsWith("/", "/WEB-INF"));
         }
-        printf("=> Test12: OK\n\n");
+        printf("=> Test10: OK\n\n");
 
-        printf("=> Test13: endsWith\n");
+        printf("=> Test11: endsWith\n");
         {
                 char *a = "mysql://localhost:3306";
                 printf("\tResult: ends with 3306 - %s\n", Str_endsWith(a, "3306") ? "yes" : "no");
@@ -302,9 +282,9 @@ int main(void) {
                 assert(Str_endsWith("", ""));
                 assert(!Str_endsWith("abc", "defabc"));
         }
-        printf("=> Test13: OK\n\n");
+        printf("=> Test11: OK\n\n");
 
-        printf("=> Test14: isEqual\n");
+        printf("=> Test12: isEqual\n");
         {
                 char *a = "mysql://localhost:3306";
                 printf("\tResult: is equal - %s\n", Str_isEqual(a, "mysql://localhost:3306") ? "yes" : "no");
@@ -317,9 +297,9 @@ int main(void) {
                 assert(!Str_isEqual(NULL, NULL));
                 assert(Str_isEqual("", ""));
         }
-        printf("=> Test14: OK\n\n");
+        printf("=> Test12: OK\n\n");
 
-        printf("=> Test15: trail\n");
+        printf("=> Test13: trail\n");
         {
                 char s[] = "This string will be trailed someplace";
                 assert(Str_trunc(NULL, 100) == NULL);
@@ -332,35 +312,9 @@ int main(void) {
                 printf("\tResult: %s\n", Str_trunc(s, 0));
                 assert(Str_isEqual(s, ""));
         }
-        printf("=> Test15: OK\n\n");
+        printf("=> Test13: OK\n\n");
 
-        printf("=> Test16: hash\n");
-        {
-                char *x = "a";
-                char *y = "b";
-                char *a = "abc";
-                char *b = "bca";
-                char *c = "this is a long string";
-                char *d = "this is a longer string";
-                printf("\tResult: %s -> %d\n", x, Str_hash(x));
-                printf("\tResult: %s -> %d\n", y, Str_hash(y));
-                assert(Str_hash(x) != Str_hash(y));
-                assert(Str_hash(x) == Str_hash(x));
-                assert(Str_hash(y) == Str_hash(y));
-                printf("\tResult: %s -> %d\n", a, Str_hash(a));
-                printf("\tResult: %s -> %d\n", b, Str_hash(b));
-                assert(Str_hash(a) != Str_hash(b));
-                assert(Str_hash(a) == Str_hash(a));
-                assert(Str_hash(b) == Str_hash(b));
-                printf("\tResult: %s -> %d\n", c, Str_hash(c));
-                printf("\tResult: %s -> %d\n", d, Str_hash(d));
-                assert(Str_hash(c) != Str_hash(d));
-                assert(Str_hash(c) == Str_hash(c));
-                assert(Str_hash(d) == Str_hash(d));
-        }
-        printf("=> Test16: OK\n\n");
-
-        printf("=> Test17: regular expression match\n");
+        printf("=> Test14: regular expression match\n");
         {
                 char *phone_pattern = "^[-0-9+( )]{7,40}$";
                 char *email_pattern = "^[^@ ]+@([-a-zA-Z0-9]+\\.)+[a-zA-Z]{2,}$";
@@ -415,27 +369,9 @@ int main(void) {
                 }
                 END_TRY;
         }
-        printf("=> Test17: OK\n\n");
+        printf("=> Test14: OK\n\n");
 
-        printf("=> Test18: lim\n");
-        {
-                char *zero = "";
-                char *two = "12";
-                char *ten = "1234567890";
-                assert(! Str_lim(zero, 0));
-                assert(!Str_lim(zero, 1));
-                assert(Str_lim(two, 0));
-                assert(Str_lim(two, 1));
-                assert(!Str_lim(two, 2));
-                assert(Str_lim(ten, 0));
-                assert(Str_lim(ten, 5));
-                assert(Str_lim(ten, 9));
-                assert(!Str_lim(ten, 10));
-                assert(! Str_lim(ten, 100));
-        }
-        printf("=> Test18: OK\n\n");
-
-        printf("=> Test19: substring\n");
+        printf("=> Test15: substring\n");
         {
                 assert(Str_sub("foo bar baz", "bar"));
                 assert(!  Str_sub("foo bar baz", "barx"));
@@ -451,35 +387,17 @@ int main(void) {
                 assert(Str_sub("foo foo bar foo bar baz fuu", "foo bar baz"));
                 assert(Str_isEqual(Str_sub("abcd abcc", "abcc"), "abcc"));
         }
-        printf("=> Test19: OK\n\n");
+        printf("=> Test15: OK\n\n");
 
-        printf("=> Test20: Str_join\n");
-        {
-                char *p = NULL;
-                char dest[10+1] = "xxxxxxxxx";
-                char a[] = "abc";
-                char *b  = "def";
-                char *c  = "xxx123";
-                assert(Str_isEqual(Str_join(dest, 10, a, b, "ghi"), "abcdefghi"));
-                assert(Str_isEqual(Str_join(dest, 10, p), ""));
-                assert(Str_isEqual(Str_join(dest, 10), ""));
-                assert(Str_isEqual(Str_join(dest, 10, "012", "3456789", "0123456789"), "0123456789"));
-                assert(Str_isEqual(Str_join(dest, 4, "a", "b", "cd", "ghi", "jklmnopq"), "abcd"));
-                assert(Str_isEqual(Str_join(dest, 10, a, c + 3), "abc123"));
-                Str_join(dest, 0);
-                assert(dest[0]==0);
-        }
-        printf("=> Test20: OK\n\n");
-
-        printf("=> Test21: Str_has\n");
+        printf("=> Test16: Str_has\n");
         {
                 char *foo = "'bar' (baz)";
                 assert(Str_has("(')", foo));
                 assert(! Str_has(",;", foo));
         }
-        printf("=> Test21: OK\n\n");
+        printf("=> Test16: OK\n\n");
 
-        printf("=> Test22: Str_curtail\n");
+        printf("=> Test17: Str_curtail\n");
         {
                 char s[] = "<text>Hello World</text>";
                 assert(Str_isByteEqual(Str_curtail(s, "</text>"), "<text>Hello World"));
@@ -489,20 +407,9 @@ int main(void) {
                 assert(Str_isByteEqual("a", NULL) == false);
                 assert(Str_isByteEqual(NULL, NULL) == false);
         }
-        printf("=> Test22: OK\n\n");
+        printf("=> Test17: OK\n\n");
 
-        printf("=> Test23: Str_unescape\n");
-        {
-                char s[] = "foo\\'ba\\`r\\}baz";
-                char t[] = "\\&gt\\;";
-                assert(Str_isEqual("foo'ba`r\\}baz", Str_unescape("`'", s)));
-                assert(Str_isEqual(s, Str_unescape("@*", s)));
-                assert(Str_isEqual(Str_unescape("&;", t), "&gt;"));
-                assert(Str_unescape("@*!#$%&/(=", NULL) == NULL);
-        }
-        printf("=> Test23: OK\n\n");
-
-        printf("=> Test24: Str_authcmp\n");
+        printf("=> Test18: Str_authcmp\n");
         {
                 assert(!Str_authcmp(NULL,     NULL));
                 assert(!Str_authcmp("abcdef", NULL));
@@ -516,15 +423,15 @@ int main(void) {
                 assert(!Str_authcmp(a, b));
                 assert(Str_authcmp(a, a));
         }
-        printf("=> Test24: OK\n\n");
+        printf("=> Test18: OK\n\n");
 
-        printf("=> Test25: Str_cmp\n");
+        printf("=> Test19: Str_cmp\n");
         {
                 assert(Str_cmp("foo", "foo") == 0);
                 assert(Str_cmp("foo", "FOO") != 0);
                 assert(Str_cmp("foo", "bar") != 0);
         }
-        printf("=> Test25: OK\n\n");
+        printf("=> Test19: OK\n\n");
 
         printf("============> Str Tests: OK\n\n");
         return 0;

@@ -111,30 +111,6 @@ char *Str_unquote(char *s);
 
 
 /**
- * Converts the given string to lower case
- * @param s A string
- * @return s converted to lower case letters
- */
-char *Str_toLower(char *s);
-
-
-/**
- * Converts the given string to upper case
- * @param s A string
- * @return s converted to upper case letters
- */
-char *Str_toUpper(char *s);
-
-
-/**
- * Returns true if the string argument is a decimal integer.
- * @param s A string
- * @return True if <code>s</code> is a number otherwise false
- */
-bool Str_isInt(const char *s);
-
-
-/**
  * Parses the string argument as a signed decimal integer.
  * @param s A string
  * @return The integer represented by the string argument
@@ -236,23 +212,6 @@ bool Str_has(const char *charset, const char *s);
 
 
 /**
- * Unescape all characters in <code>s</code> which are in the
- * <code>charset</code> and return <code>s</code> modified.
- * Example:
- * <pre>
- * char s[] = "foo\'ba\"r\}baz";
- * Str_unescape("\"'", s) -> foo'ba"r\}baz
- * </pre>
- * @param charset The characters to test <code>s</code> against.
- * A character is unescaped in <code>s</code> if it is in the
- * charset and is preceded with '\'.
- * @param s The string to unescape
- * @return A pointer to s
- */
-char *Str_unescape(const char *charset, char *s);
-
-
-/**
  * Returns true if <i>a</i> equals <i>b</i>. The test is
  * <i>case-insensitive</i> but depends on that all characters
  * in the two strings can be translated in the current locale.
@@ -306,34 +265,6 @@ char *Str_dup(const char *s);
  * @exception AssertException if n is less than 0
  */
 char *Str_ndup(const char *s, long n);
-
-
-/**
- * Copy <code>n</code> bytes from a variable number of strings. The
- * destination string, <code>dest</code>, is 0 terminated at length
- * <code>n</code> or if number of bytes to copy is shorter than
- * <code>n</code> at the combined length of the given strings.
- * Example:
- * <pre>
- * char dest[10 + 1];
- *
- * Str_join(dest, 10, "012", "3456789", "foo") -> "0123456789"
- * Str_join(dest, 4, "a", "b", "cd", "ghi", "jklmnopq") -> "abcd"
- * Str_join(dest, 10) -> ""
- * </pre>
- * <i><small>It is an unchecked runtime error not to provide at least one
- * parameter in a variable argument list. This macro for the _Str_join()
- * function ensures that at least one parameter exist in the argument list
- * and its last parameter is NULL. </small></i>
- * @param dest The destination buffer
- * @param n The number of bytes to copy
- * @return A pointer to dest
- * @exception AssertException if <code>dest</code> is null
- * @hideinitializer
- */
-#define Str_join(dest, n, ...) _Str_join((dest), (n), ##__VA_ARGS__, NULL)
-/** Internal function. Use the Str_join() macro */
-char *_Str_join(char *dest, int n, ...) __attribute__((sentinel));
 
 
 /**
@@ -397,17 +328,6 @@ char *Str_curtail(char *s, const char *t);
 
 
 /**
- * Returns true if the string <code>s</code> has length greater than
- * <code>limit</code>, otherwise false.
- * @param s String to test
- * @param limit The limit in bytes to test s against
- * @return true if <code>s.length > limit</code> otherwise false
- * @exception AssertException if limit is less than 0
- */
-bool Str_lim(const char *s, int limit);
-
-
-/**
  * Returns true if the regular expression <code>pattern</code> match
  * the <code>subject</code> string, otherwise false. This function
  * supports POSIX regular expression for <code>pattern</code>. See
@@ -423,16 +343,6 @@ bool Str_lim(const char *s, int limit);
  * compiled.
  */
 bool Str_match(const char *pattern, const char *subject);
-
-
-/**
- * UNIX ELF hash algorithm. May be used as the <code>hash</code>
- * function in a Table or a Set.
- * @param x A String
- * @return A hash value for the String
- * @see Table.h and Set.h
- */
-int Str_hash(const void *x);
 
 
 /**

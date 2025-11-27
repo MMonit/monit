@@ -113,34 +113,6 @@ char *Str_unquote(char *s) {
 }
 
 
-char *Str_toLower(char *s) {
-        if (s)
-                for (int i = 0; s[i]; i++)
-                        s[i] = tolower(s[i]);
-        return s;
-}
-
-
-char *Str_toUpper(char *s) {
-        if (s)
-                for (int i = 0; s[i]; i++)
-                        s[i] = toupper(s[i]);
-        return s;
-}
-
-
-bool Str_isInt(const char *s) {
-        char *e;
-        if (STR_UNDEF(s))
-                return false;
-        errno = 0;
-        strtol(s, &e, 10);
-        if (errno || (e == s))
-                return false;
-        return true;
-}
-
-
 int Str_parseInt(const char *s) {
         int i;
         char *e;
@@ -247,25 +219,6 @@ bool Str_has(const char *charset, const char *s) {
 }
 
 
-char *Str_unescape(const char *charset, char *s) {
-        if (charset && STR_DEF(s)) {
-                int x, y;
-                for (x = 0, y = 0; s[y]; x++, y++) {
-                        if ((s[x] = s[y]) == '\\')
-                                for (int i = 0; charset[i]; i++) {
-                                        if (charset[i] == s[y + 1]) {
-                                                s[x] = charset[i];
-                                                y++;
-                                                break;
-                                        }
-                                }
-                }
-                s[x] = 0;
-        }
-        return s;
-}
-
-
 bool Str_isEqual(const char *a, const char *b) {
         if (a && b) {
                 while (*a && *b)
@@ -324,19 +277,6 @@ char *Str_ndup(const char *s, long n) {
 }
 
 
-char *_Str_join(char *dest, int n, ...) {
-        char *p, *q;
-        va_list ap;
-        assert(dest);
-        va_start(ap, n);
-        for (q = dest, p = va_arg(ap, char *); (p && (n > 0)); p = va_arg(ap, char *))
-                while (*p && n--) *q++ = *p++;
-        va_end(ap);
-        *q = 0;
-        return dest;
-}
-
-
 char *Str_cat(const char *s, ...) {
         char *t = NULL;
         if (s) {
@@ -389,14 +329,6 @@ char *Str_curtail(char *s, const char *t) {
 }
 
 
-bool Str_lim(const char *s, int limit) {
-        assert(limit>=0);
-        if (s)
-                for (; (*s && limit--); s++) ;
-        return (limit < 0);
-}
-
-
 bool Str_match(const char *pattern, const char *subject) {
         assert(pattern);
         if (STR_DEF(subject)) {
@@ -414,20 +346,6 @@ bool Str_match(const char *pattern, const char *subject) {
                 }
         }
         return false;
-}
-
-
-int Str_hash(const void *x) {
-        const char *s = x;
-        unsigned long long h = 0, g;
-        assert(x);
-        while (*s) {
-                h = (h << 4) + *s++;
-                if ((g = h & 0xF0000000))
-                        h ^= g >> 24;
-                h &= ~g;
-        }
-        return (int)h;
 }
 
 
