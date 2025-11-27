@@ -95,19 +95,18 @@ char *Str_rtrim(char *s) {
 char *Str_unquote(char *s) {
         if (STR_DEF(s)) {
                 char *t = s;
-                // Left unquote
-                while (*t == 34 || *t == 39 || isspace(*t)) t++;
-                if (t != s) {
-                        char *u = s;
-                        for (; *t; t++, u++)
-                                *u = *t;
-                        t = u;
-                } else
-                        while (*t) t++;
-                // Right unquote
-                do
-                        *(t--) = 0;
-                while (t > s && (*t == 34 || *t == 39 || isspace(*t)));
+                while (*t == '"' || *t == '\'' || isspace((uchar_t)*t))
+                        t++;
+                char *u = s;
+                char *end = s;
+                while (*t) {
+                        *u = *t;
+                        if (!(*t == '"' || *t == '\'' || isspace((uchar_t)*t)))
+                                end = u + 1;
+                        u++;
+                        t++;
+                }
+                *end = '\0';
         }
         return s;
 }

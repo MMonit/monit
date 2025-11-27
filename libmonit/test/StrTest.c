@@ -106,28 +106,41 @@ int main(void) {
 
         printf("=> Test7: trim quotes\n");
         {
-                char s5[] = "\"'abc'\"";
-                char s5a[] = "\"'abc";
-                char s5b[] = "abc'\"";
-                char s5c[] = "'\"";
-                char s5d[] = " \t abc def '\"  ";
-                printf("\tResult: %s\n", Str_unquote(s5));
-                assert(Str_isEqual(s5, "abc"));
-                printf("\tResult: %s\n", Str_unquote(s5a));
-                assert(Str_isEqual(s5, "abc"));
-                printf("\tResult: %s\n", Str_unquote(s5b));
-                assert(Str_isEqual(s5, "abc"));
-                printf("\tResult: %s\n", Str_unquote(s5b));
-                assert(Str_isEqual(s5, "abc"));
-                printf("\tTesting for NULL argument\n");
+                char t1[] = "\"'abc'\"";
+                char t2[] = "\"'abc";
+                char t3[] = "abc'\"";
+                char t4[] = "'\"";
+                char t5[] = " \t abc def '\"  ";
+                char t6[] = "\n \"ab\" cd\' ef \t g\r\n";
+                char t7[] = "";
+                char t8[] = "abc";
+                char t9[] = " \t\n ";
+                char t10[] = "'a'";
+                printf("\tTesting balanced quotes\n");
+                assert(Str_isEqual("abc", Str_unquote(t1)));
+                printf("\tTesting leading quotes only\n");
+                assert(Str_isEqual("abc", Str_unquote(t2)));
+                printf("\tTesting trailing quotes only\n");
+                assert(Str_isEqual("abc", Str_unquote(t3)));
+                printf("\tTesting NULL argument\n");
                 assert(!Str_unquote(NULL));
-                printf("\tTesting for quotes-only argument\n");
-                assert(Str_isEqual("", Str_unquote(s5c)));
-                printf("\tTesting for quotes and white-space removal\n");
-                assert(Str_isEqual("abc def", Str_unquote(s5d)));
+                printf("\tTesting quotes-only argument\n");
+                assert(Str_isEqual("", Str_unquote(t4)));
+                printf("\tTesting quotes and whitespace removal\n");
+                assert(Str_isEqual("abc def", Str_unquote(t5)));
+                printf("\tTesting inside quotes and whitespace preservation\n");
+                assert(Str_isEqual("ab\" cd\' ef \t g", Str_unquote(t6)));
+                printf("\tTesting empty string\n");
+                assert(Str_isEqual("", Str_unquote(t7)));
+                printf("\tTesting nothing to trim\n");
+                assert(Str_isEqual("abc", Str_unquote(t8)));
+                printf("\tTesting whitespace only\n");
+                assert(Str_isEqual("", Str_unquote(t9)));
+                printf("\tTesting single char quoted\n");
+                assert(Str_isEqual("a", Str_unquote(t10)));
         }
         printf("=> Test7: OK\n\n");
-
+        
         printf("=> Test8: parseInt, parseLLong, parseDouble\n");
         {
                 char i[STRLEN] = "   -2812 bla";

@@ -953,7 +953,7 @@ group[ \t]+       {
                 }
 
         (({ws}?["][^"]+["])|({ws}?['][^']+['])) {
-                        yylval.string = Str_cat("%s", Str_unquote(yytext + 1));
+                        yylval.string = Str_unquote(Str_dup(yytext + 1));
                         save_arg();
                         return HOSTGROUPNAME;
                 }
@@ -983,7 +983,7 @@ group[ \t]+       {
                   }
 
   ['"]{ws}?[0-9,*/-]+{ws}[0-9,*/-]+{ws}[0-9,*/-]+{ws}[0-9,*/-]+{ws}[0-9,*/-]+{ws}?['"] { // A minimal syntax check of the cron format string; 
-                    yylval.string = Str_dup(Str_unquote(yytext));
+                    yylval.string = Str_unquote(Str_dup(yytext));
                     BEGIN(INITIAL);
                     save_arg();
                     return TIMESPEC;
@@ -1015,7 +1015,7 @@ group[ \t]+       {
                         save_arg();
                 }
 
-        [:](({ws}?["][^"]+["])|({ws}?['][^']+['])|([^\r\n\],:]+)) { // : value
+        [:](({ws}?["][^"]*["])|({ws}?['][^']*['])|([^\r\n\],:]+)) { // : value
                         yylval.string = Str_cat("%s:%s", Str_trim(argyytext), Str_unquote(yytext + 1));
                         save_arg();
                         return HTTPHEADER;
