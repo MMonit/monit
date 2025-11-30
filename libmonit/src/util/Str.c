@@ -57,37 +57,70 @@
 
 
 char *Str_chomp(char *s) {
-        if (STR_DEF(s)) {
-                for (char *p = s; *p; p++)
-                        if (*p == '\r' || *p == '\n') {
-                                *p = 0; break;
-                        }
+        if (s) {
+                char *p = strpbrk(s, "\r\n");
+                if (p)
+                        *p = 0;
         }
         return s;
 }
 
 
 char *Str_trim(char *s) {
-        return (Str_ltrim(Str_rtrim(s)));
-}
-
-
-char *Str_ltrim(char *s) {
-        if (STR_DEF(s) && isspace((uchar_t)*s)) {
-                int i, j;
-                for (i = 0; isspace((uchar_t)s[i]); i++) ;
-                for (j = i; s[j]; j++) ;
-                memmove(s, s + i, j - i);
-                s[j - i] = 0;
-        }
+        if (STR_UNDEF(s))
+                return s;
+        
+        unsigned char *start = (unsigned char *)s;
+        unsigned char *end;
+        
+        while (isspace(*start)) start++;
+        if (!*start) { *s = '\0'; return s; }
+        
+        for (end = start + strlen((const char *)start) - 1; isspace(*end); end--);
+        
+        size_t len = (size_t)(end - start) + 1;
+        end[1] = '\0';
+        
+        if (start != (unsigned char *)s)
+                memmove(s, start, len + 1);
+        
         return s;
 }
 
 
 char *Str_rtrim(char *s) {
-        if (STR_DEF(s))
-                for (ssize_t j = strlen(s) - 1; j >= 0 && isspace((uchar_t)s[j]); j--)
-                        s[j] = 0;
+        if (STR_UNDEF(s))
+                return s;
+        
+        unsigned char *end = (unsigned char *)s + strlen(s);
+        
+        while (end > (unsigned char *)s && isspace(*(end - 1))) end--;
+        *end = '\0';
+        
+        return s;
+}
+
+
+char *Str_ltrim(char *s) {
+        if (STR_UNDEF(s))
+                return s;
+        
+        unsigned char *start = (unsigned char *)s;
+        
+        while (isspace(*start)) start++;
+        
+        if (start == (unsigned char *)s) return s;  // Nothing to trim
+        
+        if (!*start) {  // All whitespace
+                *s = '\0';
+                return s;
+        }
+        
+        size_t len = strlen((char *)start);
+        
+        // Move including null terminator
+        memmove(s, start, len + 1);
+        
         return s;
 }
 
@@ -162,78 +195,53 @@ char *Str_replaceChar(char *s, char o, char n) {
 
 
 bool Str_startsWith(const char *a, const char *b) {
-        if (a && b) {
-                do {
-                        if (toupper((uchar_t)*a) != toupper((uchar_t)*b))
-                                return false;
-                        if (*a++ == 0 || *b++ == 0)
-                                break;
-                } while (*b);
-                return true;
-        }
-        return false;
+        if (!STR_DEF(a) || !STR_DEF(b))
+                return false;
+        size_t b_len = strlen(b);
+        return strncasecmp(a, b, b_len) == 0;
 }
 
 
 bool Str_endsWith(const char *a, const char *b) {
-        if (a && b) {
-                size_t i = 0, j = 0;
-                for (i = strlen(a), j = strlen(b); (i && j); i--, j--)
-                        if (toupper((uchar_t)a[i]) != toupper((uchar_t)b[j])) return false;
-                return (i >= j);
-        }
-        return false;
+        if (!STR_DEF(a) || !STR_DEF(b))
+                return false;
+        size_t a_len = strlen(a);
+        size_t b_len = strlen(b);
+        if (a_len < b_len)
+                return false;
+        return strcasecmp(a + (a_len - b_len), b) == 0;
 }
 
 
 char *Str_sub(const char *a, const char *b) {
-        if (a && STR_DEF(b)) {
-                const char *p, *q;
-                while (*a) {
-                        if (toupper((uchar_t)*a) == toupper((uchar_t)*b)) {
-                                p = a;
-                                q = b;
-                                do
-                                        if (! *q)
-                                                return (char*)a;
-                                while (toupper((uchar_t)*p++) == toupper((uchar_t)*q++));
-                        }
-                        a++;
-                }
+        if (!a || !STR_DEF(b))
+                return NULL;
+        size_t b_len = strlen(b);
+        for (; *a; a++) {
+                if (strncasecmp(a, b, b_len) == 0)
+                        return (char *)a;
         }
         return NULL;
 }
 
 
 bool Str_has(const char *charset, const char *s) {
-        if (charset && s) {
-                for (int x = 0; s[x]; x++) {
-                        for (int y = 0; charset[y]; y++) {
-                                if (s[x] == charset[y])
-                                        return true;
-                        }
-                }
-        }
+        if (charset && s)
+                return strpbrk(s, charset) != NULL;
         return false;
 }
 
 
 bool Str_isEqual(const char *a, const char *b) {
-        if (a && b) {
-                while (*a && *b)
-                        if (toupper((uchar_t)*a++) != toupper((uchar_t)*b++)) return false;
-                return (*a == *b);
-        }
+        if (a && b)
+                return (strcasecmp(a, b) == 0);
         return false;
 }
 
 
 bool Str_isByteEqual(const char *a, const char *b) {
-        if (a && b) {
-                while (*a && *b)
-                        if (*a++ != *b++) return false;
-                return (*a == *b);
-        }
+        if (a && b)
+                return (__builtin_strcmp(a, b) == 0);
         return false;
 }
 
@@ -309,9 +317,9 @@ char *Str_trunc(char *s, int n) {
         if (s) {
                 size_t sl = strlen(s);
                 if (sl > (size_t)n) {
-                        if (n - 3 >= 0)
-                                for (int e = n - 3; e < n; e++)
-                                        s[e] = '.';
+                        if (n >= 3) {
+                                memset(s + n - 3, '.', 3);
+                        }
                         s[n] = 0;
                 }
         }
@@ -367,3 +375,4 @@ bool Str_authcmp(const char *a, const char *b) {
         }
         return rv == 0;
 }
+
