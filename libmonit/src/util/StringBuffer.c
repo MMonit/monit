@@ -126,56 +126,9 @@ T StringBuffer_append(T S, const char *s, ...) {
 
 T StringBuffer_vappend(T S, const char *s, va_list ap) {
         assert(S);
-        if (STR_DEF(s)) {
+        if (STR_DEF(s))
                 _append(S, s, ap);
-        }
         return S;
-}
-
-
-int StringBuffer_replace(T S, const char *a, const char *b) {
-        int n = 0;
-        assert(S);
-        if (a && b && *a) {
-                int i, j;
-                for (i = 0; S->buffer[i]; i++) {
-                        if (S->buffer[i] == *a) {
-                                j = 0;
-                                do
-                                        if (! a[++j]) {n++; break;}
-                                while (S->buffer[i + j] == a[j]);
-                        }
-                }
-                if (n) {
-                        int m = n;
-                        size_t bl = strlen(b);
-                        size_t diff = bl - strlen(a);
-                        if (diff > 0) {
-                                size_t required = (diff * n) + S->used + 1;
-                                if (required >= (size_t)S->length) {
-                                        S->length = (int)required;
-                                        RESIZE(S->buffer, S->length);
-                                }
-                        }
-                        for (i = 0; m; i++) {
-                                if (S->buffer[i] == *a) {
-                                        j = 0;
-                                        do
-                                                if (! a[++j]) {
-                                                        memmove(S->buffer + i + bl, S->buffer + i + j, (S->used - (i + j)));
-                                                        memcpy(S->buffer + i, b, bl);
-                                                        S->used += diff;
-                                                        i += bl - 1;
-                                                        m--;
-                                                        break;
-                                                }
-                                        while (S->buffer[i + j] == a[j]);
-                                }
-                        }
-                        S->buffer[S->used] = 0;
-                }
-        }
-        return n;
 }
 
 
@@ -200,60 +153,6 @@ T StringBuffer_trim(T S) {
                 memmove(S->buffer, start, S->used + 1);
         }
         return S;
-}
-
-
-T StringBuffer_delete(T S, int index) {
-        assert(S);
-        if (index < 0 || index > S->used)
-                THROW(AssertException, "Index out of bounds");
-        S->used = index;
-        S->buffer[S->used] = 0;
-        return S;
-}
-
-
-int StringBuffer_indexOf(T S, const char *s) {
-        assert(S);
-        if (STR_DEF(s)) {
-                int i, j;
-                for (i = 0; i < S->used; i++) {
-                        if (S->buffer[i] == *s) {
-                                j = 0;
-                                do
-                                        if (! s[++j])
-                                                return i;
-                                while (S->buffer[i + j] == s[j]);
-                        }
-                }
-        }
-        return -1;
-}
-
-
-int StringBuffer_lastIndexOf(T S, const char *s) {
-        assert(S);
-        if (STR_DEF(s)) {
-                int i, j;
-                for (i = S->used - 1; i >= 0; i--) {
-                        if (S->buffer[i] == *s) {
-                                j = 0;
-                                do
-                                        if (! s[++j])
-                                                return i;
-                                while (S->buffer[i + j] == s[j]);
-                        }
-                }
-        }
-        return -1;
-}
-
-
-const char *StringBuffer_substring(T S, int index) {
-        assert(S);
-        if (index < 0 || index > S->used)
-                THROW(AssertException, "Index out of bounds");
-        return (const char *)(S->buffer + index);
 }
 
 

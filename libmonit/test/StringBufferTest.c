@@ -113,61 +113,7 @@ int main(void) {
         }
         printf("=> Test5: OK\n\n");
 
-        printf("=> Test6: deleteFrom\n");
-        {
-                sb = StringBuffer_new("abcdefgh");
-                assert(sb);
-                TRY
-                {
-                        StringBuffer_delete(sb, -1);
-                        assert(false);
-                }
-                CATCH(AssertException)
-                {
-                        printf("\tok\n");
-                }
-                END_TRY;
-                TRY
-                {
-                        StringBuffer_delete(sb, 9);
-                        assert(false);
-                }
-                CATCH(AssertException)
-                {
-                        printf("\tok\n");
-                }
-                END_TRY;
-                StringBuffer_delete(sb,3);
-                assert(StringBuffer_length(sb)==3);
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-        }
-        printf("=> Test6: OK\n\n");
-
-        printf("=> Test7: indexOf and lastIndexOf\n");
-        {
-                sb = StringBuffer_new("jan-henrik haukeland");
-                assert(sb);
-                assert(StringBuffer_indexOf(sb, "henrik")==4);
-                assert(StringBuffer_indexOf(sb, "an")==1);
-                assert(StringBuffer_indexOf(sb, "-")==3);
-                assert(StringBuffer_lastIndexOf(sb, "an")==17);
-                assert(StringBuffer_indexOf(sb, "")==-1);
-                assert(StringBuffer_indexOf(sb, 0)==-1);
-                assert(StringBuffer_indexOf(sb, "d")==19);
-                assert(StringBuffer_indexOf(sb, "j")==0);
-                assert(StringBuffer_lastIndexOf(sb, "d")==19);
-                assert(StringBuffer_lastIndexOf(sb, "j")==0);
-                assert(StringBuffer_lastIndexOf(sb, "x")==-1);
-                assert(StringBuffer_indexOf(sb, "jane")==-1);
-                assert(StringBuffer_indexOf(sb, "jan-henrik haukeland")==0);
-                assert(StringBuffer_indexOf(sb, "haukeland")==11);
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-        }
-        printf("=> Test7: OK\n\n");
-
-        printf("=> Test8: length and clear\n");
+        printf("=> Test6: length and clear\n");
         {
                 sb = StringBuffer_new("jan-henrik haukeland");
                 assert(sb);
@@ -177,9 +123,9 @@ int main(void) {
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
         }
-        printf("=> Test8: OK\n\n");
+        printf("=> Test6: OK\n\n");
 
-        printf("=> Test9: toString value\n");
+        printf("=> Test7: toString value\n");
         {
                 sb = StringBuffer_new("abc");
                 assert(sb);
@@ -188,9 +134,9 @@ int main(void) {
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
         }
-        printf("=> Test9: OK\n\n");
+        printf("=> Test7: OK\n\n");
 
-        printf("=> Test10: internal resize\n");
+        printf("=> Test8: internal resize\n");
         {
                 int i;
                 sb = StringBuffer_new("");
@@ -203,104 +149,10 @@ int main(void) {
                 StringBuffer_free(&sb);
                 assert(sb==NULL);
         }
-        printf("=> Test10: OK\n\n");
-
-        printf("=> Test11: substring\n");
-        {
-                sb = StringBuffer_new("jan-henrik haukeland");
-                assert(sb);
-                assert(Str_isEqual(StringBuffer_substring(sb, StringBuffer_indexOf(sb, "-")),
-                                                 "-henrik haukeland"));
-                TRY
-                {
-                        StringBuffer_substring(sb, -1);
-                        assert(false);
-                }
-                CATCH(AssertException)
-                {
-                        printf("\tok\n");
-                }
-                END_TRY;
-                TRY
-                {
-                        StringBuffer_substring(sb, 1000);
-                        assert(false);
-                }
-                CATCH(AssertException)
-                {
-                        printf("\tok\n");
-                }
-                END_TRY;
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-        }
-        printf("=> Test11: OK\n\n");
-
-        printf("=> Test12: replace\n");
-        {
-                printf("\tNothing to replace\n");
-                sb = StringBuffer_new("abc?def?");
-                assert(sb);
-                StringBuffer_replace(sb, "x", "$x");
-                assert(Str_isEqual(StringBuffer_toString(sb), "abc?def?"));
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-                printf("\tReplace and expand\n");
-                sb = StringBuffer_new("abc?def?");
-                assert(sb);
-                StringBuffer_replace(sb, "?", "$x");
-                assert(Str_isEqual(StringBuffer_toString(sb), "abc$xdef$x"));
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-                printf("\tReplace and shrink\n");
-                sb = StringBuffer_new("abc$xdef$x");
-                assert(sb);
-                StringBuffer_replace(sb, "$x", "?");
-                assert(Str_isEqual(StringBuffer_toString(sb), "abc?def?"));
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-                printf("\tReplace with empty string\n");
-                sb = StringBuffer_new("abc$xdef$x");
-                assert(sb);
-                StringBuffer_replace(sb, "$x", "");
-                assert(Str_isEqual(StringBuffer_toString(sb), "abcdef"));
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-                printf("\tReplace with same length\n");
-                sb = StringBuffer_new("foo bar baz foo bar baz");
-                assert(sb);
-                StringBuffer_replace(sb, "baz", "bar");
-                assert(Str_isEqual(StringBuffer_toString(sb), "foo bar bar foo bar bar"));
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-                printf("\tRemove words and test traceback\n");
-                sb = StringBuffer_new("foo bar baz foo foo bar baz");
-                assert(sb);
-                StringBuffer_replace(sb, "baz", "bar");
-                assert(Str_isEqual(StringBuffer_toString(sb), "foo bar bar foo foo bar bar"));
-                StringBuffer_replace(sb, "foo bar ", "");
-                assert(Str_isEqual(StringBuffer_toString(sb), "bar foo bar"));
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-                printf("\tReplace all elements\n");
-                sb = StringBuffer_new("aaaaaaaaaaaaaaaaaaaaaaaa");
-                assert(sb);
-                StringBuffer_replace(sb, "a", "b");
-                assert(Str_isEqual(StringBuffer_toString(sb), "bbbbbbbbbbbbbbbbbbbbbbbb"));
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-                printf("\tReplace and expand with resize of StringBuffer\n");
-                sb = StringBuffer_new("insert into(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) values (1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,01,2,3);");
-                assert(sb);
-                StringBuffer_replace(sb, "?", "$x");
-                assert(Str_isEqual(StringBuffer_toString(sb), "insert into($x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x, $x) values (1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,01,2,3);"));
-                StringBuffer_free(&sb);
-                assert(sb==NULL);
-        }
-        printf("=> Test12: OK\n\n");
+        printf("=> Test8: OK\n\n");
 
 #ifdef HAVE_LIBZ
-        printf("=> Test13: compression\n");
+        printf("=> Test9: compression\n");
         {
                 const char *input = "<aaaaaaaaaa>"
                                     "<bbbbbbbbbb>"
@@ -334,9 +186,9 @@ int main(void) {
                 StringBuffer_free(&sb);
                 assert(sb == NULL);
         }
-        printf("=> Test13: OK\n\n");
+        printf("=> Test9: OK\n\n");
 
-        printf("=> Test14: empty string compression\n");
+        printf("=> Test10: empty string compression\n");
         {
                 const char *input = "";
                 sb = StringBuffer_new(input);
@@ -348,9 +200,9 @@ int main(void) {
                 StringBuffer_free(&sb);
                 assert(sb == NULL);
         }
-        printf("=> Test14: OK\n\n");
+        printf("=> Test10: OK\n\n");
 
-        printf("=> Test15: StringBuffer set-compress -> clear-compress -> append-compress\n");
+        printf("=> Test11: StringBuffer set-compress -> clear-compress -> append-compress\n");
         {
                 printf("\tStage 1: set content + compress\n");
                 const char *input1 = "<aaaaaaaaaa>"
@@ -437,7 +289,7 @@ int main(void) {
                 StringBuffer_free(&sb);
                 assert(sb == NULL);
         }
-        printf("=> Test15: OK\n\n");
+        printf("=> Test11: OK\n\n");
 #endif
         printf("============> StringBuffer Tests: OK\n\n");
 
