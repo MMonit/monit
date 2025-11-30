@@ -152,12 +152,16 @@ char *Str_replaceChar(char *s, char o, char n);
 
 
 /**
- * Returns true if <i>a</i> starts with <i>b</i>. The test is
- * <i>case-insensitive</i> but depends on that all characters
- * in the two strings can be translated in the current locale.
- * <code>b</code> is assumed to be the substring of <code>a</code>.
- * This means that if <code>a</code> is shorter than <code>b</code>,
- * this method returns false
+ * Returns true if `a` starts with `b`. The test is *case-insensitive*
+ * but depends on all characters in the two strings being translatable
+ * in the current locale.
+ *
+ * `b` is assumed to be the substring of `a`. This means that if `a` is
+ * shorter than `b`, this method returns false.
+ *
+ * If either `a` or `b` is NULL or the empty string, this method returns
+ * false as neither NULL nor empty string is considered a value.
+ *
  * @param a The string to search for b in
  * @param b The sub-string to test a against
  * @return true if a starts with b, otherwise false
@@ -166,9 +170,16 @@ bool Str_startsWith(const char *a, const char *b);
 
 
 /**
- * Returns true if <i>a</i> ends with <i>b</i>. The test is
- * <i>case-insensitive</i> but depends on that all characters
- * in the two strings can be translated in the current locale.
+ * Returns true if `a` ends with `b`. The test is *case-insensitive*
+ * but depends on all characters in the two strings being translatable
+ * in the current locale.
+ *
+ * `b` is assumed to be the substring of `a`. This means that if `a` is
+ * shorter than `b`, this method returns false.
+ *
+ * If either `a` or `b` is NULL or the empty string, this method returns
+ * false as neither NULL nor empty string is considered a value.
+ *
  * @param a The string to search for b in
  * @param b The sub-string to test a against
  * @return true if a ends with b, otherwise false
