@@ -98,22 +98,6 @@ T StringBuffer_vappend(T S, const char *s, va_list ap) __attribute__((format (pr
 
 
 /**
- * Replace all occurrences of <code>a</code> with <code>b</code>. Example:
- * <pre>
- * StringBuffer_T b = StringBuffer_new("foo bar baz foo foo bar baz");
- * StringBuffer_replace(b, "baz", "bar") -> "foo bar bar foo foo bar bar"
- * StringBuffer_replace(b, "foo bar ", "") -> "bar foo bar"
- * </pre>
- * @param S StringBuffer object
- * @param a The sub-string to be replaced with <code>b</code>
- * @param b The string to replace <code>a</code>
- * @return The number of replacements that took place
- * @exception MemoryException if allocation was used and failed
- */
-int StringBuffer_replace(T S, const char *a, const char *b);
-
-
-/**
  * Remove (any) leading and trailing white space [ \\t\\r\\n]. Example
  * <pre>
  * StringBuffer_T b = StringBuffer_new("\t 'foo bar' \n");
@@ -123,61 +107,6 @@ int StringBuffer_replace(T S, const char *a, const char *b);
  * @return a reference to this StringBuffer
  */
 T StringBuffer_trim(T S);
-
-
-/**
- * Remove all characters from the given <code>index</code> position and
- * to the end of the StringBuffer. The index parameter must be greater
- * than or equal to 0 and less than the length of the StringBuffer.
- * @param S StringBuffer object
- * @param index The position of the buffer to start truncating
- * @exception AssertException if the index parameter is negative
- * or greater than or equal to the StringBuffer length.
- * @return a reference to this StringBuffer
- */
-T StringBuffer_delete(T S, int index);
-
-
-/**
- * Locate the first occurrence of the string <code>s</code>
- * in the StringBuffer. Example:
- * <pre>
- * StringBuffer_T b = StringBuffer_new("foo bar");
- * StringBuffer_indexOf(b, "foo") ->  0
- * StringBuffer_indexOf(b, "bar") ->  4
- * StringBuffer_indexOf(b, "a")   ->  5
- * StringBuffer_indexOf(b, "xy")  -> -1
- * </pre>
- * @param S StringBuffer object
- * @param s The string to search for in the buffer
- * @return The index of the first occurrence of <code>s</code> in the
- * buffer or -1 if not found.
- */
-int StringBuffer_indexOf(T S, const char *s);
-
-
-/**
- * Locate the last occurrence of the string <code>s</code>
- * in the StringBuffer.
- * @param S StringBuffer object
- * @param s The string to search for in the buffer
- * @return The index of the last occurrence of <code>s</code> in the
- * buffer or -1 if not found.
- */
-int StringBuffer_lastIndexOf(T S, const char *s);
-
-
-/**
- * Returns a substring of characters currently contained in this character
- * sequence. The substring begins at the specified index and extends to the
- * end of this sequence
- * @param S StringBuffer object
- * @param index The start index of the substring
- * @return A substring of StringBuffer
- * @exception AssertException if the index parameter is negative
- * or greater than or equal to the StringBuffer length.
- */
-const char *StringBuffer_substring(T S, int index);
 
 
 /**
