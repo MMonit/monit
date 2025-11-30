@@ -73,10 +73,10 @@ char *Str_trim(char *s) {
 
 
 char *Str_ltrim(char *s) {
-        if (STR_DEF(s) && isspace(*s)) {
+        if (STR_DEF(s) && isspace((uchar_t)*s)) {
                 int i, j;
-                for (j = 0; s[j]; j++) ;
-                for (i = 0; isspace(s[i]); i++) ;
+                for (i = 0; isspace((uchar_t)s[i]); i++) ;
+                for (j = i; s[j]; j++) ;
                 memmove(s, s + i, j - i);
                 s[j - i] = 0;
         }
@@ -86,7 +86,7 @@ char *Str_ltrim(char *s) {
 
 char *Str_rtrim(char *s) {
         if (STR_DEF(s))
-                for (ssize_t j = strlen(s) - 1; j >= 0 && isspace(s[j]); j--)
+                for (ssize_t j = strlen(s) - 1; j >= 0 && isspace((uchar_t)s[j]); j--)
                         s[j] = 0;
         return s;
 }
@@ -164,7 +164,7 @@ char *Str_replaceChar(char *s, char o, char n) {
 bool Str_startsWith(const char *a, const char *b) {
         if (a && b) {
                 do {
-                        if (toupper(*a) != toupper(*b))
+                        if (toupper((uchar_t)*a) != toupper((uchar_t)*b))
                                 return false;
                         if (*a++ == 0 || *b++ == 0)
                                 break;
@@ -179,7 +179,7 @@ bool Str_endsWith(const char *a, const char *b) {
         if (a && b) {
                 size_t i = 0, j = 0;
                 for (i = strlen(a), j = strlen(b); (i && j); i--, j--)
-                        if (toupper(a[i]) != toupper(b[j])) return false;
+                        if (toupper((uchar_t)a[i]) != toupper((uchar_t)b[j])) return false;
                 return (i >= j);
         }
         return false;
@@ -190,13 +190,13 @@ char *Str_sub(const char *a, const char *b) {
         if (a && STR_DEF(b)) {
                 const char *p, *q;
                 while (*a) {
-                        if (toupper(*a) == toupper(*b)) {
+                        if (toupper((uchar_t)*a) == toupper((uchar_t)*b)) {
                                 p = a;
                                 q = b;
                                 do
                                         if (! *q)
                                                 return (char*)a;
-                                while (toupper(*p++) == toupper(*q++));
+                                while (toupper((uchar_t)*p++) == toupper((uchar_t)*q++));
                         }
                         a++;
                 }
@@ -221,7 +221,7 @@ bool Str_has(const char *charset, const char *s) {
 bool Str_isEqual(const char *a, const char *b) {
         if (a && b) {
                 while (*a && *b)
-                        if (toupper(*a++) != toupper(*b++)) return false;
+                        if (toupper((uchar_t)*a++) != toupper((uchar_t)*b++)) return false;
                 return (*a == *b);
         }
         return false;
