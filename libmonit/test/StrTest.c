@@ -396,7 +396,15 @@ int main(void) {
         }
         printf("=> Test15: OK\n\n");
 
-        printf("=> Test16: Str_curtail\n");
+        printf("=> Test16: Str_has\n");
+        {
+                char *foo = "'bar' (baz)";
+                assert(Str_has("(')", foo));
+                assert(! Str_has(",;", foo));
+        }
+        printf("=> Test16: OK\n\n");
+
+        printf("=> Test17: Str_curtail\n");
         {
                 char s[] = "<text>Hello World</text>";
                 assert(Str_isByteEqual(Str_curtail(s, "</text>"), "<text>Hello World"));
@@ -406,9 +414,9 @@ int main(void) {
                 assert(Str_isByteEqual("a", NULL) == false);
                 assert(Str_isByteEqual(NULL, NULL) == false);
         }
-        printf("=> Test16: OK\n\n");
+        printf("=> Test17: OK\n\n");
 
-        printf("=> Test17: Str_authcmp\n");
+        printf("=> Test18: Str_authcmp\n");
         {
                 assert(!Str_authcmp(NULL,     NULL));
                 assert(!Str_authcmp("abcdef", NULL));
@@ -422,15 +430,15 @@ int main(void) {
                 assert(!Str_authcmp(a, b));
                 assert(Str_authcmp(a, a));
         }
-        printf("=> Test17: OK\n\n");
+        printf("=> Test18: OK\n\n");
 
-        printf("=> Test18: Str_cmp\n");
+        printf("=> Test19: Str_cmp\n");
         {
                 assert(Str_cmp("foo", "foo") == 0);
                 assert(Str_cmp("foo", "FOO") != 0);
                 assert(Str_cmp("foo", "bar") != 0);
         }
-        printf("=> Test18: OK\n\n");
+        printf("=> Test19: OK\n\n");
 
         printf("============> Str Tests: OK\n\n");
         return 0;
