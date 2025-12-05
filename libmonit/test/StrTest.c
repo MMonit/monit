@@ -81,23 +81,17 @@ int main(void) {
 
         printf("=> Test6: trim\n");
         {
-                char el[]  = "   ";
                 char er[]  = "   ";
                 char elr[] = "   ";
-                char ol[]  = " a ";
                 char or[]  = " a ";
                 char olr[] = " a ";
-                char s[]   = "   abcdef";
                 char s4[]  = "  \t abc \r\n\t ";
-                assert(Str_isEqual(Str_ltrim(s), "abcdef"));
                 printf("\tResult: %s\n", Str_trim(s4));
                 assert(Str_isEqual(s4, "abc"));
                 printf("\tTesting for NULL argument\n");
                 assert(!Str_trim(NULL));
-                assert(Str_isEqual(Str_ltrim(el), ""));
                 assert(Str_isEqual(Str_rtrim(er), ""));
                 assert(Str_isEqual(Str_trim(elr), ""));
-                assert(Str_isEqual(Str_ltrim(ol), "a "));
                 assert(Str_isEqual(Str_rtrim(or), " a"));
                 assert(Str_isEqual(Str_trim(olr), "a"));
                 assert(Str_isEqual(Str_trim(olr), "a"));
@@ -274,7 +268,7 @@ int main(void) {
                 assert(!Str_startsWith(NULL, "mysql"));
                 assert(!Str_startsWith("", NULL));
                 assert(!Str_startsWith(NULL, NULL));
-                assert(Str_startsWith("", ""));
+                assert(!Str_startsWith("", ""));
                 assert(!Str_startsWith("/", "/WEB-INF"));
         }
         printf("=> Test10: OK\n\n");
@@ -288,11 +282,11 @@ int main(void) {
                 assert(Str_endsWith("sqlite", "sqlite"));
                 printf("\tTesting for NULL and NUL argument\n");
                 assert(!Str_endsWith(a, NULL));
-                assert(Str_endsWith(a, "")); // a ends with 0
+                assert(!Str_endsWith(a, "")); // a ends with 0
                 assert(!Str_endsWith(NULL, "mysql"));
                 assert(!Str_endsWith("", NULL));
                 assert(!Str_endsWith(NULL, NULL));
-                assert(Str_endsWith("", ""));
+                assert(!Str_endsWith("", ""));
                 assert(!Str_endsWith("abc", "defabc"));
         }
         printf("=> Test11: OK\n\n");
@@ -402,15 +396,7 @@ int main(void) {
         }
         printf("=> Test15: OK\n\n");
 
-        printf("=> Test16: Str_has\n");
-        {
-                char *foo = "'bar' (baz)";
-                assert(Str_has("(')", foo));
-                assert(! Str_has(",;", foo));
-        }
-        printf("=> Test16: OK\n\n");
-
-        printf("=> Test17: Str_curtail\n");
+        printf("=> Test16: Str_curtail\n");
         {
                 char s[] = "<text>Hello World</text>";
                 assert(Str_isByteEqual(Str_curtail(s, "</text>"), "<text>Hello World"));
@@ -420,9 +406,9 @@ int main(void) {
                 assert(Str_isByteEqual("a", NULL) == false);
                 assert(Str_isByteEqual(NULL, NULL) == false);
         }
-        printf("=> Test17: OK\n\n");
+        printf("=> Test16: OK\n\n");
 
-        printf("=> Test18: Str_authcmp\n");
+        printf("=> Test17: Str_authcmp\n");
         {
                 assert(!Str_authcmp(NULL,     NULL));
                 assert(!Str_authcmp("abcdef", NULL));
@@ -436,15 +422,15 @@ int main(void) {
                 assert(!Str_authcmp(a, b));
                 assert(Str_authcmp(a, a));
         }
-        printf("=> Test18: OK\n\n");
+        printf("=> Test17: OK\n\n");
 
-        printf("=> Test19: Str_cmp\n");
+        printf("=> Test18: Str_cmp\n");
         {
                 assert(Str_cmp("foo", "foo") == 0);
                 assert(Str_cmp("foo", "FOO") != 0);
                 assert(Str_cmp("foo", "bar") != 0);
         }
-        printf("=> Test19: OK\n\n");
+        printf("=> Test18: OK\n\n");
 
         printf("============> Str Tests: OK\n\n");
         return 0;

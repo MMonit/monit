@@ -56,20 +56,6 @@
 
 
 /**
- * Set <code>a</code> to <code>b</code> if and only if a != b.
- * Deallocate the previous value of a and copy b as the new value
- * of a. If a == b, this function leaves a as it was. The string
- * <code>a</code> <b>must</b> be of a heap allocated <code>char *
- * </code> type, while <code>b</code> can be any string type.
- * @param a The (char *) string to replace with b if b != a
- * @param b The string to copy as the new value of a if a != b
- * @hideinitializer
- */
-#define STR_SET(a, b) do { if (!Str_isByteEqual((a), (b))) \
-        { FREE((a)); (a) = Str_dup((b));} } while(0)
-
-
-/**
  * Removes everything from the first newline (CR|LF)
  * @param s A string to be chomped
  * @return The chomped string
@@ -84,14 +70,6 @@ char *Str_chomp(char *s);
  * @return s with leading and trailing spaces removed
  */
 char *Str_trim(char *s);
-
-
-/**
- * Remove leading white space [ \\t\\r\\n] from the string.
- * @param s A string
- * @return s with leading spaces removed
- */
-char *Str_ltrim(char *s);
 
 
 /**
@@ -141,12 +119,16 @@ double Str_parseDouble(const char *s);
 
 
 /**
- * Replace all occurrences of the <code>old</code> char in
- * <code>s</code> with the <code>new</code> char.
- * @param s A string
- * @param o The old char
- * @param n The new char
- * @return s where all occurrence of old are replaced with new
+ * Replaces all occurrences of character `o` with `n` in string `s`.
+ * The replacement is done in-place.
+ *
+ * If `n` is `'\0'`, the string is truncated at the first occurrence
+ * of `o`.
+ *
+ * @param s The string to modify, or NULL
+ * @param o The character to replace
+ * @param n The replacement character, or `'\0'` to truncate
+ * @return s, or NULL if s was NULL
  */
 char *Str_replaceChar(char *s, char o, char n);
 
@@ -160,10 +142,12 @@ char *Str_replaceChar(char *s, char o, char n);
  * shorter than `b`, this method returns false.
  *
  * If either `a` or `b` is NULL or the empty string, this method returns
- * false as neither NULL nor empty string is considered a value.
+ * false. Technically, the empty string is a prefix of every string, but
+ * this function is designed to be used as a guard where `b` must represent
+ * a meaningful value.
  *
- * @param a The string to search for b in
- * @param b The sub-string to test a against
+ * @param a The string to search for `b` in
+ * @param b The sub-string to test `a` against
  * @return true if a starts with b, otherwise false
  */
 bool Str_startsWith(const char *a, const char *b);
@@ -178,10 +162,12 @@ bool Str_startsWith(const char *a, const char *b);
  * shorter than `b`, this method returns false.
  *
  * If either `a` or `b` is NULL or the empty string, this method returns
- * false as neither NULL nor empty string is considered a value.
+ * false. Technically, the empty string is a suffix of every string, but
+ * this function is designed to be used as a guard where `b` must represent
+ * a meaningful value.
  *
- * @param a The string to search for b in
- * @param b The sub-string to test a against
+ * @param a The string to search for `b` in
+ * @param b The sub-string to test `a` against
  * @return true if a ends with b, otherwise false
  */
 bool Str_endsWith(const char *a, const char *b);

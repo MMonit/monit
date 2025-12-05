@@ -101,30 +101,6 @@ char *Str_rtrim(char *s) {
 }
 
 
-char *Str_ltrim(char *s) {
-        if (STR_UNDEF(s))
-                return s;
-        
-        unsigned char *start = (unsigned char *)s;
-        
-        while (isspace(*start)) start++;
-        
-        if (start == (unsigned char *)s) return s;  // Nothing to trim
-        
-        if (!*start) {  // All whitespace
-                *s = '\0';
-                return s;
-        }
-        
-        size_t len = strlen((char *)start);
-        
-        // Move including null terminator
-        memmove(s, start, len + 1);
-        
-        return s;
-}
-
-
 char *Str_unquote(char *s) {
         if (STR_DEF(s)) {
                 char *t = s;
