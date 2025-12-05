@@ -407,13 +407,16 @@ CFLAGS="$CFLAGS -D_GNU_SOURCE"
 # Compiler; tune warnings
 CFLAGS="$CFLAGS -Wall -Wunused ";
 
-# Require at least C11 and use C17 if available
+# Require C11 and use the latest available (C23 > C17 > C11)
 AC_COMPUTE_INT([STDC_VERSION],[__STDC_VERSION__],,[STDC_VERSION=0])
-AS_IF([test "$STDC_VERSION" -ge 201710],
-    [CFLAGS="$CFLAGS -std=c17"],
-    [AS_IF([test "$STDC_VERSION" -ge 201112],
-        [CFLAGS="$CFLAGS -std=c11"],
-        [AC_MSG_ERROR([Your compiler does not support C11 or later])]
+AS_IF([test "$STDC_VERSION" -ge 202311],
+    [CFLAGS="$CFLAGS -std=c23"],
+    [AS_IF([test "$STDC_VERSION" -ge 201710],
+        [CFLAGS="$CFLAGS -std=c17"],
+        [AS_IF([test "$STDC_VERSION" -ge 201112],
+            [CFLAGS="$CFLAGS -std=c11"],
+            [AC_MSG_ERROR([Your compiler does not support C11 or later])]
+        )]
     )]
 )
 
@@ -897,7 +900,7 @@ then
             [
                 if test -z "$sslincldir"; then
                     dnl Search default locations of SSL includes
-                    for maindir in /usr /usr/local /usr/lib /usr/pkg /var /opt /usr/sfw /opt/csw /opt/freeware; do
+                    for maindir in /usr /usr/local /usr/lib /usr/pkg /var /opt /opt/local /usr/sfw /opt/csw /opt/freeware; do
                         for dir in "$maindir/include"\
                                    "$maindir/include/openssl"\
                                    "$maindir/include/ssl"\
@@ -935,6 +938,7 @@ then
                                    /usr/pkg \
                                    /var \
                                    /opt \
+                                   /opt/local \
                                    /usr/sfw \
                                    /opt/csw \
                                    /opt/freeware; do
