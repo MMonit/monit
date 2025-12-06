@@ -843,6 +843,7 @@ typedef struct ActionRate_T {
 typedef struct Every_T {
         Every_Type type;
         _Atomic bool run_now;
+        bool await_program_exit;  // Only written by main thread
         union {
                 struct {
                         int number; /**< Check this program at a given cycles */

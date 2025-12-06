@@ -274,7 +274,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage = %.1f%%]", s->inf.process->cpu_percent);
                         }
                         break;
-
+                        
                 case Resource_CpuPercentTotal:
                         if (s->inf.process->total_cpu_percent < 0.) {
                                 DEBUG("'%s' total cpu usage check skipped (initializing)\n", s->name);
@@ -286,7 +286,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "total cpu usage check succeeded [current cpu usage = %.1f%%]", s->inf.process->total_cpu_percent);
                         }
                         break;
-
+                        
                 case Resource_MemoryPercent:
                         if (s->inf.process->mem_percent < 0.) {
                                 DEBUG("'%s' memory usage check skipped (initializing)\n", s->name);
@@ -298,7 +298,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "mem usage check succeeded [current mem usage = %.1f%%]", s->inf.process->mem_percent);
                         }
                         break;
-
+                        
                 case Resource_MemoryKbyte:
                         if (s->inf.process->mem == 0) {
                                 DEBUG("'%s' process memory usage check skipped (initializing)\n", s->name);
@@ -310,7 +310,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "mem amount check succeeded [current mem amount = %s]", Fmt_bytes2str(s->inf.process->mem, buf1));
                         }
                         break;
-
+                        
                 case Resource_Threads:
                         if (s->inf.process->threads < 0) {
                                 DEBUG("'%s' process threads count check skipped (initializing)\n", s->name);
@@ -322,7 +322,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "threads check succeeded [current threads = %i]", s->inf.process->threads);
                         }
                         break;
-
+                        
                 case Resource_Children:
                         if (s->inf.process->children < 0) {
                                 DEBUG("'%s' process children count check skipped (initializing)\n", s->name);
@@ -334,7 +334,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "children check succeeded [current children = %i]", s->inf.process->children);
                         }
                         break;
-
+                        
                 case Resource_MemoryKbyteTotal:
                         if (s->inf.process->total_mem == 0) {
                                 DEBUG("'%s' process total memory usage check skipped (initializing)\n", s->name);
@@ -346,7 +346,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "total mem amount check succeeded [current total mem amount = %s]", Fmt_bytes2str(s->inf.process->total_mem, buf1));
                         }
                         break;
-
+                        
                 case Resource_MemoryPercentTotal:
                         if (s->inf.process->total_mem_percent < 0.) {
                                 DEBUG("'%s' total memory usage check skipped (initializing)\n", s->name);
@@ -358,7 +358,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "total mem amount check succeeded [current total mem amount = %.1f%%]", s->inf.process->total_mem_percent);
                         }
                         break;
-
+                        
                 case Resource_ReadBytes:
                         if (Statistics_initialized(&(s->inf.process->read.bytes))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.process->read.bytes));
@@ -373,7 +373,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 return State_Init;
                         }
                         break;
-
+                        
                 case Resource_ReadBytesPhysical:
                         if (Statistics_initialized(&(s->inf.process->read.bytesPhysical))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.process->read.bytesPhysical));
@@ -388,7 +388,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 return State_Init;
                         }
                         break;
-
+                        
                 case Resource_ReadOperations:
                         if (Statistics_initialized(&(s->inf.process->read.operations))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.process->read.operations));
@@ -403,7 +403,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 return State_Init;
                         }
                         break;
-
+                        
                 case Resource_WriteBytes:
                         if (Statistics_initialized(&(s->inf.process->write.bytes))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.process->write.bytes));
@@ -418,7 +418,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 return State_Init;
                         }
                         break;
-
+                        
                 case Resource_WriteBytesPhysical:
                         if (Statistics_initialized(&(s->inf.process->write.bytesPhysical))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.process->write.bytesPhysical));
@@ -433,7 +433,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 return State_Init;
                         }
                         break;
-
+                        
                 case Resource_WriteOperations:
                         if (Statistics_initialized(&(s->inf.process->write.operations))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.process->write.operations));
@@ -448,31 +448,31 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                                 return State_Init;
                         }
                         break;
-
+                        
                 case Resource_LoadAverage1m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[0], "loadavg (1min)", report);
                         break;
-
+                        
                 case Resource_LoadAverage5m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[1], "loadavg (5min)", report);
                         break;
-
+                        
                 case Resource_LoadAverage15m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[2], "loadavg (15min)", report);
                         break;
-
+                        
                 case Resource_LoadAveragePerCore1m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[0] / (double)System_Info.cpu.count, "loadavg per core (1min)", report);
                         break;
-
+                        
                 case Resource_LoadAveragePerCore5m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[1] / (double)System_Info.cpu.count, "loadavg per core (5min)", report);
                         break;
-
+                        
                 case Resource_LoadAveragePerCore15m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[2] / (double)System_Info.cpu.count, "loadavg per core (15min)", report);
                         break;
-
+                        
                 default:
                         Log_error("'%s' error -- unknown resource ID: [%d]\n", s->name, r->resource_id);
                         return State_Failed;
@@ -489,22 +489,22 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
         char report[STRLEN] = {}, buf1[10], buf2[10];
         switch (r->resource_id) {
                 case Resource_CpuPercent:
-                        {
-                                float cpu =
-                                        (System_Info.cpu.usage.system > 0. ? System_Info.cpu.usage.system : 0.) +
-                                        (System_Info.cpu.usage.user > 0. ? System_Info.cpu.usage.user : 0.);
-                                if (cpu < 0.) {
-                                        DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
-                                        return State_Init;
-                                } else if (Util_evalDoubleQExpression(r->operator, cpu, r->limit)) {
-                                        rv = State_Failed;
-                                        snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage %s %.1f%%]", cpu, OperatorShort_Names[r->operator], r->limit);
-                                } else {
-                                        snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage = %.1f%%]", cpu);
-                                }
+                {
+                        float cpu =
+                        (System_Info.cpu.usage.system > 0. ? System_Info.cpu.usage.system : 0.) +
+                        (System_Info.cpu.usage.user > 0. ? System_Info.cpu.usage.user : 0.);
+                        if (cpu < 0.) {
+                                DEBUG("'%s' cpu usage check skipped (initializing)\n", s->name);
+                                return State_Init;
+                        } else if (Util_evalDoubleQExpression(r->operator, cpu, r->limit)) {
+                                rv = State_Failed;
+                                snprintf(report, STRLEN, "cpu usage of %.1f%% matches resource limit [cpu usage %s %.1f%%]", cpu, OperatorShort_Names[r->operator], r->limit);
+                        } else {
+                                snprintf(report, STRLEN, "cpu usage check succeeded [current cpu usage = %.1f%%]", cpu);
                         }
+                }
                         break;
-
+                        
                 case Resource_CpuUser:
                         if (System_Info.cpu.usage.user < 0.) {
                                 DEBUG("'%s' cpu user usage check skipped (initializing)\n", s->name);
@@ -516,7 +516,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "cpu user usage check succeeded [current cpu user usage = %.1f%%]", System_Info.cpu.usage.user);
                         }
                         break;
-
+                        
                 case Resource_CpuSystem:
                         if (System_Info.cpu.usage.system < 0.) {
                                 DEBUG("'%s' cpu system usage check skipped (initializing)\n", s->name);
@@ -528,7 +528,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "cpu system usage check succeeded [current cpu system usage = %.1f%%]", System_Info.cpu.usage.system);
                         }
                         break;
-
+                        
                 case Resource_CpuWait:
                         if (System_Info.statisticsAvailable & Statistics_CpuIOWait) {
                                 if (System_Info.cpu.usage.iowait < 0.) {
@@ -544,7 +544,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 Log_warning("Cannot test cpu I/O wait usage as the statistics is not available on this system\n");
                         }
                         break;
-
+                        
                 case Resource_CpuNice:
                         if (System_Info.statisticsAvailable & Statistics_CpuNice) {
                                 if (System_Info.cpu.usage.nice < 0.) {
@@ -560,7 +560,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 Log_warning("Cannot test cpu nice usage as the statistics is not available on this system\n");
                         }
                         break;
-
+                        
                 case Resource_CpuHardIRQ:
                         if (System_Info.statisticsAvailable & Statistics_CpuHardIRQ) {
                                 if (System_Info.cpu.usage.hardirq < 0.) {
@@ -576,7 +576,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 Log_warning("Cannot test cpu hardware IRQ usage as the statistics is not available on this system\n");
                         }
                         break;
-
+                        
                 case Resource_CpuSoftIRQ:
                         if (System_Info.statisticsAvailable & Statistics_CpuSoftIRQ) {
                                 if (System_Info.cpu.usage.softirq < 0.) {
@@ -592,7 +592,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 Log_warning("Cannot test cpu software IRQ usage as the statistics is not available on this system\n");
                         }
                         break;
-
+                        
                 case Resource_CpuSteal:
                         if (System_Info.statisticsAvailable & Statistics_CpuSteal) {
                                 if (System_Info.cpu.usage.steal < 0.) {
@@ -608,7 +608,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 Log_warning("Cannot test cpu steal usage as the statistics is not available on this system\n");
                         }
                         break;
-
+                        
                 case Resource_CpuGuest:
                         if (System_Info.statisticsAvailable & Statistics_CpuGuest) {
                                 if (System_Info.cpu.usage.guest < 0.) {
@@ -624,7 +624,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 Log_warning("Cannot test cpu guest usage as the statistics is not available on this system\n");
                         }
                         break;
-
+                        
                 case Resource_CpuGuestNice:
                         if (System_Info.statisticsAvailable & Statistics_CpuGuestNice) {
                                 if (System_Info.cpu.usage.guest_nice < 0.) {
@@ -640,7 +640,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 Log_warning("Cannot test cpu guestnice usage as the statistics is not available on this system\n");
                         }
                         break;
-
+                        
                 case Resource_MemoryPercent:
                         if (Util_evalDoubleQExpression(r->operator, System_Info.memory.usage.percent, r->limit)) {
                                 rv = State_Failed;
@@ -649,7 +649,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "mem usage check succeeded [current mem usage = %.1f%%]", System_Info.memory.usage.percent);
                         }
                         break;
-
+                        
                 case Resource_MemoryKbyte:
                         if (Util_evalDoubleQExpression(r->operator, System_Info.memory.usage.bytes, r->limit)) {
                                 rv = State_Failed;
@@ -658,7 +658,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "mem amount check succeeded [current mem amount = %s]", Fmt_bytes2str(System_Info.memory.usage.bytes, buf1));
                         }
                         break;
-
+                        
                 case Resource_SwapPercent:
                         if (Util_evalDoubleQExpression(r->operator, System_Info.swap.usage.percent, r->limit)) {
                                 rv = State_Failed;
@@ -667,7 +667,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 snprintf(report, STRLEN, "swap usage check succeeded [current swap usage = %.1f%%]", System_Info.swap.usage.percent);
                         }
                         break;
-
+                        
                 case Resource_SwapKbyte:
                         if (s->type == Service_System) {
                                 if (Util_evalDoubleQExpression(r->operator, System_Info.swap.usage.bytes, r->limit)) {
@@ -678,31 +678,31 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 }
                         }
                         break;
-
+                        
                 case Resource_LoadAverage1m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[0], "loadavg (1min)", report);
                         break;
-
+                        
                 case Resource_LoadAverage5m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[1], "loadavg (5min)", report);
                         break;
-
+                        
                 case Resource_LoadAverage15m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[2], "loadavg (15min)", report);
                         break;
-
+                        
                 case Resource_LoadAveragePerCore1m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[0] / (double)System_Info.cpu.count, "loadavg per core (1min)", report);
                         break;
-
+                        
                 case Resource_LoadAveragePerCore5m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[1] / (double)System_Info.cpu.count, "loadavg per core (5min)", report);
                         break;
-
+                        
                 case Resource_LoadAveragePerCore15m:
                         rv = _checkLoadAverage(r, System_Info.loadavg[2] / (double)System_Info.cpu.count, "loadavg per core (15min)", report);
                         break;
-
+                        
                 case Resource_Pagein:
                         if (System_Info.paging.initialized) {
                                 if (Util_evalDoubleQExpression(r->operator, System_Info.paging.average.in, r->limit)) {
@@ -716,7 +716,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 return State_Init;
                         }
                         break;
-
+                        
                 case Resource_Pageout:
                         if (System_Info.paging.initialized) {
                                 if (Util_evalDoubleQExpression(r->operator, System_Info.paging.average.out, r->limit)) {
@@ -730,7 +730,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                                 return State_Init;
                         }
                         break;
-
+                        
                 default:
                         Log_error("'%s' error -- unknown resource ID: [%d]\n", s->name, r->resource_id);
                         return State_Failed;
@@ -1194,7 +1194,7 @@ static State_Type _checkMatch(Service_T s) {
                 }
                 char *line = CALLOC(sizeof(unsigned char), Run.limits.fileContentBuffer);
                 while (true) {
-next:
+                next:
                         /* Seek to the read position */
                         if (fseek(file, (long)s->inf.file->readpos, SEEK_SET)) {
                                 rv = State_Failed;
@@ -1257,9 +1257,9 @@ next:
                                 }
                         }
                 }
-final2:
+        final2:
                 FREE(line);
-final1:
+        final1:
                 if (fclose(file)) {
                         rv = State_Failed;
                         Log_error("'%s' cannot close file %s: %s\n", s->name, s->path, STRERROR);
@@ -1314,7 +1314,7 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                 return State_Failed;
         }
         switch (td->resource) {
-
+                        
                 case Resource_Inode:
                         if (s->inf.filesystem->f_files <= 0) {
                                 DEBUG("'%s' filesystem doesn't support inodes\n", s->name);
@@ -1336,7 +1336,7 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 }
                         }
                         return State_Succeeded;
-
+                        
                 case Resource_InodeFree:
                         if (s->inf.filesystem->f_files <= 0) {
                                 DEBUG("'%s' filesystem doesn't support inodes\n", s->name);
@@ -1358,7 +1358,7 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 }
                         }
                         return State_Succeeded;
-
+                        
                 case Resource_Space:
                         if (td->limit_percent >= 0.) {
                                 if (Util_evalDoubleQExpression(td->operator, s->inf.filesystem->space_percent, td->limit_percent)) {
@@ -1381,7 +1381,7 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 }
                         }
                         return State_Succeeded;
-
+                        
                 case Resource_SpaceFree:
                         if (td->limit_percent >= 0.) {
                                 if (Util_evalDoubleQExpression(td->operator, 100. - s->inf.filesystem->space_percent, td->limit_percent)) {
@@ -1404,7 +1404,7 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 }
                         }
                         return State_Succeeded;
-
+                        
                 case Resource_ReadBytes:
                         if (Statistics_initialized(&(s->inf.filesystem->read.bytes))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.filesystem->read.bytes));
@@ -1417,7 +1417,7 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 DEBUG("'%s' warning -- no data are available for bytes read rate test\n", s->name);
                         }
                         return State_Succeeded;
-
+                        
                 case Resource_ReadOperations:
                         if (Statistics_initialized(&(s->inf.filesystem->read.operations))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.filesystem->read.operations));
@@ -1430,7 +1430,7 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 DEBUG("'%s' warning -- no data are available for read rate test\n", s->name);
                         }
                         return State_Succeeded;
-
+                        
                 case Resource_WriteBytes:
                         if (Statistics_initialized(&(s->inf.filesystem->write.bytes))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.filesystem->write.bytes));
@@ -1443,7 +1443,7 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 DEBUG("'%s' warning -- no data are available for bytes write rate test\n", s->name);
                         }
                         return State_Succeeded;
-
+                        
                 case Resource_WriteOperations:
                         if (Statistics_initialized(&(s->inf.filesystem->write.operations))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.filesystem->write.operations));
@@ -1456,41 +1456,41 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 DEBUG("'%s' warning -- no data are available for write rate test\n", s->name);
                         }
                         return State_Succeeded;
-
+                        
                 case Resource_ServiceTime:
-                        {
-                                double deltaTime = 0.;
-                                bool hasReadTime = Statistics_initialized(&(s->inf.filesystem->time.read));
-                                bool hasWriteTime = Statistics_initialized(&(s->inf.filesystem->time.write));
-                                bool hasWaitTime = Statistics_initialized(&(s->inf.filesystem->time.wait));
-                                bool hasRunTime = Statistics_initialized(&(s->inf.filesystem->time.run));
-                                // Some platforms have detailed R/W time (Linux, MacOS), other just total R/W time (*BSD), Solaris has total R/W time with wait/run granularity. To make the test cross-platform and simple, we operate on sum
-                                if (! hasReadTime && ! hasWriteTime && ! hasWaitTime && ! hasRunTime) {
-                                        DEBUG("'%s' warning -- no data are available for service time test\n", s->name);
-                                        return State_Succeeded;
-                                }
-                                if (hasReadTime) {
-                                        deltaTime += Statistics_delta(&(s->inf.filesystem->time.read));
-                                }
-                                if (hasWriteTime) {
-                                        deltaTime += Statistics_delta(&(s->inf.filesystem->time.write));
-                                }
-                                if (hasWaitTime) {
-                                        deltaTime += Statistics_delta(&(s->inf.filesystem->time.wait));
-                                }
-                                if (hasRunTime) {
-                                        deltaTime += Statistics_delta(&(s->inf.filesystem->time.run));
-                                }
-                                double deltaOperations = Statistics_delta(&(s->inf.filesystem->read.operations)) + Statistics_delta(&(s->inf.filesystem->write.operations));
-                                double serviceTime = deltaOperations > 0. ? deltaTime / deltaOperations : 0.;
-                                if (Util_evalDoubleQExpression(td->operator, serviceTime, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "service time %s/operation matches resource limit [service time %s %s/operation]", Fmt_time2str(serviceTime, (char[11]){}), OperatorShort_Names[td->operator], Fmt_time2str(td->limit_absolute, (char[11]){}));
-                                        return State_Failed;
-                                }
-                                Event_post(s, Event_Resource, State_Succeeded, td->action, "service time test succeeded [current service time = %s/operation]", Fmt_time2str(serviceTime, (char[11]){}));
+                {
+                        double deltaTime = 0.;
+                        bool hasReadTime = Statistics_initialized(&(s->inf.filesystem->time.read));
+                        bool hasWriteTime = Statistics_initialized(&(s->inf.filesystem->time.write));
+                        bool hasWaitTime = Statistics_initialized(&(s->inf.filesystem->time.wait));
+                        bool hasRunTime = Statistics_initialized(&(s->inf.filesystem->time.run));
+                        // Some platforms have detailed R/W time (Linux, MacOS), other just total R/W time (*BSD), Solaris has total R/W time with wait/run granularity. To make the test cross-platform and simple, we operate on sum
+                        if (! hasReadTime && ! hasWriteTime && ! hasWaitTime && ! hasRunTime) {
+                                DEBUG("'%s' warning -- no data are available for service time test\n", s->name);
+                                return State_Succeeded;
                         }
+                        if (hasReadTime) {
+                                deltaTime += Statistics_delta(&(s->inf.filesystem->time.read));
+                        }
+                        if (hasWriteTime) {
+                                deltaTime += Statistics_delta(&(s->inf.filesystem->time.write));
+                        }
+                        if (hasWaitTime) {
+                                deltaTime += Statistics_delta(&(s->inf.filesystem->time.wait));
+                        }
+                        if (hasRunTime) {
+                                deltaTime += Statistics_delta(&(s->inf.filesystem->time.run));
+                        }
+                        double deltaOperations = Statistics_delta(&(s->inf.filesystem->read.operations)) + Statistics_delta(&(s->inf.filesystem->write.operations));
+                        double serviceTime = deltaOperations > 0. ? deltaTime / deltaOperations : 0.;
+                        if (Util_evalDoubleQExpression(td->operator, serviceTime, td->limit_absolute)) {
+                                Event_post(s, Event_Resource, State_Failed, td->action, "service time %s/operation matches resource limit [service time %s %s/operation]", Fmt_time2str(serviceTime, (char[11]){}), OperatorShort_Names[td->operator], Fmt_time2str(td->limit_absolute, (char[11]){}));
+                                return State_Failed;
+                        }
+                        Event_post(s, Event_Resource, State_Succeeded, td->action, "service time test succeeded [current service time = %s/operation]", Fmt_time2str(serviceTime, (char[11]){}));
+                }
                         return State_Succeeded;
-
+                        
                 default:
                         Log_error("'%s' error -- unknown resource type: [%d]\n", s->name, td->resource);
                         return State_Failed;
@@ -1533,7 +1533,8 @@ static bool _checkSkip(Service_T s) {
                 }
                 s->every.spec.cycle.counter = 0;
         } else if (s->every.type == Every_Cron) {
-                if (! s->every.run_now) {
+                // Allow check if we're awaiting program exit OR cron matched
+                if (! s->every.run_now && ! (s->type == Service_Program && s->every.await_program_exit)) {
                         s->monitor |= Monitor_Waiting;
                         return true;
                 }
@@ -1591,18 +1592,18 @@ static bool _doScheduledAction(Service_T s) {
 int validate(void) {
         Run.handler_flag = Handler_Succeeded;
         Event_queue_process();
-
+        
         SystemInfo_update();
         ProcessTree_init(ProcessEngine_None);
         gettimeofday(&System_Info.collected, NULL);
-
+        
         /* In the case that at least one action is pending, perform quick loop to handle the actions ASAP */
         if (Run.flags & Run_ActionPending) {
                 Run.flags &= ~Run_ActionPending;
                 for (Service_T s = Service_List; s; s = s->next)
                         _doScheduledAction(s);
         }
-
+        
         int errors = 0;
         /* Check the services */
         for (Service_T s = Service_List; s && ! interrupt(); s = s->next) {
@@ -1614,7 +1615,7 @@ int validate(void) {
                                         s->monitor = Monitor_Yes;
                                 if (state == State_Failed)
                                         errors++;
-
+                                
                                 gettimeofday(&s->collected, NULL);
                         }
                 }
@@ -1950,6 +1951,7 @@ State_Type check_program(Service_T s) {
         assert(s);
         assert(s->program);
         State_Type rv = State_Succeeded;
+        bool evaluated = false;  // Track if we evaluated exit status this cycle
         time_t now = Time_now();
         Process_T P = s->program->P;
         if (P) {
@@ -1973,16 +1975,25 @@ State_Type check_program(Service_T s) {
                         } else {
                                 // Defer test of exit value until program exit or timeout
                                 DEBUG("'%s' status check deferred - waiting on program to exit\n", s->name);
+                                // Keep await_program_exit true so the next poll cycle continues checking
+                                if (s->every.type == Every_Cron) {
+                                        s->every.await_program_exit = true;
+                                }
                                 return State_Init;
                         }
                 }
+                // Reset await_program_exit so the next poll cycle only depend on cron match
+                if (s->every.type == Every_Cron) {
+                        s->every.await_program_exit = false;
+                }
+                evaluated = true;
                 s->program->exitStatus = Process_exitStatus(P); // Copy exit status to the Program object for status display (CLI, http API), as the Process will be freed
                 StringBuffer_trim(s->program->inprogressOutput);
                 // Swap program output (instance finished)
                 const char *lastOutput = StringBuffer_toString(s->program->inprogressOutput);
                 StringBuffer_clear(s->program->lastOutput);
                 StringBuffer_append(s->program->lastOutput, "%s", lastOutput);
-
+                
                 // Evaluate program's exit status against our status checks.
                 const char *output = StringBuffer_length(s->program->inprogressOutput) ? StringBuffer_toString(s->program->inprogressOutput) : "no output";
                 for (Status_T status = s->statuslist; status; status = status->next) {
@@ -2007,7 +2018,7 @@ State_Type check_program(Service_T s) {
                                 }
                         }
                 }
-
+                
                 // Check the program content (we check the whole program output at once, not line-by-line)
                 for (Match_T ml = s->matchlist; ml; ml = ml->next) {
                         if ((_checkPattern(ml, lastOutput) == 0) ^ (ml->not))
@@ -2015,7 +2026,7 @@ State_Type check_program(Service_T s) {
                         else
                                 Event_post(s, Event_Content, State_ChangedNot, ml->action,  "content doesn't match on program output:\n%s", lastOutput);
                 }
-
+                
                 // Check if the program output content changed
                 for (OutputChange_T oc = s->outputchangelist; oc; oc = oc->next) {
                         if (! oc->previous) {
@@ -2030,12 +2041,17 @@ State_Type check_program(Service_T s) {
                                 oc->previous = Str_dup(lastOutput);
                         }
                 }
-
+                
                 Process_free(&s->program->P);
         } else {
                 rv = State_Init;
         }
         if (s->monitor != Monitor_Not) { // The status evaluation may disable service monitoring
+                // For cron-scheduled programs: don't restart after evaluation,
+                // wait for next cron match
+                if (s->every.type == Every_Cron && evaluated) {
+                        return rv;
+                }
                 // Start program
                 StringBuffer_clear(s->program->inprogressOutput);
                 s->program->P = Command_execute(s->program->C);
@@ -2045,6 +2061,10 @@ State_Type check_program(Service_T s) {
                 } else {
                         Event_post(s, Event_Status, State_Succeeded, s->action_EXEC, "program started");
                         s->program->started = now;
+                        // Set await_program_exit so the next poll cycle continues checking until we get exit status
+                        if (s->every.type == Every_Cron) {
+                                s->every.await_program_exit = true;
+                        }
                 }
         }
         return rv;
@@ -2082,7 +2102,7 @@ State_Type check_remote_host(Service_T s) {
                                         rv = icmp->check_invers ? State_Failed : State_Succeeded;
                                         icmp->is_available = Connection_Ok;
                                         Event_post(s, Event_Icmp, rv, icmp->action, "ping test succeeded [response time %s]", Fmt_time2str(icmp->responsetime.current, (char[11]){}));
-
+                                        
                                         // Check response time
                                         if (icmp->responsetime.limit > -1.) {
                                                 if (Util_evalDoubleQExpression(icmp->responsetime.operator, icmp->responsetime.current, icmp->responsetime.limit)) {
@@ -2166,7 +2186,7 @@ State_Type check_net(Service_T s) {
         if (! s->inverseStatus) {
                 //FIXME: these tests share the same class (Event_Link), so if "link up" test is set, it would set the state to failure, but these tests will reset it back to success. When we'll add more event types,
                 //       we shoud assign a new type for link in/out errors and then we can perform these tests even if "link up" is set
-
+                
                 // Link errors
                 long long oerrors = Link_getErrorsOutPerSecond(s->inf.net->stats);
                 if (oerrors >= 0) {
