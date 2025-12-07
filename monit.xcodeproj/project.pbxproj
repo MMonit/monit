@@ -250,7 +250,6 @@
 		5272D8412A01471300CF8E25 /* libssl.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.3.dylib; path = ../../../../../opt/local/libexec/openssl3/lib/libssl.3.dylib; sourceTree = "<group>"; };
 		5272D8422A01471300CF8E25 /* libcrypto.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcrypto.3.dylib; path = ../../../../../opt/local/libexec/openssl3/lib/libcrypto.3.dylib; sourceTree = "<group>"; };
 		528EA77213A74E05003DA4BE /* monit */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = monit; sourceTree = BUILT_PRODUCTS_DIR; };
-		528F7DB318BCABC9004BF9B5 /* CONTRIBUTORS */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CONTRIBUTORS; sourceTree = "<group>"; };
 		5295A9F524584CDA007E3C4C /* Link.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Link.h; sourceTree = "<group>"; };
 		5295A9F624584CDA007E3C4C /* Link.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; path = Link.inc; sourceTree = "<group>"; };
 		5295A9F824584CDA007E3C4C /* Link.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; path = Link.inc; sourceTree = "<group>"; };
@@ -507,7 +506,6 @@
 				52D25EDD17C0E8680039D3E4 /* CHANGES */,
 				522F48E52D9D9C8700F6B829 /* COPYING */,
 				52D25EDE17C0E8680039D3E4 /* configure.ac */,
-				528F7DB318BCABC9004BF9B5 /* CONTRIBUTORS */,
 				52D25EE017C0E8680039D3E4 /* Makefile.am */,
 				52D25EE217C0E8680039D3E4 /* monitrc */,
 				52FFBA1118A7E785001F9962 /* README.md */,
