@@ -202,6 +202,14 @@ typedef enum {
 
 
 typedef enum {
+        StringOperator_Equal = 0,
+        StringOperator_NotEqual,
+        StringOperator_RegexMatch,
+        StringOperator_RegexNoMatch,
+} StringOperator_Type;
+
+
+typedef enum {
         Timestamp_Default = 0,
         Timestamp_Access,
         Timestamp_Change,
@@ -1015,12 +1023,15 @@ typedef struct Gid_T {
 
 
 typedef struct SecurityAttribute_T {
-        char *attribute;                                   /**< Security attribute */
+        char *attribute;                           /**< Security attribute pattern */
+        regex_t *regex_comp;       /**< Pre-compiled match, NULL for literal match */
+        StringOperator_Type operator;                     /**< Comparison operator */
         EventAction_T action; /**< Description of the action upon event occurrence */
 
         /** For internal use */
         struct SecurityAttribute_T *next;
 } *SecurityAttribute_T;
+
 
 typedef struct Filedescriptors_T {
         bool total;             /**<Whether to include filedescriptors of children */
@@ -1440,6 +1451,7 @@ extern const char *onReboot_Names[];
 extern const char *Checksum_Names[];
 extern const char *Operator_Names[];
 extern const char *OperatorShort_Names[];
+extern const char *StringOperator_Names[];
 extern const char *Servicetype_Names[];
 extern const char *Path_Names[];
 extern const char *Icmp_Names[];

@@ -875,7 +875,26 @@ static State_Type _checkSecurityAttribute(Service_T s, char *attribute) {
         State_Type rv = State_Succeeded;
         const char *attr = NVLSTR(attribute);
         for (SecurityAttribute_T a = s->secattrlist; a; a = a->next) {
-                if (IS(attr, a->attribute)) {
+                bool condition_matched;
+                switch (a->operator) {
+                        case StringOperator_Equal:
+                                condition_matched = IS(a->attribute, attr);
+                                break;
+                        case StringOperator_NotEqual:
+                                condition_matched = !IS(a->attribute, attr);
+                                break;
+                        case StringOperator_RegexMatch:
+                                condition_matched = (regexec(a->regex_comp, attr, 0, NULL, 0) == 0);
+                                break;
+                        case StringOperator_RegexNoMatch:
+                                condition_matched = (regexec(a->regex_comp, attr, 0, NULL, 0) != 0);
+                                break;
+                        default:
+                                Log_error("'%s' error -- unknown secattr operator: [%d]\n", s->name, a->operator);
+                                return State_Failed;
+                }
+
+                if (! condition_matched) {
                         Event_post(s, Event_Invalid, State_Succeeded, a->action, "Security attribute test succeeded [current attribute = '%s']", attr);
                 } else {
                         rv = State_Failed;

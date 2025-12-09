@@ -749,6 +749,10 @@ static void _gcsecattr(SecurityAttribute_T *s) {
         if ((*s)->action)
                 _gc_eventaction(&(*s)->action);
         FREE((*s)->attribute);
+        if ((*s)->regex_comp) {
+                regfree((*s)->regex_comp);
+                FREE((*s)->regex_comp);
+        }
         FREE(*s);
 }
 

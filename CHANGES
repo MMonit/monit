@@ -52,6 +52,11 @@ New: MacOS: Process memory usage report is in line with ActivityMonitor now and 
      physical memory footprint instead of RSS. It excludes shared memory that's being used by
      multiple processes (to avoid double-counting).
 
+New: The security attribute test now support regular expressions and negative match. Thanks to
+     Christian Goettsche.
+        Syntax:
+            IF SECURITY ATTRIBUTE <"="|"!="|"=~"|"!=~"> <regex> THEN <action>
+
 New: The "check program" output in the "monit status" CLI was limited to 200 characters. The limitation is removed
      and monit will display up to "set limits { programOutput: <size> }" characters now.
      
