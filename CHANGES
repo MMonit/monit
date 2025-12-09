@@ -52,8 +52,9 @@ New: MacOS: Process memory usage report is in line with ActivityMonitor now and 
      physical memory footprint instead of RSS. It excludes shared memory that's being used by
      multiple processes (to avoid double-counting).
 
-New: The security attribute test now support regular expressions and negative match. Thanks to
-     Christian Goettsche.
+New: The security attribute test now supports regular expressions and negative match, which is useful,
+     for example, in the SELinux context, where a container might consist of random MCS categories.
+     Thanks to Christian Goettsche.
         Syntax:
             IF SECURITY ATTRIBUTE <"="|"!="|"=~"|"!=~"> <regex> THEN <action>
 
