@@ -876,6 +876,7 @@ static void do_options(int argc, char **argv, List_T arguments) {
                 {
                         do_init(); // Parses control file and initialize program, exit on error
                         printf("Control file syntax OK\n");
+                        gc();
                         exit(0);
                         break;
                 }
@@ -889,6 +890,7 @@ static void do_options(int argc, char **argv, List_T arguments) {
                                 Util_monitId(Run.files.id);
                                 kill_daemon(SIGHUP); // make any running Monit Daemon reload the new ID-File
                         }
+                        gc();
                         exit(0);
                         break;
                 }
@@ -897,6 +899,7 @@ static void do_options(int argc, char **argv, List_T arguments) {
                         do_init();
                         assert(Run.id);
                         printf("Monit ID: %s\n", Run.id);
+                        gc();
                         exit(0);
                         break;
                 }
