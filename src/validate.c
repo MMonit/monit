@@ -1526,7 +1526,8 @@ static bool _checkSkip(Service_T s) {
         assert(s);
         if (s->every.type == Every_SkipCycles) {
                 s->every.spec.cycle.counter++;
-                if (s->every.spec.cycle.counter < s->every.spec.cycle.number) {
+                // Allow check if we're awaiting program exit OR cycles amount passed
+                if (s->every.spec.cycle.counter < s->every.spec.cycle.number && ! (s->type == Service_Program && s->every.await_program_exit)) {
                         s->monitor |= Monitor_Waiting;
                         DEBUG("'%s' test skipped as current cycle (%d) < every cycle (%d) \n", s->name, s->every.spec.cycle.counter, s->every.spec.cycle.number);
                         return true;
@@ -1550,7 +1551,7 @@ static bool _checkSkip(Service_T s) {
         for (Dependant_T d = s->dependantlist; d; d = d->next) {
                 Service_T parent = Util_getService(d->dependant);
                 if (parent) {
-                        if (parent->monitor != Monitor_Yes) {
+                        if (! (parent->monitor & Monitor_Yes)) {
                                 DEBUG("'%s' test skipped as required service '%s' is %s\n", s->name, parent->name, parent->monitor == Monitor_Init ? "initializing" : "not monitored");
                                 return true;
                         } else if (parent->error) {
@@ -1976,14 +1977,14 @@ State_Type check_program(Service_T s) {
                                 // Defer test of exit value until program exit or timeout
                                 DEBUG("'%s' status check deferred - waiting on program to exit\n", s->name);
                                 // Keep await_program_exit true so the next poll cycle continues checking
-                                if (s->every.type == Every_Cron) {
+                                if (s->every.type == Every_Cron || s->every.type == Every_SkipCycles) {
                                         s->every.await_program_exit = true;
                                 }
                                 return State_Init;
                         }
                 }
-                // Reset await_program_exit so the next poll cycle only depend on cron match
-                if (s->every.type == Every_Cron) {
+                // Reset await_program_exit so the next poll cycle only depend on every match
+                if (s->every.type == Every_Cron || s->every.type == Every_SkipCycles) {
                         s->every.await_program_exit = false;
                 }
                 evaluated = true;
@@ -2047,9 +2048,8 @@ State_Type check_program(Service_T s) {
                 rv = State_Init;
         }
         if (s->monitor != Monitor_Not) { // The status evaluation may disable service monitoring
-                // For cron-scheduled programs: don't restart after evaluation,
-                // wait for next cron match
-                if (s->every.type == Every_Cron && evaluated) {
+                // For cron/cycles scheduled programs: don't restart after evaluation, wait for next every match
+                if (evaluated && (s->every.type == Every_Cron || s->every.type == Every_SkipCycles)) {
                         return rv;
                 }
                 // Start program
@@ -2062,7 +2062,7 @@ State_Type check_program(Service_T s) {
                         Event_post(s, Event_Status, State_Succeeded, s->action_EXEC, "program started");
                         s->program->started = now;
                         // Set await_program_exit so the next poll cycle continues checking until we get exit status
-                        if (s->every.type == Every_Cron) {
+                        if (s->every.type == Every_Cron || s->every.type == Every_SkipCycles) {
                                 s->every.await_program_exit = true;
                         }
                 }
