@@ -2174,7 +2174,7 @@ static void print_service_rules_gid(HttpResponse res, Service_T s) {
 static void print_service_rules_secattr(HttpResponse res, Service_T s) {
         for (SecurityAttribute_T a = s->secattrlist; a; a = a->next) {
                 StringBuffer_T sb = StringBuffer_create(256);
-                _displayTableRow(res, true, "rule", "Security attribute", "%s", StringBuffer_toString(Util_printRule(false, sb, a->action, "If failed %s", a->attribute)));
+                _displayTableRow(res, true, "rule", "Security attribute", "%s", StringBuffer_toString(Util_printRule(false, sb, a->action, "If %s \"%s\"", StringOperator_Names[a->operator], a->attribute)));
                 StringBuffer_free(&sb);
          }
 }

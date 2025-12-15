@@ -139,6 +139,7 @@ const char *onReboot_Names[] = {"start", "nostart", "laststate"};
 const char *Checksum_Names[] = {"UNKNOWN", "MD5", "SHA1"};
 const char *Operator_Names[] = {"less than", "less than or equal to", "greater than", "greater than or equal to", "equal to", "not equal to", "changed"};
 const char *OperatorShort_Names[] = {"<", "<=", ">", ">=", "=", "!=", "<>"};
+const char *StringOperator_Names[] = {"equal to", "not equal to", "matching", "not matching"};
 const char *Servicetype_Names[] = {"Filesystem", "Directory", "File", "Process", "Remote Host", "System", "Fifo", "Program", "Network"};
 const char *Path_Names[] = {"Path", "Path", "Path", "Pid file", "Path", "", "Path"};
 const char *Icmp_Names[] = {"Reply", "", "", "Destination Unreachable", "Source Quench", "Redirect", "", "", "Ping", "", "", "Time Exceeded", "Parameter Problem", "Timestamp Request", "Timestamp Reply", "Information Request", "Information Reply", "Address Mask Request", "Address Mask Reply"};
@@ -876,6 +877,7 @@ static void do_options(int argc, char **argv, List_T arguments) {
                 {
                         do_init(); // Parses control file and initialize program, exit on error
                         printf("Control file syntax OK\n");
+                        gc();
                         exit(0);
                         break;
                 }
@@ -889,6 +891,7 @@ static void do_options(int argc, char **argv, List_T arguments) {
                                 Util_monitId(Run.files.id);
                                 kill_daemon(SIGHUP); // make any running Monit Daemon reload the new ID-File
                         }
+                        gc();
                         exit(0);
                         break;
                 }
@@ -897,6 +900,7 @@ static void do_options(int argc, char **argv, List_T arguments) {
                         do_init();
                         assert(Run.id);
                         printf("Monit ID: %s\n", Run.id);
+                        gc();
                         exit(0);
                         break;
                 }

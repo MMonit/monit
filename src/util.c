@@ -923,7 +923,7 @@ void Util_printService(Service_T s) {
 
         for (SecurityAttribute_T o = s->secattrlist; o; o = o->next) {
                 StringBuffer_clear(buf);
-                printf(" %-20s = %s\n", "Security attribute", StringBuffer_toString(Util_printRule(false, buf, o->action, "if failed %s", o->attribute)));
+                printf(" %-20s = %s\n", "Security attribute", StringBuffer_toString(Util_printRule(false, buf, o->action, "if %s \"%s\"", StringOperator_Names[o->operator], o->attribute)));
         }
 
         for (Filedescriptors_T o = s->filedescriptorslist; o; o = o->next) {

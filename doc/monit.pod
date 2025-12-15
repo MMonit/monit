@@ -3002,6 +3002,22 @@ The security attribute statement may only be used in a process context.
 
 Syntax:
 
+ IF SECURITY ATTRIBUTE <operator> <regex> THEN <action>
+
+I<operator> is either a "=" for a full string match,
+"!=" for an unsuccessful full string match,
+"=~" for a regular expression match,
+or "!=~" for a regular expression mismatch.
+
+I<regex> is a string containing the string or extended regular expression.
+See also regex(7).
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+For backward compatibility, the following syntax is supported and
+equivalent to an unsuccessful full string match:
+
  IF FAILED SECURITY ATTRIBUTE <string> THEN <action>
 
 I<string> expected security attribute value
@@ -3012,12 +3028,12 @@ I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 Example for SELinux:
 
  check process ntpd matching "ntpd"
-    if failed security attribute "system_u:system_r:ntpd_t:s0" then alert
+    if security attribute != "system_u:system_r:ntpd_t:s0" then alert
 
 Example for AppArmor:
 
  check process ntpd matching "ntpd"
-    if failed security attribute "/usr/sbin/ntpd (enforce)" then alert
+    if security attribute != "/usr/sbin/ntpd (enforce)" then alert
 
 
 =head2 SYSTEM AND PER-PROCESS FILEDESCRIPTORS TEST

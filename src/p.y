@@ -336,7 +336,7 @@ static void _setSSLOptions(SslOptions_T options);
 static void _setSSLVersion(short version);
 #endif
 static void _unsetSSLVersion(short version);
-static void addsecurityattribute(char *, Action_Type, Action_Type);
+static void addsecurityattribute(char *, StringOperator_Type, Action_Type, Action_Type);
 static void addfiledescriptors(Operator_Type, bool, long long, float, Action_Type, Action_Type);
 static void _sanityCheckEveryStatement(Service_T s);
 
@@ -386,7 +386,8 @@ int yydebug = 1;
 %token SSLV2 SSLV3 TLSV1 TLSV11 TLSV12 TLSV13 CERTMD5 AUTO
 %token NOSSLV2 NOSSLV3 NOTLSV1 NOTLSV11 NOTLSV12 NOTLSV13
 %token BYTE KILOBYTE MEGABYTE GIGABYTE
-%token INODE SPACE TFREE PERMISSION SIZE MATCH NOT IGNORE ACTION UPTIME RESPONSETIME
+%token INODE SPACE TFREE PERMISSION SIZE NOT IGNORE ACTION UPTIME RESPONSETIME
+%token REGEXMATCH REGEXNOMATCH
 %token EXEC UNMONITOR PING PING4 PING6 ICMP ICMPECHO NONEXIST EXIST INVALID DATA RECOVERED PASSED SUCCEEDED
 %token URL CONTENT PID PPID FSFLAG
 %token REGISTER CREDENTIALS
@@ -1406,14 +1407,14 @@ checkproc       : CHECKPROC SERVICENAME PIDFILE PATH {
                 | CHECKPROC SERVICENAME PATHTOK PATH {
                         createservice(Service_Process, $<string>2, $4, check_process);
                   }
-                | CHECKPROC SERVICENAME MATCH STRING {
+                | CHECKPROC SERVICENAME REGEXMATCH STRING {
                         createservice(Service_Process, $<string>2, $4, check_process);
                         matchset.ignore = false;
                         matchset.match_path = NULL;
                         matchset.match_string = Str_dup($4);
                         addmatch(&matchset, Action_Ignored, 0);
                   }
-                | CHECKPROC SERVICENAME MATCH PATH {
+                | CHECKPROC SERVICENAME REGEXMATCH PATH {
                         createservice(Service_Process, $<string>2, $4, check_process);
                         matchset.ignore = false;
                         matchset.match_path = NULL;
@@ -3162,28 +3163,28 @@ match           : IF CONTENT urloperator PATH rate1 THEN action1 {
                         matchset.match_string = $4;
                         addmatch(&matchset, Action_Ignored, 0);
                   }
-                /* The below MATCH statement is deprecated (replaced by CONTENT) */
-                | IF matchflagnot MATCH PATH rate1 THEN action1 {
+                /* The below REGEXMATCH statement is deprecated (replaced by CONTENT) */
+                | IF matchflagnot REGEXMATCH PATH rate1 THEN action1 {
                         matchset.ignore = false;
                         matchset.match_path = $4;
                         matchset.match_string = NULL;
                         addmatchpath(&matchset, $<number>7);
                         FREE($4);
                   }
-                | IF matchflagnot MATCH STRING rate1 THEN action1 {
+                | IF matchflagnot REGEXMATCH STRING rate1 THEN action1 {
                         matchset.ignore = false;
                         matchset.match_path = NULL;
                         matchset.match_string = $4;
                         addmatch(&matchset, $<number>7, 0);
                   }
-                | IGNORE matchflagnot MATCH PATH {
+                | IGNORE matchflagnot REGEXMATCH PATH {
                         matchset.ignore = true;
                         matchset.match_path = $4;
                         matchset.match_string = NULL;
                         addmatchpath(&matchset, Action_Ignored);
                         FREE($4);
                   }
-                | IGNORE matchflagnot MATCH STRING {
+                | IGNORE matchflagnot REGEXMATCH STRING {
                         matchset.ignore = true;
                         matchset.match_path = NULL;
                         matchset.match_string = $4;
@@ -3253,12 +3254,34 @@ euid            : IF FAILED EUID STRING rate1 THEN action1 recovery_success {
                   }
                 ;
 
-secattr         : IF FAILED SECURITY ATTRIBUTE STRING rate1 THEN action1 recovery_success {
-                        addsecurityattribute($5, $<number>8, $<number>9);
+secattr         : IF FAILED SECURITY ATTRIBUTE secattr_value rate1 THEN action1 recovery_success {
+                        addsecurityattribute($<string>5, StringOperator_NotEqual, $<number>8, $<number>9);
                   }
-                | IF FAILED SECURITY ATTRIBUTE PATH rate1 THEN action1 recovery_success {
-                        addsecurityattribute($5, $<number>8, $<number>9);
+                | IF SECURITY ATTRIBUTE secattr_operator secattr_value rate1 THEN action1 recovery_success {
+                        addsecurityattribute($<string>5, $<number>4, $<number>8, $<number>9);
                   }
+                ;
+
+secattr_operator : EQUAL {
+                        $<number>$ = StringOperator_Equal;
+                }
+                | NOTEQUAL {
+                        $<number>$ = StringOperator_NotEqual;
+                }
+                | REGEXMATCH {
+                        $<number>$ = StringOperator_RegexMatch;
+                }
+                | REGEXNOMATCH {
+                        $<number>$ = StringOperator_RegexNoMatch;
+                }
+                ;
+
+secattr_value   : STRING {
+                        $<string>$ = $1;
+                  }
+                | PATH {
+                        $<string>$ = $1;
+                }
                 ;
 
 filedescriptorssystem : IF FILEDESCRIPTORS operator NUMBER rate1 THEN action1 recovery_success {
@@ -5712,10 +5735,27 @@ static void _unsetSSLVersion(short version) {
 }
 
 
-static void addsecurityattribute(char *value, Action_Type failed, Action_Type succeeded) {
+static void addsecurityattribute(char *value, StringOperator_Type operator, Action_Type failed, Action_Type succeeded) {
         SecurityAttribute_T attr;
         NEW(attr);
+
+        if (operator == StringOperator_RegexMatch || operator == StringOperator_RegexNoMatch) {
+                NEW(attr->regex_comp);
+
+                int reg_return = regcomp(attr->regex_comp, value, REG_NOSUB|REG_EXTENDED);
+                if (reg_return != 0) {
+                        char errbuf[STRLEN];
+                        regerror(reg_return, attr->regex_comp, errbuf, STRLEN);
+                        yyerror2("Regex parsing error of '%s': %s", value, errbuf);
+                        FREE(value);
+                        FREE(attr->regex_comp);
+                        FREE(attr);
+                        return;
+                }
+        }
+
         addeventaction(&(attr->action), failed, succeeded);
+        attr->operator = operator;
         attr->attribute = value;
         attr->next = current->secattrlist;
         current->secattrlist = attr;

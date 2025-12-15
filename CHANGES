@@ -52,9 +52,23 @@ New: MacOS: Process memory usage report is in line with ActivityMonitor now and 
      physical memory footprint instead of RSS. It excludes shared memory that's being used by
      multiple processes (to avoid double-counting).
 
+New: The security attribute test now supports regular expressions and negative match, which is useful,
+     for example, in the SELinux context, where a container might consist of random MCS categories.
+     Thanks to Christian Goettsche.
+        Syntax:
+            IF SECURITY ATTRIBUTE <"="|"!="|"=~"|"!=~"> <regex> THEN <action>
+
 New: The "check program" output in the "monit status" CLI was limited to 200 characters. The limitation is removed
      and monit will display up to "set limits { programOutput: <size> }" characters now.
      
+Fixed: The result of executing the "check program" command with the "every" statement is evaluated immediately
+     (in the next cycle). Previously, Monit would wait for a specified number of cycles or until the next cron
+     pattern match before evaluating the program's result.
+
+Fixed: Issue #1141: When multiple "check program" statements were linked with "depends on," but the parent test
+     frequency was limited using the "every" statement, the child copied the parent's test schedule, even if the
+     child did not have its own "every" statement.
+
 Fixed: Wakeup Monit from sleep on SIGUSR1 signal
 
 Fixed: Issue #1129: When Monit log was set to a device, such as "set logfile /dev/stdout" (e.g. inside the

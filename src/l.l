@@ -128,6 +128,8 @@ less           ("less"|"lt"|"<"|"newer")
 lessorequal    ("le"|"<=")
 equal          ("equal"|"eq"|"=="|"=")
 notequal       ("notequal"|"ne"|"!=")
+regexmatch     ("match"|"matching"|"=~")
+regexnomatch   ("nomatch"|"notmatching"|"!=~")
 loadavg1       load(avg)[ ]*(\([ ]*1[ ]*(m|min)?[ ]*\))?
 loadavg5       load(avg)[ ]*\([ ]*5[ ]*(m|min)?[ ]*\)
 loadavg15      load(avg)[ ]*\([ ]*15[ ]*(m|min)?[ ]*\)
@@ -404,7 +406,6 @@ responsetime      { return RESPONSETIME; }
 basedir           { return BASEDIR; }
 slot(s)?          { return SLOT; }
 eventqueue        { return EVENTQUEUE; }
-match(ing)?       { return MATCH; }
 not               { return NOT; }
 ignore            { return IGNORE; }
 connection        { return CONNECTION; }
@@ -484,6 +485,8 @@ pageout(s)?       { return PAGEOUT; }
 {lessorequal}     { return LESSOREQUAL; }
 {equal}           { return EQUAL; }
 {notequal}        { return NOTEQUAL; }
+{regexmatch}      { return REGEXMATCH; }
+{regexnomatch}    { return REGEXNOMATCH; }
 {millisecond}     { return MILLISECOND; }
 {second}          { return SECOND; }
 {minute}          { return MINUTE; }
