@@ -192,12 +192,7 @@ bool Str_endsWith(const char *a, const char *b) {
 char *Str_sub(const char *a, const char *b) {
         if (!a || !STR_DEF(b))
                 return NULL;
-        size_t b_len = strlen(b);
-        for (; *a; a++) {
-                if (strncasecmp(a, b, b_len) == 0)
-                        return (char *)a;
-        }
-        return NULL;
+        return strcasestr(a, b);
 }
 
 
