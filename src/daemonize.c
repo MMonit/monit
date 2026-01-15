@@ -62,6 +62,10 @@
 #endif
 
 #include "monit.h"
+#include "file.h"
+
+// libmonit
+#include "io/File.h"
 
 
 /**
@@ -130,13 +134,20 @@ bool kill_daemon(int sig) {
 
 
 /**
- * @return true (i.e. the daemons pid) if a daemon process is running,
- * otherwise false (0)
+ * Check if a Monit daemon is already running by testing the pidfile lock.
+ * @return The daemon's pid if running, otherwise 0
  */
 pid_t exist_daemon(void) {
-        errno = 0;
-        pid_t pid = Util_getPid(Run.files.pid);
-        if (pid && (getpgid(pid) > -1 || errno == EPERM))
+        pid_t pid = file_getPid(Run.files.pidfile);
+        if (pid <= 0)
+                return 0;
+        /*
+         * Check if the pidfile is locked. If locked, another Monit daemon
+         * holds the lock and is running. If not locked (or file doesn't
+         * exist), no daemon is running.
+         */
+        int locked = File_isLocked(Run.files.pidfile);
+        if (locked == 1)
                 return pid;
         return 0;
 }
