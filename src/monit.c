@@ -127,7 +127,7 @@ static void handle_wakeup(int);    /* Signalhandler for a daemon wakeup call */
 /* ------------------------------------------------------------------ Global */
 
 
-struct Run_T Run = {};                   /**< Struct holding runtime constants */
+struct Run_T Run = {.files.pidfile_lock = -1};  /**< Struct holding runtime constants */
 Service_T Service_List;                 /**< The service list (created in p.y) */
 Service_T Service_List_Conf;    /**< The service list in conf file (c. in p.y) */
 ServiceGroup_T Service_Group_List;/**< The service group list (created in p.y) */
@@ -191,14 +191,19 @@ int main(int argc, char **argv) {
  */
 bool do_wakeupcall(void) {
         pid_t pid;
-
         if ((pid = exist_daemon()) > 0) {
                 kill(pid, SIGUSR1);
                 Log_info("Monit daemon with PID %d awakened\n", pid);
-
+                /*
+                 * Fallback check: if we somehow signaled ourselves, return false
+                 * to allow Monit to start normally. This shouldn't happen with
+                 * pidfile locking, but provides defense-in-depth.
+                 */
+                if (pid == getpid()) {
+                        return false;
+                }
                 return true;
         }
-
         return false;
 }
 
@@ -376,7 +381,7 @@ static void do_reinit(bool full) {
         /* Reinitialize Runtime file variables */
         file_init();
 
-        if (! file_createPidFile(Run.files.pid)) {
+        if (! file_createPidFile(Run.files.pidfile)) {
                 Log_error("Monit stopped -- cannot create a pid file\n");
                 exit(1);
         }
@@ -620,7 +625,7 @@ static void do_default(void) {
                         }
                 }
 
-                if (! file_createPidFile(Run.files.pid)) {
+                if (! file_createPidFile(Run.files.pidfile)) {
                         Log_error("Monit daemon died\n");
                         exit(1);
                 }
@@ -774,11 +779,11 @@ static void do_options(int argc, char **argv, List_T arguments) {
                                 }
                                 case 'p':
                                 {
-                                        if (Run.files.pid) {
+                                        if (Run.files.pidfile) {
                                                 Log_warning("WARNING: The -p option was specified multiple times, only the last value will be used\n");
-                                                FREE(Run.files.pid);
+                                                FREE(Run.files.pidfile);
                                         }
-                                        Run.files.pid = Str_dup(optarg);
+                                        Run.files.pidfile = Str_dup(optarg);
                                         break;
                                 }
                                 case 's':
@@ -888,7 +893,7 @@ static void do_options(int argc, char **argv, List_T arguments) {
                         printf("Reset Monit Id? [y/N]> ");
                         if (tolower(getchar()) == 'y') {
                                 File_delete(Run.files.id);
-                                Util_monitId(Run.files.id);
+                                file_monitId(Run.files.id);
                                 kill_daemon(SIGHUP); // make any running Monit Daemon reload the new ID-File
                         }
                         gc();
