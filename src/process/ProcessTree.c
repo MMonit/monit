@@ -62,6 +62,7 @@
 
 #include "monit.h"
 #include "event.h"
+#include "file.h"
 #include "ProcessTree.h"
 #include "process_sysdep.h"
 #include "TextBox.h"
@@ -396,7 +397,7 @@ pid_t ProcessTree_findProcess(Service_T s) {
                 // PIDFILE check
 
                 // Re-read PID from the file
-                pid_t pid = Util_getPid(s->path);
+                pid_t pid = file_getPid(s->path);
 
                 if (pid > 0) {
                         pid_t foundPid = _isProcessRunning(s, pid);
