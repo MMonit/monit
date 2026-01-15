@@ -975,7 +975,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
         _displayTableRow(res, true,  NULL, "Controlfile",                  "%s", Run.files.control);
         if (Run.files.log)
                 _displayTableRow(res, true, NULL, "Logfile", "%s", Run.files.log);
-        _displayTableRow(res, true, NULL, "Pidfile",    "%s", Run.files.pid);
+        _displayTableRow(res, true, NULL, "Pidfile",    "%s", Run.files.pidfile);
         _displayTableRow(res, true, NULL, "State file", "%s", Run.files.state);
         _displayTableRow(res, true, NULL, "Debug",      "%s", Run.debug ? "True" : "False");
         _displayTableRow(res, true, NULL, "Log",        "%s", (Run.flags & Run_Log) ? "True" : "False");
