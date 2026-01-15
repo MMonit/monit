@@ -365,4 +365,38 @@ char *File_removeTrailingSeparator(char *path);
 char *File_realPath(const char *path, char *resolved);
 
 
+/**
+ * Check if the file at <code>path</code> is locked by another process.
+ * Uses POSIX fcntl advisory locking to test if an exclusive write lock
+ * can be acquired. The file must exist.
+ * @param path An absolute file path
+ * @return 1 (true) if the file is locked by another process,
+ *         0 (false) if the file is not locked,
+ *        -1 if an error occurred (e.g., file does not exist)
+ */
+int File_isLocked(const char *path);
+
+
+/**
+ * Acquire an exclusive advisory lock on the file at <code>path</code>.
+ * Uses POSIX fcntl locking. The lock is held until the returned file
+ * descriptor is closed (via File_unlock or process termination). The
+ * file must exist and be writable.
+ * @param path An absolute file path
+ * @return A file descriptor (>= 0) holding the lock on success,
+ *         -1 if the lock could not be acquired (file locked by another
+ *         process, file does not exist, or other error)
+ */
+int File_lock(const char *path);
+
+
+/**
+ * Release an advisory lock previously acquired with File_lock.
+ * Closes the file descriptor, which releases the lock.
+ * @param fd The file descriptor returned by File_lock
+ * @return 0 on success, -1 on error
+ */
+int File_unlock(int fd);
+
+
 #endif

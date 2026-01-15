@@ -315,3 +315,55 @@ char *File_realPath(const char *path, char *resolved) {
                 return realpath(path, resolved);
         return NULL;
 }
+
+
+// MARK: - File Lock
+
+int File_lock(const char *path) {
+        if (STR_DEF(path)) {
+                int fd = File_open(path, "r+");
+                if (fd >= 0) {
+                        struct flock lock = {
+                                .l_type = F_WRLCK,
+                                .l_whence = SEEK_SET,
+                                .l_start = 0,
+                                .l_len = 0
+                        };
+                        if (fcntl(fd, F_SETLK, &lock) < 0) {
+                                close(fd);
+                                return -1;
+                        }
+                        return fd;
+                }
+        }
+        errno = EINVAL;
+        return -1;
+}
+
+
+int File_isLocked(const char *path) {
+        if (STR_DEF(path)) {
+                int fd = File_open(path, "r");
+                if (fd >= 0) {
+                        struct flock lock = {
+                                .l_type = F_WRLCK,
+                                .l_whence = SEEK_SET,
+                                .l_start = 0,
+                                .l_len = 0
+                        };
+                        bool isLocked = (fcntl(fd, F_SETLK, &lock) < 0);
+                        close(fd);
+                        return isLocked;
+                }
+        }
+        errno = EINVAL;
+        return -1;
+}
+
+
+int File_unlock(int fd) {
+        if (fd >= 0)
+                return close(fd);
+        errno = EBADF;
+        return -1;
+}
