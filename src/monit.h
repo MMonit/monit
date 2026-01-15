@@ -1373,7 +1373,9 @@ struct Run_T {
         struct {
                 char *control;            /**< The file to read configuration from */
                 char *log;                     /**< The file to write logdata into */
-                char *pid;                              /**< This programs pidfile */
+                char *pidfile;                          /**< This programs pidfile */
+                int pidfile_lock;     /**< File descriptor holding lock on pidfile */
+                bool pidfile_changed;    /**< True if pidfile path changed on reload */
                 char *id;                       /**< The file with unique monit id */
                 char *state;            /**< The file with the saved runtime state */
         } files;
