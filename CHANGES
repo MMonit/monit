@@ -60,7 +60,11 @@ New: The security attribute test now supports regular expressions and negative m
 
 New: The "check program" output in the "monit status" CLI was limited to 200 characters. The limitation is removed
      and monit will display up to "set limits { programOutput: <size> }" characters now.
-     
+
+Fixed: If a stale pidfile existed at Monit startup, Monit could fail to start. This was fixed by
+       improving the startup check that detects whether another Monit daemon is already running.
+       Thanks to Lutz Mader for identifying the problem and providing an initial patch.
+
 Fixed: The result of executing the "check program" command with the "every" statement is evaluated immediately
      (in the next cycle). Previously, Monit would wait for a specified number of cycles or until the next cron
      pattern match before evaluating the program's result.
