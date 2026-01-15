@@ -124,24 +124,6 @@ char *Util_getToken(MD_T token);
 
 
 /**
- * Open and read the id from the given idfile. If the idfile doesn't exist,
- * generate new id and store it in the id file.
- * @param idfile An idfile with full path
- * @return the id or NULL
- */
-char *Util_monitId(char *idfile);
-
-
-/**
- * Open and read the pid from the given pidfile.
- * @param pidfile A pidfile with full path
- * @return the pid or -1 if the pid could
- * not be read from the file
- */
-pid_t Util_getPid(char *pidfile);
-
-
-/**
  * Returns true if url contains url safe characters otherwise false
  * @param url an url string to test
  * @return true if url is url safe otherwise false

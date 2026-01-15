@@ -631,7 +631,7 @@ void Util_printRunList(void) {
         printf("Runtime constants:\n");
         printf(" %-18s = %s\n", "Control file", is_str_defined(Run.files.control));
         printf(" %-18s = %s\n", "Log file", is_str_defined(Run.files.log));
-        printf(" %-18s = %s\n", "Pid file", is_str_defined(Run.files.pid));
+        printf(" %-18s = %s\n", "Pid file", is_str_defined(Run.files.pidfile));
         printf(" %-18s = %s\n", "Id file", is_str_defined(Run.files.id));
         printf(" %-18s = %s\n", "State file", is_str_defined(Run.files.state));
         printf(" %-18s = %s\n", "Debug", Run.debug ? "True" : "False");
@@ -1402,71 +1402,6 @@ char *Util_getToken(MD_T token) {
         md5_finish(&ctx, (md5_byte_t *)digest);
         Checksum_digest2Bytes((unsigned char *)digest, 16, token);
         return token;
-}
-
-
-char *Util_monitId(char *idfile) {
-        assert(idfile);
-        FILE *file = NULL;
-        if (! File_exist(idfile)) {
-                // Generate the unique id
-                file = fopen(idfile, "w");
-                if (! file) {
-                        Log_error("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
-                        return NULL;
-                }
-                fprintf(file, "%s", Util_getToken(Run.id));
-                Log_info(" New Monit id: %s\n Stored in '%s'\n", Run.id, idfile);
-        } else {
-                if (! File_isFile(idfile)) {
-                        Log_error("idfile '%s' is not a regular file\n", idfile);
-                        return NULL;
-                }
-                if ((file = fopen(idfile,"r")) == (FILE *)NULL) {
-                        Log_error("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
-                        return NULL;
-                }
-                if (fscanf(file, "%64s", Run.id) != 1) {
-                        Log_error("Error reading id from file '%s'\n", idfile);
-                        if (fclose(file))
-                                Log_error("Error closing file '%s' -- %s\n", idfile, STRERROR);
-                        return NULL;
-                }
-        }
-        fflush(file);
-        fsync(fileno(file));
-        if (fclose(file))
-                Log_error("Error closing file '%s' -- %s\n", idfile, STRERROR);
-
-        return Run.id;
-}
-
-
-pid_t Util_getPid(char *pidfile) {
-        assert(pidfile);
-        pid_t pid = -1;
-        FILE *file = NULL;
-        if (! File_exist(pidfile)) {
-                DEBUG("pidfile '%s' does not exist\n", pidfile);
-                return -1;
-        }
-        if (! File_isFile(pidfile)) {
-                DEBUG("pidfile '%s' is not a regular file\n", pidfile);
-                return -1;
-        }
-        if ((file = fopen(pidfile,"r")) == (FILE *)NULL) {
-                DEBUG("Error opening the pidfile '%s' -- %s\n", pidfile, STRERROR);
-                return -1;
-        }
-        if (fscanf(file, "%d", &pid) != 1) {
-                DEBUG("Error reading pid from file '%s'\n", pidfile);
-                if (fclose(file))
-                        DEBUG("Error closing file '%s' -- %s\n", pidfile, STRERROR);
-                return -1;
-        }
-        if (fclose(file))
-                DEBUG("Error closing file '%s' -- %s\n", pidfile, STRERROR);
-        return pid;
 }
 
 
