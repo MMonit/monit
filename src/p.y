@@ -899,7 +899,7 @@ setstatefile    : SET STATEFILE PATH {
                 ;
 
 setpid          : SET PIDFILE PATH {
-                        if (! Run.files.pid || ihp.pidfile) {
+                        if (! Run.files.pidfile || ihp.pidfile) {
                                 ihp.pidfile = true;
                                 setpidfile($3);
                         } else {
@@ -5012,15 +5012,16 @@ static void setlogfile(char *logfile) {
  * Reset the pidfile if changed
  */
 static void setpidfile(char *pidfile) {
-        if (Run.files.pid) {
-                if (IS(Run.files.pid, pidfile)) {
+        if (Run.files.pidfile) {
+                if (IS(Run.files.pidfile, pidfile)) {
                         FREE(pidfile);
                         return;
                 } else {
-                        FREE(Run.files.pid);
+                        FREE(Run.files.pidfile);
+                        Run.files.pidfile_changed = true;
                 }
         }
-        Run.files.pid = pidfile;
+        Run.files.pidfile = pidfile;
 }
 
 
