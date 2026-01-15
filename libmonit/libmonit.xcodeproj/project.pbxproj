@@ -264,7 +264,7 @@
 		52F8BB441ECE55D70007DF91 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		52F8BB461ECE567A0007DF91 /* libz.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.dylib; path = ../../../../../usr/lib/libz.1.dylib; sourceTree = "<group>"; };
 		52FDA94E2EC6A67E00971039 /* NumTest.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = NumTest.c; sourceTree = "<group>"; };
-		52FDA95A2EC6A76000971039 /* NumTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = NumTest; sourceTree = BUILT_PRODUCTS_DIR; };
+		52FDA95A2EC6A76000971039 /* NumTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = NumTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/NumTest"; sourceTree = "<absolute>"; };
 		93D5F8A82EBB81CE009E458B /* Num.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Num.h; sourceTree = "<group>"; };
 		93D5F8A92EBB81CE009E458B /* Num.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = Num.c; sourceTree = "<group>"; };
 		93F6F8E02BF762D500BAFEC1 /* StringBufferTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StringBufferTest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -399,7 +399,6 @@
 				5274583A13A1009C00C422FE /* test */,
 				52A31C831A6531DF009D3D83 /* Products */,
 				52F8BB431ECE55D60007DF91 /* Frameworks */,
-				52FDA95A2EC6A76000971039 /* NumTest */,
 			);
 			sourceTree = "<group>";
 		};
