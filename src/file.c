@@ -84,21 +84,21 @@ void file_init(void) {
         char pidfile[STRLEN];
         char buf[STRLEN];
         /* Check if the pidfile was already set during configfile parsing */
-        if (Run.files.pid == NULL) {
+        if (Run.files.pidfile == NULL) {
                 /* Set the location of this programs pidfile */
                 if (! getuid()) {
                         snprintf(pidfile, STRLEN, "%s/%s", MYPIDDIR, MYPIDFILE);
                 } else {
                         snprintf(pidfile, STRLEN, "%s/.%s", Run.Env.home, MYPIDFILE);
                 }
-                Run.files.pid = Str_dup(pidfile);
+                Run.files.pidfile = Str_dup(pidfile);
         }
         /* Set the location of monit's id file */
         if (Run.files.id == NULL) {
                 snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYIDFILE);
                 Run.files.id = Str_dup(buf);
         }
-        Util_monitId(Run.files.id);
+        file_monitId(Run.files.id);
         /* Set the location of monit's state file */
         if (Run.files.state == NULL) {
                 snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYSTATEFILE);
@@ -109,7 +109,11 @@ void file_init(void) {
 
 void file_finalize(void) {
         Engine_cleanup();
-        unlink(Run.files.pid);
+        if (Run.files.pidfile_lock >= 0) {
+                File_unlock(Run.files.pidfile_lock);
+                Run.files.pidfile_lock = -1;
+        }
+        unlink(Run.files.pidfile);
 }
 
 
@@ -142,6 +146,23 @@ char *file_findControlFile(void) {
 
 bool file_createPidFile(const char *pidfile) {
         assert(pidfile);
+        /*
+         * If we already hold a lock and the pidfile path hasn't changed,
+         * there's nothing to do (happens during reinit with same config).
+         */
+        if (Run.files.pidfile_lock >= 0 && ! Run.files.pidfile_changed) {
+                return true;
+        }
+        /*
+         * If the pidfile path changed during reinit, release the old lock
+         * before creating a new pidfile.
+         */
+        if (Run.files.pidfile_lock >= 0 && Run.files.pidfile_changed) {
+                File_unlock(Run.files.pidfile_lock);
+                Run.files.pidfile_lock = -1;
+        }
+        Run.files.pidfile_changed = false;
+        /* Create the pidfile and write our PID */
         unlink(pidfile);
         FILE *F = fopen(pidfile, "w");
         if (! F) {
@@ -150,7 +171,77 @@ bool file_createPidFile(const char *pidfile) {
         }
         fprintf(F, "%d\n", (int)getpid());
         fclose(F);
+        /* Acquire an exclusive lock on the pidfile */
+        int lock = File_lock(pidfile);
+        if (lock < 0) {
+                Log_error("Error acquiring lock on pidfile '%s' -- %s\n", pidfile, STRERROR);
+                unlink(pidfile);
+                return false;
+        }
+        Run.files.pidfile_lock = lock;
         return true;
+}
+
+
+pid_t file_getPid(const char *pidfile) {
+        assert(pidfile);
+        if (! File_exist(pidfile)) {
+                DEBUG("pidfile '%s' does not exist\n", pidfile);
+                return -1;
+        }
+        if (! File_isFile(pidfile)) {
+                DEBUG("pidfile '%s' is not a regular file\n", pidfile);
+                return -1;
+        }
+        FILE *file = fopen(pidfile, "r");
+        if (file == NULL) {
+                DEBUG("Error opening the pidfile '%s' -- %s\n", pidfile, STRERROR);
+                return -1;
+        }
+        pid_t pid = -1;
+        if (fscanf(file, "%d", &pid) != 1) {
+                DEBUG("Error reading pid from file '%s'\n", pidfile);
+        }
+        if (fclose(file))
+                DEBUG("Error closing file '%s' -- %s\n", pidfile, STRERROR);
+        return pid;
+}
+
+
+char *file_monitId(char *idfile) {
+        assert(idfile);
+        FILE *file = NULL;
+        if (! File_exist(idfile)) {
+                // Generate the unique id
+                file = fopen(idfile, "w");
+                if (! file) {
+                        Log_error("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
+                        return NULL;
+                }
+                fprintf(file, "%s", Util_getToken(Run.id));
+                Log_info(" New Monit id: %s\n Stored in '%s'\n", Run.id, idfile);
+        } else {
+                if (! File_isFile(idfile)) {
+                        Log_error("idfile '%s' is not a regular file\n", idfile);
+                        return NULL;
+                }
+                if ((file = fopen(idfile,"r")) == (FILE *)NULL) {
+                        Log_error("Error opening the idfile '%s' -- %s\n", idfile, STRERROR);
+                        return NULL;
+                }
+                if (fscanf(file, "%64s", Run.id) != 1) {
+                        Log_error("Error reading id from file '%s'\n", idfile);
+                        if (fclose(file))
+                                Log_error("Error closing file '%s' -- %s\n", idfile, STRERROR);
+                        return NULL;
+                }
+        }
+        fflush(file);
+        fsync(fileno(file));
+        if (fclose(file))
+                Log_error("Error closing file '%s' -- %s\n", idfile, STRERROR);
+
+        return Run.id;
 }
 
 
