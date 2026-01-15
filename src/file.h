@@ -66,6 +66,24 @@ bool file_createPidFile(const char *pidfile);
 
 
 /**
+ * Read the pid from the given pidfile.
+ * @param pidfile A pidfile with full path
+ * @return The pid (>0) if successful, otherwise -1
+ */
+pid_t file_getPid(const char *pidfile);
+
+
+/**
+ * Open and read the id from the given idfile. If the idfile doesn't exist,
+ * generate new id and store it in the id file.
+ * @param idfile An idfile with full path
+ * @return the id or NULL
+ */
+char *file_monitId(char *idfile);
+
+
+
+/**
  * Security check for files. The files must have the same uid as the
  * REAL uid of this process, it must have permissions no greater than
  * "maxpermission" and it must not be a symbolic link.  We check these
