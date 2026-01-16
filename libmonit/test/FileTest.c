@@ -190,6 +190,38 @@ int main(void) {
         }
         printf("=> Test10: OK\n\n");
 
+        printf("=> Test11: File Locking\n");
+        {
+                char lockpath[STRLEN];
+                snprintf(lockpath, STRLEN, "/tmp/.FileLockTest.%d", getpid());
+                int fd;
+                // Create a test file for locking
+                assert((fd = File_open(lockpath, "w")) != -1);
+                assert(write(fd, "test", 4) == 4);
+                assert(File_close(fd) == true);
+                // Test File_isLocked on unlocked file
+                assert(File_isLocked(lockpath) == 0);
+                // Test File_lock
+                int lockfd = File_lock(lockpath);
+                assert(lockfd >= 0);
+                // Test File_isLocked on locked file (same process can re-lock with fcntl)
+                // So we just verify the lock fd is valid
+                assert(lockfd >= 0);
+                // Test File_unlock
+                assert(File_unlock(lockfd) == 0);
+                // After unlock, file should not be locked
+                assert(File_isLocked(lockpath) == 0);
+                // Test error cases
+                assert(File_lock(NULL) == -1);
+                assert(File_lock("/nonexistent/path/file") == -1);
+                assert(File_isLocked(NULL) == -1);
+                assert(File_isLocked("/nonexistent/path/file") == -1);
+                assert(File_unlock(-1) == -1);
+                // Cleanup
+                assert(File_delete(lockpath) == true);
+        }
+        printf("=> Test11: OK\n\n");
+
         printf("============> File Tests: OK\n\n");
 
         return 0;
