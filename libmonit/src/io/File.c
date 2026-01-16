@@ -336,6 +336,7 @@ int File_lock(const char *path) {
                         return fd;
                 }
         }
+        errno = EINVAL;
         return -1;
 }
 
@@ -355,6 +356,7 @@ int File_isLocked(const char *path) {
                         return isLocked;
                 }
         }
+        errno = EINVAL;
         return -1;
 }
 
