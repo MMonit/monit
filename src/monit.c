@@ -194,14 +194,6 @@ bool do_wakeupcall(void) {
         if ((pid = exist_daemon()) > 0) {
                 kill(pid, SIGUSR1);
                 Log_info("Monit daemon with PID %d awakened\n", pid);
-                /*
-                 * Fallback check: if we somehow signaled ourselves, return false
-                 * to allow Monit to start normally. This shouldn't happen with
-                 * pidfile locking, but provides defense-in-depth.
-                 */
-                if (pid == getpid()) {
-                        return false;
-                }
                 return true;
         }
         return false;
