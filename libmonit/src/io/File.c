@@ -321,7 +321,7 @@ char *File_realPath(const char *path, char *resolved) {
 
 int File_lock(const char *path) {
         if (STR_DEF(path)) {
-                int fd = File_open(path, "r+");
+                int fd = File_open(path, "r+"); // Need write mode
                 if (fd >= 0) {
                         struct flock lock = {
                                 .l_type = F_WRLCK,
@@ -336,14 +336,13 @@ int File_lock(const char *path) {
                         return fd;
                 }
         }
-        errno = EINVAL;
         return -1;
 }
 
 
 int File_isLocked(const char *path) {
         if (STR_DEF(path)) {
-                int fd = File_open(path, "r");
+                int fd = File_open(path, "r+"); // Need write mode
                 if (fd >= 0) {
                         struct flock lock = {
                                 .l_type = F_WRLCK,
@@ -356,7 +355,6 @@ int File_isLocked(const char *path) {
                         return isLocked;
                 }
         }
-        errno = EINVAL;
         return -1;
 }
 
