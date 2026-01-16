@@ -985,7 +985,7 @@ static void _crontab(time_t now) {
         bool cron_match = false;
         for (Service_T s = Service_List; s; s = s->next) {
                 if (s->every.type == Every_Cron) {
-                        s->every.run_now = cron_match = (Time_incron(s->every.spec.cron, now) == 1);
+                        cron_match |= (s->every.run_now = (Time_incron(s->every.spec.cron, now) == 1));
                         if (! s->every.run_now)
                                 DEBUG("'%s' test skipped - waiting for cron schedule to match\n", s->name);
                 }
