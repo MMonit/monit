@@ -144,8 +144,8 @@ char *file_findControlFile(void) {
 }
 
 
-bool file_createPidFile(const char *pidfile) {
-        assert(pidfile);
+bool file_createPidFile(void) {
+        assert(Run.files.pidfile);
         /*
          * If we already hold a lock and the pidfile path hasn't changed,
          * there's nothing to do (happens during reinit with same config).
@@ -163,19 +163,19 @@ bool file_createPidFile(const char *pidfile) {
         }
         Run.files.pidfile_changed = false;
         /* Create the pidfile and write our PID */
-        unlink(pidfile);
-        FILE *F = fopen(pidfile, "w");
+        unlink(Run.files.pidfile);
+        FILE *F = fopen(Run.files.pidfile, "w");
         if (! F) {
-                Log_error("Error opening pidfile '%s' for writing -- %s\n", pidfile, STRERROR);
+                Log_error("Error opening pidfile '%s' for writing -- %s\n", Run.files.pidfile, STRERROR);
                 return false;
         }
         fprintf(F, "%d\n", (int)getpid());
         fclose(F);
         /* Acquire an exclusive lock on the pidfile */
-        int lock = File_lock(pidfile);
+        int lock = File_lock(Run.files.pidfile);
         if (lock < 0) {
-                Log_error("Error acquiring lock on pidfile '%s' -- %s\n", pidfile, STRERROR);
-                unlink(pidfile);
+                Log_error("Error acquiring lock on pidfile '%s' -- %s\n", Run.files.pidfile, STRERROR);
+                unlink(Run.files.pidfile);
                 return false;
         }
         Run.files.pidfile_lock = lock;

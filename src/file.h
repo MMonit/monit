@@ -57,12 +57,11 @@ char *file_findControlFile(void);
 
 
 /**
- * Create a program's pidfile - Such a file is created when in daemon
+ * Create Monit's pidfile - Such a file is created when in daemon
  * mode.
- * @param pidfile The name of the pidfile to create
  * @return true if the file was created, otherwise false.
  */
-bool file_createPidFile(const char *pidfile);
+bool file_createPidFile(void);
 
 
 /**

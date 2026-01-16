@@ -381,7 +381,7 @@ static void do_reinit(bool full) {
         /* Reinitialize Runtime file variables */
         file_init();
 
-        if (! file_createPidFile(Run.files.pidfile)) {
+        if (! file_createPidFile()) {
                 Log_error("Monit stopped -- cannot create a pid file\n");
                 exit(1);
         }
@@ -625,7 +625,7 @@ static void do_default(void) {
                         }
                 }
 
-                if (! file_createPidFile(Run.files.pidfile)) {
+                if (! file_createPidFile()) {
                         Log_error("Monit daemon died\n");
                         exit(1);
                 }
