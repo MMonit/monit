@@ -1233,8 +1233,6 @@ int Time_year(time_t time) {
 
 char *Time_localStr(time_t time, char result[static 26]) {
         struct tm ts;
-        /* This implementation needs to be fast and is around 50%
-           faster than strftime */
         localtime_r((const time_t *)&time, &ts);
         memcpy(result, "aaa, xx aaa xxxx xx:xx:xx\0", 26);
         /*              0    5  8   1214 17 20 23 25 */
@@ -1252,8 +1250,6 @@ char *Time_localStr(time_t time, char result[static 26]) {
 
 char *Time_str(time_t time, char result[static 30]) {
         struct tm ts;
-        /* This implementation needs to be fast and is around 50%
-         faster than strftime */
         gmtime_r(&time, &ts);
         memcpy(result, "aaa, xx aaa xxxx xx:xx:xx GMT\0", 30);
         /*              0    5  8   1214 17 20 23    29 */

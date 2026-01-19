@@ -104,11 +104,6 @@ unsigned long long Random_number(void) {
 }
 
 
-/**
- * Returns a random number in the inclusive range [min, max].
- * If min == max, returns min.
- * If min > max, the program will abort.
- */
 unsigned long long Random_range(unsigned long long min, unsigned long long max) {
         assert(min <= max);
         if (min == max) {
