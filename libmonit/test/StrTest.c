@@ -429,6 +429,11 @@ int main(void) {
                 char *b = "9b594557f02a0084bcd10cbb160406618312ce6612aeb8da86e57b2929fa1465";
                 assert(!Str_authcmp(a, b));
                 assert(Str_authcmp(a, a));
+                // Different length strings
+                assert(!Str_authcmp("abc", "abcdef"));
+                assert(!Str_authcmp("abcdef", "abc"));
+                assert(!Str_authcmp("a", "ab"));
+                assert(!Str_authcmp("ab", "a"));
         }
         printf("=> Test18: OK\n\n");
 
