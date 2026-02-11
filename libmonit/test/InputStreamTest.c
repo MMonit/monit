@@ -56,13 +56,13 @@ int main(void) {
         {
                 int byte;
                 int byteno = 0;
-                char content[][1] = {"l", "i", "n", "e", "1", "\n",
-                                     "l", "i", "n", "e", "2", "\n",
-                                     "l", "i", "n", "e", "3", "\n"};
+                char content[] = {'l', 'i', 'n', 'e', '1', '\n',
+                                  'l', 'i', 'n', 'e', '2', '\n',
+                                  'l', 'i', 'n', 'e', '3', '\n'};
                 assert((fd = File_open(DATA, "r")) >= 0);
                 in = InputStream_new(fd);
                 while ((byte = InputStream_read(in)) > 0) {
-                        assert(byte == *content[byteno++]);
+                        assert(byte == content[byteno++]);
                 }
                 File_close(fd);
                 InputStream_free(&in);
