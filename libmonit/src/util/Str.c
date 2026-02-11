@@ -337,13 +337,16 @@ bool Str_authcmp(const char *a, const char *b) {
                 return false;
         size_t al = strlen(a);
         size_t bl = strlen(b);
-        size_t length = (al > bl) ? al : bl;
-        volatile int rv = 0;
+        size_t length = al ^ ((al ^ bl) & -(al < bl)); // max(al, bl) branchless
+        volatile unsigned int diff = (unsigned int)(al ^ bl);
         for (size_t i = 0; i < length; i++) {
-                char _a = (i < al) ? a[i] : 0;
-                char _b = (i < bl) ? b[i] : 0;
-                rv |= _a ^ _b;
+                // Clamp index: when i >= len, use len (the null terminator position)
+                size_t over_a = -(i >= al); // 0 or ~0
+                size_t over_b = -(i >= bl);
+                size_t ia = (i & ~over_a) | (al & over_a);
+                size_t ib = (i & ~over_b) | (bl & over_b);
+                diff |= (unsigned char)a[ia] ^ (unsigned char)b[ib];
         }
-        return rv == 0;
+        return diff == 0;
 }
 
