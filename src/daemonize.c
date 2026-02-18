@@ -141,14 +141,15 @@ pid_t exist_daemon(void) {
         pid_t pid = file_getPid(Run.files.pidfile);
         if (pid <= 0)
                 return 0;
-        /*
-         * Check if the pidfile is locked. If locked, another Monit daemon
-         * holds the lock and is running. If not locked (or file doesn't
-         * exist), no daemon is running.
-         */
         int locked = File_isLocked(Run.files.pidfile);
         if (locked == 1)
                 return pid;
+        /*
+         * Fallback for pre-5.36.0: pidfile exists but unlocked.
+         *
+         * TODO: Remove this legacy fallback in a future Monit release
+         */
+        if (pid != getpid() && kill(pid, 0) == 0)
+                return pid;
         return 0;
 }
-
