@@ -38,7 +38,7 @@
 /// @brief Return the minimum of two values
 ///
 /// Works with any numeric type (integral or floating-point). Uses compound
-/// statement * expression to ensure type safety and avoid double evaluation.
+/// statement expression to ensure type safety and avoid double evaluation.
 ///
 /// @param a First value
 /// @param b Second value
