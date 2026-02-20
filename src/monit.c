@@ -981,7 +981,6 @@ static void version(void) {
 
 
 static void _crontab(time_t now) {
-        DEBUG("Running crontab at %s\n", Time_localStr(now, (char [64]){}));
         bool cron_match = false;
         for (Service_T s = Service_List; s; s = s->next) {
                 if (s->every.type == Every_Cron) {
@@ -991,6 +990,7 @@ static void _crontab(time_t now) {
                 }
         }
         if (cron_match) {
+                DEBUG("Running crontab at %s\n", Time_localStr(now, (char [64]){}));
                 kill(getpid(), SIGUSR1);
         }
 }
