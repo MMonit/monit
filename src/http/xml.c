@@ -593,7 +593,7 @@ static void status_servicegroup(ServiceGroup_T SG, StringBuffer_T B) {
         StringBuffer_append(B, "<servicegroup name=\"%s\">", SG->name);
         for (_list_t m = SG->members->head; m; m = m->next) {
                 Service_T s = m->e;
-                StringBuffer_append(B, "<service>%s</service>", s->name);
+                StringBuffer_append(B, "<service><![CDATA[%s]]></service>", s->name);
         }
         StringBuffer_append(B, "</servicegroup>");
 }
@@ -609,7 +609,7 @@ static void status_event(Event_T E, StringBuffer_T B) {
                             "<event>"
                             "<collected_sec>%lld</collected_sec>"
                             "<collected_usec>%ld</collected_usec>"
-                            "<service>%s</service>"
+                            "<service><![CDATA[%s]]></service>"
                             "<type>%d</type>"
                             "<id>%ld</id>"
                             "<state>%d</state>"
