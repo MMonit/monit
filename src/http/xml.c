@@ -203,7 +203,7 @@ static void status_service(Service_T S, StringBuffer_T B, int V) {
         if (V == 2)
                 StringBuffer_append(B, "<service name=\"%s\"><type>%d</type>", S->name ? S->name : "", S->type);
         else
-                StringBuffer_append(B, "<service type=\"%d\"><name>%s</name>", S->type, S->name ? S->name : "");
+                StringBuffer_append(B, "<service type=\"%d\"><name><![CDATA[%s]]></name>", S->type, S->name ? S->name : "");
         StringBuffer_append(B,
                             "<collected_sec>%lld</collected_sec>"
                             "<collected_usec>%ld</collected_usec>"
