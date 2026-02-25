@@ -94,6 +94,8 @@ Fixed: Illumos build (tested on OmniOS r151054)
 
 Fixed: DragonflyBSD build (tested on DragonflyBSD 6.4)
 
+Fixed: CDATA escape service names in XML sent to M/Monit to allow for unsafe HTML chars in names. 
+
 Changed: The "check program" output change test now sets the level to warning (yellow), instead of error (red).
 
 Changed: MacOS: Monit now utilizes the 64-bit system API to retrieve system memory usage information. The support for
