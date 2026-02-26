@@ -81,6 +81,8 @@ Fixed: Issue #1129: When Monit log was set to a device, such as "set logfile /de
 
 Fixed: Issue #1137: Hostname error in log when fetching status in XML format from Monit HTTP API via UNIX socket.
 
+Fixed: Issue #1142: File descriptor leak on Linux when /proc/PID/attr/current is not accessible due to AppArmor/SELinux restrictions 
+
 Fixed: Monit now provides more detailed error reporting when the hostname resolution fails. Previously, when
        testing a remote host using ping and the host did not resolve in DNS, Monit simply reported "ping failed"
 
@@ -94,7 +96,7 @@ Fixed: Illumos build (tested on OmniOS r151054)
 
 Fixed: DragonflyBSD build (tested on DragonflyBSD 6.4)
 
-Fixed: CDATA escape service names in XML sent to M/Monit to allow for unsafe HTML chars in names. 
+Fixed: CDATA escape service names in XML sent to M/Monit to allow for unsafe HTML chars in names.
 
 Changed: The "check program" output change test now sets the level to warning (yellow), instead of error (red).
 
