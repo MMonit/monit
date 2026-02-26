@@ -95,6 +95,7 @@
 
 // libmonit
 #include "system/Time.h"
+#include "io/File.h"
 
 /**
  *  System dependent resource data collection code for Linux.
@@ -394,6 +395,16 @@ static bool _parseProcPidCmdline(Proc_T proc, ProcessEngine_Flags pflags) {
 
 // parse /proc/PID/attr/current
 static bool _parseProcPidAttrCurrent(Proc_T proc) {
+        // Workaround for a Linux kernel bug where open() on /proc/PID/attr/current
+        // leaks a file descriptor when access is denied by AppArmor/SELinux (the open
+        // returns -1 but the kernel doesn't clean up the allocated fd). Pre-check with
+        // access() which uses a different kernel path and doesn't trigger the leak.
+        char filename[STRLEN];
+        snprintf(filename, sizeof(filename), "/proc/%d/attr/current", proc->data.pid);
+        if (! File_isReadable(filename)) {
+                DEBUG("Cannot open proc file '%s' -- %s\n", filename, STRERROR);
+                return false;
+        }
         if (file_readProc(proc->data.secattr, sizeof(proc->data.secattr), "attr/current", proc->data.pid, NULL)) {
                 Str_trim(proc->data.secattr);
                 return true;
