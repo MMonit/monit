@@ -1551,6 +1551,19 @@ For example, "not every '* 2-5 * * *'" will skip checks during the
 proceed. This is more efficient than minute-level cron scheduling
 for exclusion windows.
 
+Mixing cycle-based and cron-style scheduling:
+
+If you use cron-style C<every> scheduling for some services, be
+aware that it may affect the timing of services using C<every
+[number] cycles>. A cron match will wake up Monit to run the
+scheduled check, and this extra poll cycle also advances the cycle
+counter for I<all> services. For example, if a service is set to
+C<every "* * * * *"> (checking every minute), Monit will wake up
+every minute, and a service configured with C<every 10 cycles>
+will reach its cycle count faster than expected. If you need
+precise time-based scheduling, use cron-style C<every> instead
+of cycle-based C<every>.
+
 
 =head1 SERVICE GROUPS
 
