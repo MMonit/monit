@@ -2433,7 +2433,8 @@ every           : EVERY NUMBER CYCLE {
                                 yyerror2("Invalid cron specification");
                         current->every.type = Every_Cron;
                         current->every.spec.cron = $2;
-                        Run.hasCron = true;
+                        // Needs a heartbeat thread
+                        Run.needHeartBeat |= true;
                  }
                 | NOTEVERY TIMESPEC {
                         _sanityCheckEveryStatement(current);
@@ -2441,7 +2442,7 @@ every           : EVERY NUMBER CYCLE {
                                 yyerror2("Invalid cron specification");
                         current->every.type = Every_NotInCron;
                         current->every.spec.cron = $2;
-                        Run.hasCron = true;
+                        // Does not need a heartbeat thread
                  }
                 ;
 
@@ -3621,7 +3622,6 @@ static void preparse(void) {
         Run.eventlist_dir            = NULL;
         Run.eventlist_slots          = -1;
         Run.system                   = NULL;
-        Run.hasCron                  = false;
         Run.needHeartBeat            = false;
         Run.mmonits                  = NULL;
         Run.maillist                 = NULL;
@@ -3725,8 +3725,8 @@ static void postparse(void) {
                 }
         }
 
-        // Should Monit run with a heartbeat thread
-        Run.needHeartBeat = Run.hasCron || Run.mmonits != NULL;
+        // Should Monit run with a heartbeat thread? It's also set to true if 'every cron' was parsed
+        Run.needHeartBeat |= (Run.mmonits != NULL);
 
         /* Check the sanity of any dependency graph */
         check_depend();

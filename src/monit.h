@@ -1369,7 +1369,6 @@ struct Run_T {
         Onreboot_Type onreboot;
         bool isInit;                 /**< True if Monit is running as init (PID 1) */
         bool needHeartBeat; /**< Set in p.y. True if Monit needs a hearbeat thread */
-        bool hasCron;          /**< Set in p.y. True if we have crontab statements */
         struct {
                 char *control;            /**< The file to read configuration from */
                 char *log;                     /**< The file to write logdata into */
