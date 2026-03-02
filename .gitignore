@@ -25,6 +25,7 @@ libtool
 Makefile
 config/*
 libmonit/config/
+.claude/
 
 system/startup/monit.service
 system/startup/monit.upstart
