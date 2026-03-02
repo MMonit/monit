@@ -1,8 +1,8 @@
-                     CHANGES version 5.36.0
+                     CHANGES version 6.0.0
 
            This file summarizes changes made since 5.0
 
-Version 5.36.0
+Version 6.0.0
 
 New: Implemented proper crontab behavior for Monit
      The "every" statement can now reliably be used with minute precision.
@@ -45,7 +45,7 @@ New: Linux: Issue #1136, Issue #42: process memory usage report overcounts the s
      memory by adding the entire amount to each process that uses it. PSS gives
      a more realistic view of both a single process's contribution and the system's
      total memory footprint.
-     Warning: Monit >= 5.36.0 may thus report significantly lower usage for both "memory" and
+     Warning: Monit >= 6.0.0 may thus report significantly lower usage for both "memory" and
      "total memory" for processes.
 
 New: MacOS: Process memory usage report is in line with ActivityMonitor now and shows the process'

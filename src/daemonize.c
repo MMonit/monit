@@ -145,7 +145,7 @@ pid_t exist_daemon(void) {
         if (locked == 1)
                 return pid;
         /*
-         * Fallback for pre-5.36.0: pidfile exists but unlocked.
+         * Fallback for pre-6.0.0: pidfile exists but unlocked.
          *
          * TODO: Remove this legacy fallback in a future Monit release
          */
