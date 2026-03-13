@@ -235,7 +235,7 @@ daemon            { return DAEMON; }
 delay             { return DELAY; }
 terminal          { return TERMINAL; }
 batch             { return BATCH; }
-log               { return LOGFILE; }
+log               { return LOG; }
 logfile           { return LOGFILE; }
 syslog            { return SYSLOG; }
 facility          { return FACILITY; }

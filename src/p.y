@@ -340,6 +340,8 @@ static void addsecurityattribute(char *, StringOperator_Type, Action_Type, Actio
 static void addfiledescriptors(Operator_Type, bool, long long, float, Action_Type, Action_Type);
 static void _sanityCheckEveryStatement(Service_T s);
 
+static void  yydeprecated(const char *s, ...) __attribute__((format (printf, 1, 2)));
+
 // For debug purpose only
 #ifdef HAVE_YYDEBUG
 int yydebug = 1;
@@ -357,7 +359,7 @@ int yydebug = 1;
 }
 
 %token IF ELSE THEN FAILED
-%token SET LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW REJECTOPT ADDRESS INIT TERMINAL BATCH
+%token SET LOG LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW REJECTOPT ADDRESS INIT TERMINAL BATCH
 %token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
 %token PEMFILE PEMKEY PEMCHAIN ENABLE DISABLE SSLTOKEN CIPHER CLIENTPEMFILE ALLOWSELFCERTIFICATION SELFSIGNED VERIFY CERTIFICATE CACERTIFICATEFILE CACERTIFICATEPATH VALID
 %token INTERFACE LINK PACKET BYTEIN BYTEOUT PACKETIN PACKETOUT SPEED SATURATION UPLOAD DOWNLOAD TOTAL UP DOWN
@@ -701,7 +703,7 @@ setonreboot     : SET ONREBOOT START {
                 ;
 
 setexpectbuffer : SET EXPECTBUFFER NUMBER unit {
-                        // Note: deprecated (replaced by "set limits" statement's "sendExpectBuffer" option)
+                        yydeprecated("'set expectbuffer' is deprecated, use 'set limits { sendExpectBuffer: ... }' instead");
                         Run.limits.sendExpectBuffer = $3 * $<number>4;
                   }
                 ;
@@ -832,7 +834,7 @@ setfips         : SET FIPS {
                   }
                 ;
 
-setlog          : SET LOGFILE PATH   {
+setlog          : SET logtoken PATH   {
                         struct stat sb;
                         if (! Run.files.log || ihp.logfile) {
                                 ihp.logfile = true;
@@ -856,12 +858,18 @@ setlog          : SET LOGFILE PATH   {
                                 FREE($3);
                         }
                   }
-                | SET LOGFILE SYSLOG {
+                | SET logtoken SYSLOG {
                         setsyslog(NULL);
                   }
-                | SET LOGFILE SYSLOG FACILITY STRING {
+                | SET logtoken SYSLOG FACILITY STRING {
                         setsyslog($5);
                         FREE($5);
+                  }
+                ;
+
+logtoken        : LOG
+                | LOGFILE {
+                        yydeprecated("'set logfile' is deprecated, use 'set log' instead");
                   }
                 ;
 
@@ -1054,6 +1062,7 @@ sslversion      : SSLV2 {
 #if defined OPENSSL_NO_SSL2 || ! defined HAVE_SSLV2 || ! defined HAVE_OPENSSL
                         yyerror("Your SSL Library does not support SSL version 2");
 #else
+                        yydeprecated("'sslv2' is deprecated and insecure, use 'tlsv1.2' or later instead");
                         _setSSLVersion(SSL_V2);
 #endif
                   }
@@ -1064,6 +1073,7 @@ sslversion      : SSLV2 {
 #if defined OPENSSL_NO_SSL3 || ! defined HAVE_OPENSSL
                         yyerror("Your SSL Library does not support SSL version 3");
 #else
+                        yydeprecated("'sslv3' is deprecated and insecure, use 'tlsv1.2' or later instead");
                         _setSSLVersion(SSL_V3);
 #endif
                   }
@@ -1122,6 +1132,7 @@ sslversion      : SSLV2 {
                 ;
 
 certmd5         : CERTMD5 STRING { // Backward compatibility
+                        yydeprecated("'certmd5' is deprecated, use 'certificate checksum' with SHA1 instead");
                         sslset.flags = SSL_Enabled;
                         sslset.checksum = $<string>2;
                         if (cleanup_hash_string(sslset.checksum) != 32)
@@ -1235,18 +1246,21 @@ httpdoption     : ssl
 
 /* deprecated by "ssl" options since monit 5.21 (kept for backward compatibility) */
 pemfile         : PEMFILE PATH {
+                        yydeprecated("'pemfile' is deprecated, use 'ssl { pemfile: ... }' instead");
                         _setPEM(&(sslset.pemfile), $2, "SSL server PEM file", true);
                   }
                 ;
 
 /* deprecated by "ssl" options since monit 5.21 (kept for backward compatibility) */
 clientpemfile   : CLIENTPEMFILE PATH {
+                        yydeprecated("'clientpemfile' is deprecated, use 'ssl { pemfile: ... }' instead");
                         _setPEM(&(sslset.clientpemfile), $2, "SSL client PEM file", true);
                   }
                 ;
 
 /* deprecated by "ssl" options since monit 5.21 (kept for backward compatibility) */
 allowselfcert   : ALLOWSELFCERTIFICATION {
+                        yydeprecated("'allowselfcertification' is deprecated, use 'ssl { selfsigned: allow }' instead");
                         sslset.flags = SSL_Enabled;
                         sslset.allowSelfSigned = true;
                   }
@@ -1783,6 +1797,7 @@ type            : TYPE TCP {
                         portset.type = Socket_Tcp;
                   }
                 | TYPE TCPSSL typeoptlist { // The typelist is kept for backward compatibility (replaced by ssloptionlist)
+                        yydeprecated("'type tcpssl' is deprecated, use 'type tcp ssl { ... }' instead");
                         portset.type = Socket_Tcp;
                         sslset.flags = SSL_Enabled;
                   }
@@ -2423,6 +2438,7 @@ formatoption    : MAILFROM ADDRESSOBJECT { mailset.from = $<address>1; }
                 ;
 
 every           : EVERY NUMBER CYCLE {
+                        yydeprecated("The 'every N cycles' syntax is deprecated, use cron-style 'every \"*/N * * * *\"' instead");
                         _sanityCheckEveryStatement(current);
                         current->every.type = Every_SkipCycles;
                         current->every.spec.cycle.counter = current->every.spec.cycle.number = $2;
@@ -2453,7 +2469,7 @@ mode            : MODE ACTIVE {
                         current->mode = Monitor_Passive;
                   }
                 | MODE MANUAL {
-                        // Deprecated since monit 5.18
+                        yydeprecated("'mode manual' is deprecated, use 'onreboot laststate' instead");
                         current->onreboot = Onreboot_Laststate;
                   }
                 ;
@@ -3166,6 +3182,7 @@ match           : IF CONTENT urloperator PATH rate1 THEN action1 {
                   }
                 /* The below REGEXMATCH statement is deprecated (replaced by CONTENT) */
                 | IF matchflagnot REGEXMATCH PATH rate1 THEN action1 {
+                        yydeprecated("'if match' with path is deprecated, use 'if content' instead");
                         matchset.ignore = false;
                         matchset.match_path = $4;
                         matchset.match_string = NULL;
@@ -3173,12 +3190,14 @@ match           : IF CONTENT urloperator PATH rate1 THEN action1 {
                         FREE($4);
                   }
                 | IF matchflagnot REGEXMATCH STRING rate1 THEN action1 {
+                        yydeprecated("'if match' is deprecated, use 'if content' instead");
                         matchset.ignore = false;
                         matchset.match_path = NULL;
                         matchset.match_string = $4;
                         addmatch(&matchset, $<number>7, 0);
                   }
                 | IGNORE matchflagnot REGEXMATCH PATH {
+                        yydeprecated("'ignore match' is deprecated, use 'ignore content' instead");
                         matchset.ignore = true;
                         matchset.match_path = $4;
                         matchset.match_string = NULL;
@@ -3186,6 +3205,7 @@ match           : IF CONTENT urloperator PATH rate1 THEN action1 {
                         FREE($4);
                   }
                 | IGNORE matchflagnot REGEXMATCH STRING {
+                        yydeprecated("'ignore match' is deprecated, use 'ignore content' instead");
                         matchset.ignore = true;
                         matchset.match_path = NULL;
                         matchset.match_string = $4;
@@ -3335,6 +3355,7 @@ gid             : IF FAILED GID STRING rate1 THEN action1 recovery_success {
                 ;
 
 linkstatus   : IF FAILED LINK rate1 THEN action1 recovery_success { /* Deprecated */
+                        yydeprecated("'if failed link' is deprecated, use 'if link down' instead");
                         addeventaction(&(linkstatusset).action, $<number>6, $<number>7);
                         addlinkstatus(current, &linkstatusset);
                   }
@@ -3588,6 +3609,18 @@ bool parse(char *controlfile) {
 
 /* ----------------------------------------------------------------- Private */
 
+        
+static void yydeprecated(const char *s, ...) {
+        assert(s);
+        char *msg = NULL;
+        va_list ap;
+        va_start(ap, s);
+        msg = Str_vcat(s, ap);
+        va_end(ap);
+        Log_warning("%s:%i: %s\n", currentfile, lineno, msg);
+        FREE(msg);
+}
+                
 
 /**
  * Initialize objects used by the parser.
