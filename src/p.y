@@ -1797,7 +1797,7 @@ type            : TYPE TCP {
                         portset.type = Socket_Tcp;
                   }
                 | TYPE TCPSSL typeoptlist { // The typelist is kept for backward compatibility (replaced by ssloptionlist)
-                        yydeprecated("'type tcpssl' is deprecated, use 'type tcp ssl { ... }' instead");
+                        yydeprecated("'type tcpssl' is deprecated, use 'type tcp' and 'with ssl { ... }' or the secure protocol version like 'protocol https' instead");
                         portset.type = Socket_Tcp;
                         sslset.flags = SSL_Enabled;
                   }
