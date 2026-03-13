@@ -2438,7 +2438,7 @@ formatoption    : MAILFROM ADDRESSOBJECT { mailset.from = $<address>1; }
                 ;
 
 every           : EVERY NUMBER CYCLE {
-                        yydeprecated("The 'every N cycles' syntax is deprecated, use cron-style 'every \"*/N * * * *\"' instead");
+                        yydeprecated("The 'every N cycles' syntax is deprecated, use cron-style 'every \"*/N * * * *\"' for periodic N minutes or 'every \"* * * * *\"' for once per minute instead");
                         _sanityCheckEveryStatement(current);
                         current->every.type = Every_SkipCycles;
                         current->every.spec.cycle.counter = current->every.spec.cycle.number = $2;
