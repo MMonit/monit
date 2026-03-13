@@ -38,41 +38,41 @@
 
 #include "protocol.h"
 
-static Protocol_T protocols[] = {
-        &(struct Protocol_T){"DEFAULT",         check_default},
-        &(struct Protocol_T){"HTTP",            check_http},
-        &(struct Protocol_T){"FTP",             check_ftp},
-        &(struct Protocol_T){"SMTP",            check_smtp},
-        &(struct Protocol_T){"POP",             check_pop},
-        &(struct Protocol_T){"IMAP",            check_imap},
-        &(struct Protocol_T){"NNTP",            check_nntp},
-        &(struct Protocol_T){"SSH",             check_ssh},
-        &(struct Protocol_T){"DWP",             check_dwp},
-        &(struct Protocol_T){"LDAP2",           check_ldap2},
-        &(struct Protocol_T){"LDAP3",           check_ldap3},
-        &(struct Protocol_T){"RDATE",           check_rdate},
-        &(struct Protocol_T){"RSYNC",           check_rsync},
-        &(struct Protocol_T){"generic",         check_generic},
-        &(struct Protocol_T){"APACHESTATUS",    check_apache_status},
-        &(struct Protocol_T){"NTP3",            check_ntp3},
-        &(struct Protocol_T){"MYSQL",           check_mysql},
-        &(struct Protocol_T){"DNS",             check_dns},
-        &(struct Protocol_T){"POSTFIX-POLICY",  check_postfix_policy},
-        &(struct Protocol_T){"TNS",             check_tns},
-        &(struct Protocol_T){"PGSQL",           check_pgsql},
-        &(struct Protocol_T){"CLAMAV",          check_clamav},
-        &(struct Protocol_T){"SIP",             check_sip},
-        &(struct Protocol_T){"LMTP",            check_lmtp},
-        &(struct Protocol_T){"GPS",             check_gps},
-        &(struct Protocol_T){"RADIUS",          check_radius},
-        &(struct Protocol_T){"MEMCACHE",        check_memcache},
-        &(struct Protocol_T){"WEBSOCKET",       check_websocket},
-        &(struct Protocol_T){"REDIS",           check_redis},
-        &(struct Protocol_T){"MONGODB",         check_mongodb},
-        &(struct Protocol_T){"SIEVE",           check_sieve},
-        &(struct Protocol_T){"SPAMASSASSIN",    check_spamassassin},
-        &(struct Protocol_T){"FAIL2BAN",        check_fail2ban},
-        &(struct Protocol_T){"MQTT",            check_mqtt}
+static struct Protocol_T protocols[] = {
+        {.name = "DEFAULT",         .check = check_default},
+        {.name = "HTTP",            .check = check_http},
+        {.name = "FTP",             .check = check_ftp},
+        {.name = "SMTP",            .check = check_smtp},
+        {.name = "POP",             .check = check_pop},
+        {.name = "IMAP",            .check = check_imap},
+        {.name = "NNTP",            .check = check_nntp},
+        {.name = "SSH",             .check = check_ssh},
+        {.name = "DWP",             .check = check_dwp},
+        {.name = "LDAP2",           .check = check_ldap2},
+        {.name = "LDAP3",           .check = check_ldap3},
+        {.name = "RDATE",           .check = check_rdate},
+        {.name = "RSYNC",           .check = check_rsync},
+        {.name = "generic",         .check = check_generic},
+        {.name = "APACHESTATUS",    .check = check_apache_status},
+        {.name = "NTP3",            .check = check_ntp3},
+        {.name = "MYSQL",           .check = check_mysql},
+        {.name = "DNS",             .check = check_dns},
+        {.name = "POSTFIX-POLICY",  .check = check_postfix_policy},
+        {.name = "TNS",             .check = check_tns},
+        {.name = "PGSQL",           .check = check_pgsql},
+        {.name = "CLAMAV",          .check = check_clamav},
+        {.name = "SIP",             .check = check_sip},
+        {.name = "LMTP",            .check = check_lmtp},
+        {.name = "GPS",             .check = check_gps},
+        {.name = "RADIUS",          .check = check_radius},
+        {.name = "MEMCACHE",        .check = check_memcache},
+        {.name = "WEBSOCKET",       .check = check_websocket},
+        {.name = "REDIS",           .check = check_redis},
+        {.name = "MONGODB",         .check = check_mongodb},
+        {.name = "SIEVE",           .check = check_sieve},
+        {.name = "SPAMASSASSIN",    .check = check_spamassassin},
+        {.name = "FAIL2BAN",        .check = check_fail2ban},
+        {.name = "MQTT",            .check = check_mqtt}
 };
 
 
@@ -81,8 +81,8 @@ static Protocol_T protocols[] = {
 
 Protocol_T Protocol_get(Protocol_Type type) {
         if (type >= sizeof(protocols)/sizeof(protocols[0]))
-                return protocols[0];
-        return protocols[type];
+                return &protocols[0];
+        return &protocols[type];
 }
 
 
