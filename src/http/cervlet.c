@@ -468,10 +468,14 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                         _formatStatus("uptime", Event_Uptime, type, res, s, System_Info.booted > 0, "%s", _getUptime(Time_now() - System_Info.booted, (char[256]){}));
                                         _formatStatus("boot time", Event_Null, type, res, s, true, "%s", Time_localStr(System_Info.booted, (char[32]){}));
                                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerSystem) {
-                                                if (System_Info.filedescriptors.maximum > 0)
-                                                        _formatStatus("filedescriptors", Event_Resource, type, res, s, true, "%lld [%.1f%% of %lld limit]", System_Info.filedescriptors.allocated, (float)100 * (float)System_Info.filedescriptors.allocated / (float)System_Info.filedescriptors.maximum, System_Info.filedescriptors.maximum);
-                                                else
+                                                if (System_Info.filedescriptors.maximum > 0) {
+                                                        if (System_Info.filedescriptors.maximum < LLONG_MAX)
+                                                                _formatStatus("filedescriptors", Event_Resource, type, res, s, true, "%lld [%.1f%% of %lld limit]", System_Info.filedescriptors.allocated, (float)100 * (float)System_Info.filedescriptors.allocated / (float)System_Info.filedescriptors.maximum, System_Info.filedescriptors.maximum);
+                                                        else
+                                                                _formatStatus("filedescriptors", Event_Resource, type, res, s, true, "%lld", System_Info.filedescriptors.allocated); // No limit
+                                                } else {
                                                         _formatStatus("filedescriptors", Event_Resource, type, res, s, false, NULL);
+                                                }
                                         }
                                 }
                                 break;

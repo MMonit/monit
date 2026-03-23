@@ -104,6 +104,8 @@ Changed: MacOS: Monit now utilizes the 64-bit system API to retrieve system memo
          32-bit Macs is deprecated, as the last pure 32-bit Macs were released in 2006.
          Thanks to Lutz Mader.
 
+Fixed: When the system had no filedescriptors limit, monit displayed confusing statistics in status:
+          filedescriptors    4896 [0.0% of 9223372036854775807 limit]
 
 
 Version 5.35.2
