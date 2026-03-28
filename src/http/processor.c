@@ -202,6 +202,8 @@ void send_error(HttpRequest req, HttpResponse res, int code, const char *msg, ..
 
         const char *err = get_status_string(code);
         reset_response(res);
+        if (Run.httpd.socket.net.ssl.flags & SSL_Enabled)
+                set_header(res, "Strict-Transport-Security", "max-age=63072000");
         set_content_type(res, "text/html");
         set_status(res, code);
         StringBuffer_append(res->outputbuffer,

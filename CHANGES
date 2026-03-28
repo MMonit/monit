@@ -107,6 +107,8 @@ Changed: MacOS: Monit now utilizes the 64-bit system API to retrieve system memo
 Fixed: When the system had no filedescriptors limit, monit displayed confusing statistics in status:
           filedescriptors    4896 [0.0% of 9223372036854775807 limit]
 
+Fixed: Issue #1144: Monit GUI drops the Strict-Transport-Security header when sending HTTP error responses.
+
 
 Version 5.35.2
 
