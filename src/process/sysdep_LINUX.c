@@ -89,6 +89,7 @@
 #include <sys/mman.h>
 #endif
 
+
 #include "monit.h"
 #include "ProcessTree.h"
 #include "process_sysdep.h"
@@ -418,30 +419,47 @@ static bool _parseProcFdCount(Proc_T proc) {
         unsigned long long file_count = 0;
 
         snprintf(path, sizeof(path), "/proc/%d/fd", proc->data.pid);
-        DIR *dirp = opendir(path);
-        if (! dirp) {
+        int fd = open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+        if (fd < 0) {
                 if (Run.debug >= 2)
-                        DEBUG("system statistic error -- opendir %s: %s\n", path, STRERROR);
+                        DEBUG("system statistic error -- open %s: %s\n", path, STRERROR);
                 return false;
         }
-        errno = 0;
-        while (readdir(dirp) != NULL) {
-                // count everything
-                file_count++;
+
+        struct linux_dirent64 {
+                ino64_t        d_ino;
+                off64_t        d_off;
+                unsigned short d_reclen;
+                unsigned char  d_type;
+                char           d_name[];
+        };
+
+        char buf[4096];
+        ssize_t nread;
+        while ((nread = getdents64(fd, buf, sizeof(buf))) > 0) {
+                ssize_t pos = 0;
+                while (pos < nread) {
+                        struct linux_dirent64 *d = (struct linux_dirent64 *)(buf + pos);
+                        file_count++; // count every directory (including '.' and '..' references)
+                        pos += d->d_reclen;
+                }
         }
-        // do not closedir() until readdir errno has been evaluated
-        if (errno) {
-                DEBUG("system statistic error -- cannot iterate %s: %s\n", path, STRERROR);
-                closedir(dirp);
+
+        int errno_saved = errno; // Save errno before calling close()
+        close(fd);
+
+        if (nread < 0) {
+                DEBUG("system statistic error -- cannot iterate %s: %s\n", path, strerror(errno_saved));
                 return false;
         }
-        closedir(dirp);
+
         // assert at least '.' and '..' have been found
         if (file_count < 2) {
                 DEBUG("system statistic error -- cannot find basic entries in %s\n", path);
                 return false;
         }
-        // subtract entries '.' and '..'
+
+        // subtract entries '.' and '..' (faster then doing strcmp during getdents64 loop)
         proc->data.filedescriptors.open = file_count - 2;
 
         // get process's limits
