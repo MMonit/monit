@@ -288,6 +288,53 @@ static Hash_Type _optionsChecksumType(Hash_Type checksumType) {
 }
 
 
+static bool _setupCiphers(SSL_CTX *ctx, SslOptions_T options) {
+        const char *ciphers = _optionsCiphers(options->ciphers);
+
+        // Set TLS <= 1.2 ciphers
+        if (SSL_CTX_set_cipher_list(ctx, ciphers) != 1) {
+                Log_error("SSL: TLS 1.2 cipher list [%s] error -- %s\n", ciphers, SSLERROR);
+                return false;
+        }
+
+        return true;
+}
+
+
+// Preferred key-exchange groups for TLS 1.3, ordered with Post-Quantum-Cryptography (PQC) hybrids first.
+//
+// PQC hybrid groups:
+//   X25519MLKEM768      : X25519 + ML-KEM-768  (NIST FIPS 203, primary hybrid, IANA id 25497)
+//   SecP256r1MLKEM768   : P-256  + ML-KEM-768  (NIST hybrid, IANA id 25498)
+//   SecP384r1MLKEM1024  : P-384  + ML-KEM-1024 (highest security margin, IANA id 25499)
+//
+// Classical groups:
+//   X25519           : RFC 7748, fastest classical ECDH
+//   P-256            : NIST P-256, widely supported
+//   P-384            : NIST P-384, higher security margin
+//
+#define PREFERRED_GROUPS "X25519MLKEM768:SecP256r1MLKEM768:SecP384r1MLKEM1024:X25519:P-256:P-384"
+#define CLASSICAL_GROUPS "X25519:P-256:P-384"
+
+static bool _setupPQGroups(SSL_CTX *ctx) {
+#ifdef HAVE_SSL_CTX_SET1_GROUPS_LIST
+        if (SSL_CTX_set1_groups_list(ctx, PREFERRED_GROUPS) != 1) {
+                // Non-fatal: OpenSSL < 3.2 or OQS provider not loaded will reject the PQC group names. Fall back to whatever OpenSSL defaults to (usually P-256 / X25519)
+                DEBUG("SSL: PQC group list [%s] not fully accepted – falling back to classical groups\n", PREFERRED_GROUPS);
+
+                // Try classical-only fallback so at least ECDH still works
+                if (SSL_CTX_set1_groups_list(ctx, CLASSICAL_GROUPS) != 1) {
+                        Log_error("SSL: failed to set classical ECDH group  list -- %s\n", SSLERROR);
+                        return false;
+                }
+        } else {
+                DEBUG("TLS: Post-quantum hybrid key exchange enabled (%s)\n", PREFERRED_GROUPS);
+        }
+#endif
+        return true;
+}
+
+
 static bool _setVersion(SSL_CTX *ctx, SslOptions_T options) {
         unsigned long versionMask = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1;
 #if defined HAVE_TLSV1_1
@@ -657,11 +704,13 @@ T Ssl_new(SslOptions_T options) {
 #ifdef SSL_OP_NO_COMPRESSION
         SSL_CTX_set_options(C->ctx, SSL_OP_NO_COMPRESSION);
 #endif
-        const char *ciphers = _optionsCiphers(options->ciphers);
-        if (SSL_CTX_set_cipher_list(C->ctx, ciphers) != 1) {
-                Log_error("SSL: client cipher list [%s] error -- no valid ciphers\n", ciphers);
+
+        if (! _setupCiphers(C->ctx, options))
                 goto sslerror;
-        }
+
+        if (! _setupPQGroups(C->ctx))
+                goto sslerror;
+
         if (! (C->handler = SSL_new(C->ctx))) {
                 Log_error("SSL: cannot create client handler -- %s\n", SSLERROR);
                 goto sslerror;
@@ -957,26 +1006,27 @@ SslServer_T SslServer_new(int socket, SslOptions_T options) {
                 Log_error("SSL: server session id context initialization failed -- %s\n", SSLERROR);
                 goto sslerror;
         }
-        const char *ciphers = _optionsCiphers(options->ciphers);
-        if (SSL_CTX_set_cipher_list(S->ctx, ciphers) != 1) {
-                Log_error("SSL: server cipher list [%s] error -- no valid ciphers\n", ciphers);
+
+        if (! _setupCiphers(S->ctx, options))
                 goto sslerror;
-        }
+
         SSL_CTX_set_options(S->ctx, SSL_OP_CIPHER_SERVER_PREFERENCE);
+
 #ifdef SSL_MODE_RELEASE_BUFFERS
         SSL_CTX_set_mode(S->ctx, SSL_MODE_RELEASE_BUFFERS);
 #endif
+
 #ifdef SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
         SSL_CTX_set_options(S->ctx, SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
 #endif
+
 #ifdef SSL_OP_NO_RENEGOTIATION
         SSL_CTX_set_options(S->ctx, SSL_OP_NO_RENEGOTIATION);
 #endif
-#ifdef SSL_CTRL_SET_ECDH_AUTO
-        SSL_CTX_set_options(S->ctx, SSL_OP_SINGLE_ECDH_USE);
-        SSL_CTX_set_ecdh_auto(S->ctx, 1);
-#elif defined HAVE_SSL_CTX_SET1_GROUPS_LIST
-        SSL_CTX_set1_groups_list(S->ctx, "P-256");
+
+#ifdef HAVE_SSL_CTX_SET1_GROUPS_LIST
+        if (! _setupPQGroups(S->ctx))
+                goto sslerror;
 #elif defined HAVE_EC_KEY
         SSL_CTX_set_options(S->ctx, SSL_OP_SINGLE_ECDH_USE);
         EC_KEY *key = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
@@ -984,11 +1034,17 @@ SslServer_T SslServer_new(int socket, SslOptions_T options) {
                 SSL_CTX_set_tmp_ecdh(S->ctx, key);
                 EC_KEY_free(key);
         }
+#elif defined SSL_CTRL_SET_ECDH_AUTO
+        SSL_CTX_set_options(S->ctx, SSL_OP_SINGLE_ECDH_USE);
+        SSL_CTX_set_ecdh_auto(S->ctx, 1);
 #endif
+
         SSL_CTX_set_options(S->ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+
 #ifdef SSL_OP_NO_COMPRESSION
         SSL_CTX_set_options(S->ctx, SSL_OP_NO_COMPRESSION);
 #endif
+
         SSL_CTX_set_session_cache_mode(S->ctx, SSL_SESS_CACHE_OFF);
         const char *pemchain = _optionsServerPEMChain(options->pemchain);
         const char *pemkey = _optionsServerPEMKey(options->pemkey);
