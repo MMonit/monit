@@ -5,7 +5,8 @@
 Version 6.0.0
 
 New: SSL/TLS: Add support for quantum-resistant cryptography: hybrid ML-KEM key exchange mechanisms with TLS 1.3.
-     Monit must be linked with an SSL library that supports ML-KEM, such as OpenSSL 3.5, for this functionality to work.
+     Monit must be linked with an SSL library that supports ML-KEM, such as OpenSSL 3.5.x or later, for this
+     functionality to work.
 
 New: Added SHA256 checksum support. SHA256 can now be used in addition to MD5 and SHA1
      for file integrity monitoring, SSL/TLS certificate verification, HTTP content
