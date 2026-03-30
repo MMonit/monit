@@ -109,6 +109,8 @@ Fixed: When the system had no filedescriptors limit, monit displayed confusing s
 
 Fixed: Issue #1144: Monit GUI drops the Strict-Transport-Security header when sending HTTP error responses.
 
+Fixed: TLS: Disable obsoleted CBC ciphers by default.
+
 
 Version 5.35.2
 
