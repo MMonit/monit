@@ -44,9 +44,10 @@ how much memory or cpu cycles a process is using.
 You can also use Monit to monitor B<files>, B<directories> and
 B<filesystems> on localhost. Monit can monitor these items for changes,
 such as timestamps changes, checksum changes or size changes. This is
-also useful for security reasons - you can monitor the md5 or sha1
+also useful for security reasons - you can monitor the md5, sha1, or sha256
 checksum of files that should not change and get an alert or perform an
-action if they should change.
+action if they should change. SHA256 is recommended for better cryptographic
+security.
 
 Monit can monitor B<network connections> to various servers, either on
 localhost or on remote hosts. TCP, UDP and Unix Domain Sockets are
@@ -159,7 +160,7 @@ B<-vv>
    Very verbose mode, same as -v plus log stack-trace on error
 
 B<-H> I<[filename]>
-   Print MD5 and SHA1 hashes of the file or of stdin if the
+   Print MD5, SHA1, and SHA256 hashes of the file or of stdin if the
    filename is omitted; Monit will exit afterwards
 
 B<-V>
@@ -1327,7 +1328,7 @@ defined with a C<set mailserver> statement:
         [PORT number]
         [USERNAME string] [PASSWORD string]
         [using SSL [with options {...}]
-        [CERTIFICATE CHECKSUM [MD5|SHA1] <hash>],
+        [CERTIFICATE CHECKSUM [MD5|SHA1|SHA256] <hash>],
         ...
    [with TIMEOUT X SECONDS]
    [using HOSTNAME hostname]
@@ -2419,22 +2420,24 @@ Example:
 =head2 FILE CHECKSUM TEST
 
 The checksum statement may only be used in a file service
-entry and can be used to check the file's MD5 or SHA1 checksum.
+entry and can be used to check the file's MD5, SHA1, or SHA256 checksum.
 
 Check specific checksum:
 
- IF FAILED [MD5|SHA1] CHECKSUM [EXPECT checksum] THEN action
+ IF FAILED [MD5|SHA1|SHA256] CHECKSUM [EXPECT checksum] THEN action
 
 Check any file changes:
 
- IF CHANGED [MD5|SHA1] CHECKSUM THEN action
+ IF CHANGED [MD5|SHA1|SHA256] CHECKSUM THEN action
 
-The choice of MD5 or SHA1 is optional. MD5 features a 128 bits checksum
-(32 bytes hex encoded string) and SHA1 a 160 bits checksum (40 bytes
-hex encoded string). If this option is omitted, Monit will try to guess
-the method from the EXPECT string or use MD5 as the default checksum.
+The choice of MD5, SHA1, or SHA256 is optional. MD5 features a 128 bits checksum
+(32 bytes hex encoded string), SHA1 a 160 bits checksum (40 bytes
+hex encoded string), and SHA256 a 256 bits checksum (64 bytes hex encoded string).
+If this option is omitted, Monit will try to guess the method from the EXPECT 
+string or use MD5 as the default checksum. SHA256 is recommended for better
+cryptographic security.
 
-C<expect> is optional and if used, specifies the md5 or sha1 string
+C<expect> is optional and if used, specifies the md5, sha1, or sha256 string
 Monit should expect when testing a file's checksum. Monit will then not
 compute an initial checksum for the file, but instead use the string
 you submit. For example:
@@ -2443,8 +2446,8 @@ you submit. For example:
     checksum expect 8f7f419955cefa0b33a2ba316cba3659
  then alert
 
-You can, for example, use the GNU utility I<md5sum(1)> or
-I<sha1sum(1)> to create a checksum string for a file and
+You can, for example, use the GNU utility I<md5sum(1)>, I<sha1sum(1)>,
+or I<sha256sum(1)> to create a checksum string for a file and
 use this string in the expect-statement.
 
 Reloading a server if its configuration file was changed:
@@ -3504,7 +3507,7 @@ TCP/UDP port test syntax:
     [IPV4 | IPV6]
     [TYPE <TCP|UDP>]
     [<SSL|TLS> [with options {...}]
-    [CERTIFICATE CHECKSUM [MD5|SHA1] string]
+    [CERTIFICATE CHECKSUM [MD5|SHA1|SHA256] string]
     [CERTIFICATE VALID for number DAYS]
     [PROTOCOL protocol | <SEND|EXPECT> "string",...]
     [RESPONSETIME operator number <MILLISECONDS|SECONDS>]
@@ -3566,14 +3569,15 @@ self-signed certificates or set the SSL client certificates
 database-file for client certificate authentication.
 
 
-I<CERTIFICATE CHECKSUM [MD5|SHA1] hash>. Verify
-the SSL server certificate by checking its checksum. You can use either
-MD5 or SHA1 checksum (if you don't specify the type, Monit will
-determine the digest based on the hash length). You can use the
-I<openssl> command line tool to get the checksum value for your
-certificate, which you can then use in Monit's control file:
+I<CERTIFICATE CHECKSUM [MD5|SHA1|SHA256] hash>. Verify
+the SSL server certificate by checking its checksum. You can use
+MD5, SHA1, or SHA256 checksum (if you don't specify the type, Monit will
+determine the digest based on the hash length). SHA256 is recommended
+for better cryptographic security. You can use the I<openssl> command
+line tool to get the checksum value for your certificate, which you can
+then use in Monit's control file:
 
- openssl x509 -fingerprint -sha1 -in server.crt | head -1 | cut -f2 -d'='
+ openssl x509 -fingerprint -sha256 -in server.crt | head -1 | cut -f2 -d'='
 
 Example:
 
@@ -3773,12 +3777,13 @@ should return 404 in this case):
   then alert
 
 I<CHECKSUM> You can test the checksum of documents returned by a HTTP
-server. Either MD5 or SHA1 hash can be used. Monit will B<not> test the
-checksum for a document if the server does not set the HTTP
-I<Content-Length> header. A HTTP server should set this header when it
-server a static document (i.e. a file). There are no limitation on the
-document size, but keep in mind that Monit will use time to download the
-document over the network to compute the checksum.
+server. MD5, SHA1, or SHA256 hash can be used. SHA256 is recommended for
+better cryptographic security. Monit will B<not> test the checksum for a
+document if the server does not set the HTTP I<Content-Length> header.
+A HTTP server should set this header when it serves a static document
+(i.e. a file). There are no limitations on the document size, but keep in
+mind that Monit will use time to download the document over the network
+to compute the checksum.
 
 Example:
 
@@ -3909,16 +3914,17 @@ Example:
 
 Syntax:
 
- PROTOCOL MYSQL[S] [USERNAME string PASSWORD string [RSAKEY CHECKSUM string]]
+ PROTOCOL MYSQL[S] [USERNAME string PASSWORD string [RSAKEY CHECKSUM [MD5|SHA1|SHA256] string]]
 
 I<USERNAME> MySQL username.
 
 I<PASSWORD> MySQL password (special characters can be used, but for non-alphanumerics
 the password has to be quoted).
 
-I<RSKEY CHECKSUM> If you use unsecured connection (plain MYSQL without TLS), you can set
-the expected MD5 or SHA1 checksum of the server's RSA key to protect afainst man-in-the-middle
-attacks. Monit will check the key fingerprint before sending the password to the server.
+I<RSAKEY CHECKSUM> If you use unsecured connection (plain MYSQL without TLS), you can set
+the expected MD5, SHA1, or SHA256 checksum of the server's RSA key to protect against
+man-in-the-middle attacks. SHA256 is recommended for better cryptographic security. Monit
+will check the key fingerprint before sending the password to the server.
 
 Username and password (credentials) are B<optional> and if not set,
 Monit will perform the test using anonymous login. This can cause an

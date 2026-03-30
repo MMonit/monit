@@ -27,6 +27,9 @@
 #define MONIT_CHECKSUM_H
 
 #include "monit.h"
+#include "md5.h"
+#include "sha1.h"
+#include "sha256.h"
 
 
 /**
@@ -42,8 +45,9 @@ typedef struct T {
         Hash_Type type;
         MD_T      hash;
         union {
-                md5_context_t  md5;
-                sha1_context_t sha1;
+                md5_context_t    md5;
+                sha1_context_t   sha1;
+                sha256_context_t sha256;
         } data;
 } *T;
 
@@ -52,7 +56,7 @@ typedef struct T {
  * Initialize the checksum context
  * @param context The checksum context
  * @param type Type of hash to initialize
- * @exception AssertException if context is NULL or hash type not MD5 not SHA1
+ * @exception AssertException if context is NULL or hash type not MD5, SHA1, or SHA256
  */
 void Checksum_init(T context, Hash_Type type);
 
@@ -118,7 +122,7 @@ void Checksum_printHash(char *file);
 /**
  * Store the checksum of given file in supplied buffer
  * @param file The file for which to compute the checksum
- * @param hashtype The hash type (Hash_Md5 or Hash_Sha1)
+ * @param hashtype The hash type (Hash_Md5, Hash_Sha1, or Hash_Sha256)
  * @param buf The buffer where the result will be stored
  * @param bufsize The size of the buffer
  * @return false if failed, otherwise true

@@ -327,7 +327,7 @@ static bool _setupPQGroups(SSL_CTX *ctx) {
                         Log_error("SSL: failed to set classical ECDH group  list -- %s\n", SSLERROR);
                         return false;
                 }
-        } else {
+        } else if (Run.debug >= 2) {
                 DEBUG("TLS: Post-quantum hybrid key exchange enabled (%s)\n", PREFERRED_GROUPS);
         }
 #endif
@@ -462,7 +462,7 @@ static int _checkChecksum(T C, X509_STORE_CTX *ctx, X509 *certificate) {
                         case Hash_Md5:
                                 if (Run.flags & Run_FipsEnabled) {
                                         X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
-                                        snprintf(C->error, sizeof(C->error), "SSL certificate MD5 checksum is not supported in FIPS mode, please use SHA1");
+                                        snprintf(C->error, sizeof(C->error), "SSL certificate MD5 checksum is not supported in FIPS mode, please use SHA256");
                                         return 0;
                                 } else {
                                         hash = EVP_md5();
@@ -470,6 +470,9 @@ static int _checkChecksum(T C, X509_STORE_CTX *ctx, X509 *certificate) {
                                 break;
                         case Hash_Sha1:
                                 hash = EVP_sha1();
+                                break;
+                        case Hash_Sha256:
+                                hash = EVP_sha256();
                                 break;
                         default:
                                 X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
@@ -487,6 +490,9 @@ static int _checkChecksum(T C, X509_STORE_CTX *ctx, X509 *certificate) {
                                 return 0;
                         }
                         i++;
+                }
+                if (checksumType != Hash_Unknown && STR_DEF(checksum)) {
+                        DEBUG("SSL certificate %s checksum test succeeded [%s]\n", Checksum_Names[checksumType], checksum);
                 }
         }
         return 1;

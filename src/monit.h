@@ -361,7 +361,8 @@ typedef enum {
         Hash_Unknown = 0,
         Hash_Md5,
         Hash_Sha1,
-        Hash_Default = Hash_Md5
+        Hash_Sha256,
+        Hash_Default = Hash_Sha256
 } Hash_Type;
 
 

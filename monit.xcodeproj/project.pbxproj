@@ -91,6 +91,7 @@
 		9378737B1A13907100CF8C5E /* sieve.c in Sources */ = {isa = PBXBuildFile; fileRef = 9378737A1A13907100CF8C5E /* sieve.c */; };
 		937F5ACE24618E2F006D62AF /* checksum.c in Sources */ = {isa = PBXBuildFile; fileRef = 937F5ACD24618E2F006D62AF /* checksum.c */; };
 		93A23ED41C85E6890076FBFE /* Address.c in Sources */ = {isa = PBXBuildFile; fileRef = 93A23ED21C85E6890076FBFE /* Address.c */; };
+		93DCFEE52F7A9F35005F2574 /* sha256.c in Sources */ = {isa = PBXBuildFile; fileRef = 93DCFEE42F7A9F35005F2574 /* sha256.c */; };
 		93DE91B01CBAED0400BC8E0C /* client.c in Sources */ = {isa = PBXBuildFile; fileRef = 93DE91AE1CBAED0400BC8E0C /* client.c */; };
 		93F14A6B1EE7002500FF756B /* fail2ban.c in Sources */ = {isa = PBXBuildFile; fileRef = 93F14A691EE7002500FF756B /* fail2ban.c */; };
 		93F14A6C1EE7002500FF756B /* spamassassin.c in Sources */ = {isa = PBXBuildFile; fileRef = 93F14A6A1EE7002500FF756B /* spamassassin.c */; };
@@ -176,13 +177,6 @@
 			remoteGlobalIDString = 529DBAB82EBD3CDD00BECF5F;
 			remoteInfo = RandomTest;
 		};
-		52EBFD212ED7DED500732E12 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 52FDA95A2EC6A76000971039;
-			remoteInfo = NumTest;
-		};
 		52F675FC19B873A100E1FF1E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
@@ -196,6 +190,13 @@
 			proxyType = 2;
 			remoteGlobalIDString = 52FDD6A8189C2036008E3D5E;
 			remoteInfo = CommandTest;
+		};
+		93DCFEE22F7A9F35005F2574 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 52A1310B13A7882A00583257 /* libmonit.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 93DCFED82F7A9C88005F2574;
+			remoteInfo = NumTest;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -394,6 +395,8 @@
 		93A23ED31C85E6890076FBFE /* Address.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Address.h; sourceTree = "<group>"; };
 		93C635D81E6213B5009B873B /* sysdep_DRAGONFLY.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sysdep_DRAGONFLY.c; sourceTree = "<group>"; };
 		93C635D91E6213CB009B873B /* sysdep_DRAGONFLY.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sysdep_DRAGONFLY.c; sourceTree = "<group>"; };
+		93DCFED92F7A9F35005F2574 /* sha256.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sha256.h; sourceTree = "<group>"; };
+		93DCFEE42F7A9F35005F2574 /* sha256.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sha256.c; sourceTree = "<group>"; };
 		93DE91AE1CBAED0400BC8E0C /* client.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = client.c; sourceTree = "<group>"; };
 		93DE91AF1CBAED0400BC8E0C /* client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = client.h; sourceTree = "<group>"; };
 		93F14A691EE7002500FF756B /* fail2ban.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fail2ban.c; sourceTree = "<group>"; };
@@ -622,7 +625,7 @@
 				52A20916299AD408004FFCB4 /* InputstreamTest */,
 				525ADD7F2EBBAC290000850F /* ArrayTest */,
 				52EBFD202ED7DED500732E12 /* RandomTest */,
-				52EBFD222ED7DED500732E12 /* NumTest */,
+				93DCFEE32F7A9F35005F2574 /* NumTest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -698,6 +701,8 @@
 				52F6E7AD13A74F220023F87A /* util.c */,
 				52F6E7AE13A74F220023F87A /* util.h */,
 				52F6E7AF13A74F220023F87A /* validate.c */,
+				93DCFED92F7A9F35005F2574 /* sha256.h */,
+				93DCFEE42F7A9F35005F2574 /* sha256.c */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -961,13 +966,6 @@
 			remoteRef = 52EBFD1F2ED7DED500732E12 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		52EBFD222ED7DED500732E12 /* NumTest */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = NumTest;
-			remoteRef = 52EBFD212ED7DED500732E12 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		52F675FD19B873A100E1FF1E /* StrTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
@@ -980,6 +978,13 @@
 			fileType = "compiled.mach-o.executable";
 			path = CommandTest;
 			remoteRef = 52FDD6B5189C2762008E3D5E /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		93DCFEE32F7A9F35005F2574 /* NumTest */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = NumTest;
+			remoteRef = 93DCFEE22F7A9F35005F2574 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -1005,6 +1010,7 @@
 				52F6E81713A74F220023F87A /* base64.c in Sources */,
 				52F6E81813A74F220023F87A /* cervlet.c in Sources */,
 				52F6E81913A74F220023F87A /* engine.c in Sources */,
+				93DCFEE52F7A9F35005F2574 /* sha256.c in Sources */,
 				52F6E81A13A74F220023F87A /* processor.c in Sources */,
 				52F6E81B13A74F220023F87A /* http.c in Sources */,
 				52F6E81C13A74F220023F87A /* l.l in Sources */,

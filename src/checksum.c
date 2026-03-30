@@ -31,6 +31,7 @@
 #include "monit.h"
 #include "md5.h"
 #include "sha1.h"
+#include "sha256.h"
 #include "checksum.h"
 
 // libmonit
@@ -53,6 +54,9 @@ void Checksum_init(T context, Hash_Type type) {
                 case Hash_Sha1:
                         sha1_init(&(context->data.sha1));
                         break;
+                case Hash_Sha256:
+                        sha256_init(&(context->data.sha256));
+                        break;
                 default:
                         THROW(AssertException, "Checksum error: Unknown hash type");
                         break;
@@ -71,6 +75,9 @@ unsigned char *Checksum_finish(T context) {
                                 break;
                         case Hash_Sha1:
                                 sha1_finish(&(context->data.sha1), (unsigned char *)context->hash);
+                                break;
+                        case Hash_Sha256:
+                                sha256_finish(&(context->data.sha256), (unsigned char *)context->hash);
                                 break;
                         default:
                                 THROW(AssertException, "Checksum error: Unknown hash type");
@@ -94,6 +101,9 @@ void Checksum_append(T context, const char *input, int inputLength) {
                 case Hash_Sha1:
                         sha1_append(&(context->data.sha1), (const unsigned char *)input, inputLength);
                         break;
+                case Hash_Sha256:
+                        sha256_append(&(context->data.sha256), (const unsigned char *)input, inputLength);
+                        break;
                 default:
                         THROW(AssertException, "Checksum error: Unknown hash type");
                         break;
@@ -112,6 +122,9 @@ void Checksum_verify(T context, const char *checksum) {
                         break;
                 case Hash_Sha1:
                         keyLength = 20;
+                        break;
+                case Hash_Sha256:
+                        keyLength = 32;
                         break;
                 default:
                         THROW(AssertException, "Checksum error: Unknown hash type");
@@ -194,15 +207,37 @@ process_partial_block:
 
 void Checksum_printHash(char *file) {
         MD_T hash;
-        unsigned char sha1[STRLEN], md5[STRLEN];
+        unsigned char sha256[STRLEN], sha1[STRLEN], md5[STRLEN];
         FILE *fhandle = NULL;
+        sha256_context_t ctx_sha256;
 
-        if (! (fhandle = file ? fopen(file, "r") : stdin) || ! Checksum_getStreamDigests(fhandle, sha1, md5) || (file && fclose(fhandle))) {
+        if (! (fhandle = file ? fopen(file, "r") : stdin)) {
                 printf("%s: %s\n", file, STRERROR);
                 exit(1);
         }
-        printf("SHA1(%s) = %s\n", file ? file : "stdin", Checksum_digest2Bytes(sha1, 20, hash));
-        printf("MD5(%s)  = %s\n", file ? file : "stdin", Checksum_digest2Bytes(md5, 16, hash));
+
+        // Compute SHA256
+        unsigned char buffer[4096];
+        size_t n;
+        sha256_init(&ctx_sha256);
+        while ((n = fread(buffer, 1, sizeof(buffer), fhandle)) > 0)
+                sha256_append(&ctx_sha256, buffer, n);
+        if (ferror(fhandle)) {
+                printf("%s: %s\n", file, STRERROR);
+                exit(1);
+        }
+        sha256_finish(&ctx_sha256, sha256);
+
+        // Rewind and compute MD5/SHA1
+        rewind(fhandle);
+        if (! Checksum_getStreamDigests(fhandle, sha1, md5) || (file && fclose(fhandle))) {
+                printf("%s: %s\n", file, STRERROR);
+                exit(1);
+        }
+
+        printf("SHA256(%s) = %s\n", file ? file : "stdin", Checksum_digest2Bytes(sha256, 32, hash));
+        printf("SHA1(%s)   = %s\n", file ? file : "stdin", Checksum_digest2Bytes(sha1, 20, hash));
+        printf("MD5(%s)    = %s\n", file ? file : "stdin", Checksum_digest2Bytes(md5, 16, hash));
 }
 
 
@@ -219,6 +254,9 @@ bool Checksum_getChecksum(char *file, Hash_Type hashtype, char *buf, unsigned lo
                         break;
                 case Hash_Sha1:
                         hashlength = 20;
+                        break;
+                case Hash_Sha256:
+                        hashlength = 32;
                         break;
                 default:
                         Log_error("checksum: invalid hash type: 0x%x\n", hashtype);
@@ -237,6 +275,22 @@ bool Checksum_getChecksum(char *file, Hash_Type hashtype, char *buf, unsigned lo
                                         break;
                                 case Hash_Sha1:
                                         fresult = Checksum_getStreamDigests(f, sum, NULL);
+                                        break;
+                                case Hash_Sha256:
+                                {
+                                        sha256_context_t ctx_sha256;
+                                        unsigned char buffer[4096];
+                                        size_t n;
+                                        sha256_init(&ctx_sha256);
+                                        while ((n = fread(buffer, 1, sizeof(buffer), f)) > 0)
+                                                sha256_append(&ctx_sha256, buffer, n);
+                                        if (ferror(f)) {
+                                                fresult = false;
+                                        } else {
+                                                sha256_finish(&ctx_sha256, (unsigned char *)sum);
+                                                fresult = true;
+                                        }
+                                }
                                         break;
                                 default:
                                         break;

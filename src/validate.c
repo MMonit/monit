@@ -763,6 +763,9 @@ static State_Type _checkChecksum(Service_T s) {
                                 case Hash_Sha1:
                                         changed = strncmp(cs->hash, s->inf.file->cs_sum, 40);
                                         break;
+                                case Hash_Sha256:
+                                        changed = strncmp(cs->hash, s->inf.file->cs_sum, 64);
+                                        break;
                                 default:
                                         Log_error("'%s' unknown hash type (%d)\n", s->name, cs->type);
                                         *s->inf.file->cs_sum = 0;

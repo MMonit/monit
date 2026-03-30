@@ -138,6 +138,7 @@
 #include "processor.h"
 #include "md5.h"
 #include "sha1.h"
+#include "sha256.h"
 #include "checksum.h"
 #include "ProcessTree.h"
 #include "process_sysdep.h"
@@ -360,7 +361,7 @@ int yydebug = 1;
 
 %token IF ELSE THEN FAILED
 %token SET LOG LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW REJECTOPT ADDRESS INIT TERMINAL BATCH
-%token READONLY CLEARTEXT MD5HASH SHA1HASH CRYPT DELAY
+%token READONLY CLEARTEXT MD5HASH SHA1HASH SHA256HASH CRYPT DELAY
 %token PEMFILE PEMKEY PEMCHAIN ENABLE DISABLE SSLTOKEN CIPHER CLIENTPEMFILE ALLOWSELFCERTIFICATION SELFSIGNED VERIFY CERTIFICATE CACERTIFICATEFILE CACERTIFICATEPATH VALID
 %token INTERFACE LINK PACKET BYTEIN BYTEOUT PACKETIN PACKETOUT SPEED SATURATION UPLOAD DOWNLOAD TOTAL UP DOWN
 %token IDFILE STATEFILE SEND EXPECT CYCLE COUNT REMINDER REPEAT
@@ -1030,8 +1031,11 @@ sslchecksum     : CERTIFICATE CHECKSUM checksumoperator STRING {
                                 case 40:
                                         sslset.checksumType = Hash_Sha1;
                                         break;
+                                case 64:
+                                        sslset.checksumType = Hash_Sha256;
+                                        break;
                                 default:
-                                        yyerror2("Unknown checksum type: [%s] is not MD5 nor SHA1", sslset.checksum);
+                                        yyerror2("Unknown checksum type: [%s] is not MD5, SHA1, nor SHA256", sslset.checksum);
                         }
                   }
                 | CERTIFICATE CHECKSUM MD5HASH checksumoperator STRING {
@@ -2024,8 +2028,11 @@ mysql           : username {
                                 case 40:
                                         portset.parameters.mysql.rsaChecksumType = Hash_Sha1;
                                         break;
+                                case 64:
+                                        portset.parameters.mysql.rsaChecksumType = Hash_Sha256;
+                                        break;
                                 default:
-                                        yyerror2("Unknown checksum type: [%s] is not MD5 nor SHA1", portset.parameters.mysql.rsaChecksum);
+                                        yyerror2("Unknown checksum type: [%s] is not MD5, SHA1, nor SHA256", portset.parameters.mysql.rsaChecksum);
                         }
                   }
                 | RSAKEY CHECKSUM MD5HASH checksumoperator STRING {
@@ -2039,6 +2046,12 @@ mysql           : username {
                         if (cleanup_hash_string(portset.parameters.mysql.rsaChecksum) != 40)
                                 yyerror2("Unknown checksum type: [%s] is not SHA1", portset.parameters.mysql.rsaChecksum);
                         portset.parameters.mysql.rsaChecksumType = Hash_Sha1;
+                  }
+                | RSAKEY CHECKSUM SHA256HASH checksumoperator STRING {
+                        portset.parameters.mysql.rsaChecksum = $<string>5;
+                        if (cleanup_hash_string(portset.parameters.mysql.rsaChecksum) != 64)
+                                yyerror2("Unknown checksum type: [%s] is not SHA256", portset.parameters.mysql.rsaChecksum);
+                        portset.parameters.mysql.rsaChecksumType = Hash_Sha256;
                   }
                 ;
 
@@ -2997,9 +3010,10 @@ checksum        : IF FAILED hashtype CHECKSUM rate1 THEN action1 recovery_succes
                         addchecksum(&checksumset);
                   }
                 ;
-hashtype        : /* EMPTY */ { checksumset.type = Hash_Unknown; }
-                | MD5HASH     { checksumset.type = Hash_Md5; }
-                | SHA1HASH    { checksumset.type = Hash_Sha1; }
+hashtype        : /* EMPTY */  { checksumset.type = Hash_Unknown; }
+                | MD5HASH      { checksumset.type = Hash_Md5; }
+                | SHA1HASH     { checksumset.type = Hash_Sha1; }
+                | SHA256HASH   { checksumset.type = Hash_Sha256; }
                 ;
 
 inode           : IF INODE operator NUMBER rate1 THEN action1 recovery_success {
@@ -4078,6 +4092,8 @@ static void addport(Port_T *list, Port_T port) {
                                 p->parameters.http.hashtype = Hash_Md5;
                         else if (strlen(p->parameters.http.checksum) == 40)
                                 p->parameters.http.hashtype = Hash_Sha1;
+                        else if (strlen(p->parameters.http.checksum) == 64)
+                                p->parameters.http.hashtype = Hash_Sha256;
                         else
                                 yyerror2("invalid checksum [%s]", p->parameters.http.checksum);
                 } else {
@@ -4361,7 +4377,12 @@ static void addchecksum(Checksum_T cs) {
                         cs->type = Hash_Default;
                 if (! (Checksum_getChecksum(current->path, cs->type, cs->hash, sizeof(cs->hash)))) {
                         /* If the file doesn't exist, set dummy value */
-                        snprintf(cs->hash, sizeof(cs->hash), cs->type == Hash_Md5 ? "00000000000000000000000000000000" : "0000000000000000000000000000000000000000");
+                        if (cs->type == Hash_Md5)
+                                snprintf(cs->hash, sizeof(cs->hash), "00000000000000000000000000000000");
+                        else if (cs->type == Hash_Sha1)
+                                snprintf(cs->hash, sizeof(cs->hash), "0000000000000000000000000000000000000000");
+                        else if (cs->type == Hash_Sha256)
+                                snprintf(cs->hash, sizeof(cs->hash), "0000000000000000000000000000000000000000000000000000000000000000");
                         cs->initialized = false;
                         yywarning2("Cannot compute a checksum for file %s", current->path);
                 }
@@ -4373,6 +4394,8 @@ static void addchecksum(Checksum_T cs) {
                         cs->type = Hash_Md5;
                 } else if (len == 40) {
                         cs->type = Hash_Sha1;
+                } else if (len == 64) {
+                        cs->type = Hash_Sha256;
                 } else {
                         yyerror2("Unknown checksum type [%s] for file %s", cs->hash, current->path);
                         reset_checksumset();

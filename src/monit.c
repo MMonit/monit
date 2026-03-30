@@ -136,7 +136,7 @@ SystemInfo_T System_Info;                              /**< System information *
 const char *Action_Names[] = {"ignore", "alert", "restart", "stop", "exec", "unmonitor", "start", "monitor", ""};
 const char *Mode_Names[] = {"active", "passive"};
 const char *onReboot_Names[] = {"start", "nostart", "laststate"};
-const char *Checksum_Names[] = {"UNKNOWN", "MD5", "SHA1"};
+const char *Checksum_Names[] = {"UNKNOWN", "MD5", "SHA1", "SHA256"};
 const char *Operator_Names[] = {"less than", "less than or equal to", "greater than", "greater than or equal to", "equal to", "not equal to", "changed"};
 const char *OperatorShort_Names[] = {"<", "<=", ">", ">=", "=", "!=", "<>"};
 const char *StringOperator_Names[] = {"equal to", "not equal to", "matching", "not matching"};

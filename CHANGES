@@ -4,6 +4,25 @@
 
 Version 6.0.0
 
+New: Added SHA256 checksum support. SHA256 can now be used in addition to MD5 and SHA1
+     for file integrity monitoring, SSL/TLS certificate verification, HTTP content
+     validation, and MySQL RSA key verification. SHA256 provides stronger cryptographic
+     security than MD5 and SHA1. Supported in the following statements:
+     - File checksum: if failed [sha256] checksum
+     - SSL certificate: certificate checksum <sha256-hash>
+     - MySQL RSA key: rsakey checksum [sha256] <sha256-hash>
+     - HTTP content: checksum <sha256-hash> (auto-detected from 64-character length)
+     Example:
+         check file myfile with path /path/to/file
+             if failed sha256 checksum then alert
+         check host example.com with address example.com
+             if failed port 443 protocol https
+                certificate checksum = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+             then alert
+
+New: The file checksum test now uses SHA256 by default, if no hash function is specified (it used to be MD5
+     by default).
+
 New: Implemented proper crontab behavior for Monit
      The "every" statement can now reliably be used with minute precision.
      Like crontab, the every statement will run only once per minute, regardless

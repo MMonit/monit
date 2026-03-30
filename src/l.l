@@ -433,6 +433,7 @@ exectimeout       { return EXECTIMEOUT; }
 cleartext         { return CLEARTEXT; }
 md5               { return MD5HASH; }
 sha1              { return SHA1HASH; }
+sha256            { return SHA256HASH; }
 crypt             { return CRYPT; }
 signature         { return SIGNATURE; }
 nonexist(s)?      { return NONEXIST; }
