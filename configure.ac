@@ -1061,6 +1061,22 @@ fi
 
 
 # ---------------------------------------------------------------------------
+# getdents64
+# ---------------------------------------------------------------------------
+
+# Check for getdents64() on Linux (available as a libc wrapper since glibc 2.30)
+case "$host_os" in
+  linux*)
+    AC_CHECK_FUNC([getdents64],
+      [AC_DEFINE([HAVE_GETDENTS64], [1],
+        [Define to 1 if getdents64() is available in libc])],
+      [AC_MSG_NOTICE([getdents64() not found in libc])]
+    )
+    ;;
+esac
+
+
+# ---------------------------------------------------------------------------
 # Build options
 # ---------------------------------------------------------------------------
 

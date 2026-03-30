@@ -419,6 +419,7 @@ static bool _parseProcFdCount(Proc_T proc) {
         unsigned long long file_count = 0;
 
         snprintf(path, sizeof(path), "/proc/%d/fd", proc->data.pid);
+#ifdef HAVE_GETDENTS64
         int fd = open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
         if (fd < 0) {
                 if (Run.debug >= 2)
@@ -452,6 +453,31 @@ static bool _parseProcFdCount(Proc_T proc) {
                 DEBUG("system statistic error -- cannot iterate %s: %s\n", path, strerror(errno_saved));
                 return false;
         }
+#else
+        // Fallback to opendir()+readdir()+closedir() in can the C library doesn't provide the getdents64 (glibc < 2.30)
+        DIR *dirp = opendir(path);
+        if (! dirp) {
+                if (Run.debug >= 2)
+                        DEBUG("system statistic error -- opendir %s: %s\n", path, STRERROR);
+                return false;
+        }
+
+        // If the end of the directory stream is reached, NULL is returned and errno is not changed. If an error occurs, NULL is returned and errno is set appropriately.
+        // To distinguish end of stream from an error, set errno to zero before calling readdir() and then check the value of errno if NULL is returned.
+        errno = 0;
+        while (readdir(dirp) != NULL) {
+                // count everything
+                file_count++;
+        }
+
+        int errno_saved = errno; // Save errno before calling closedir()
+        closedir(dirp);
+
+        if (errno_saved) {
+                DEBUG("system statistic error -- cannot iterate %s: %s\n", path, strerror(errno_saved));
+                return false;
+        }
+#endif
 
         // assert at least '.' and '..' have been found
         if (file_count < 2) {
