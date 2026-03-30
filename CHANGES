@@ -4,6 +4,9 @@
 
 Version 6.0.0
 
+New: SSL/TLS: Add support for quantum-resistant cryptography: hybrid ML-KEM key exchange mechanisms with TLS 1.3.
+     Monit must be linked with an SSL library that supports ML-KEM, such as OpenSSL 3.5, for this functionality to work.
+
 New: Added SHA256 checksum support. SHA256 can now be used in addition to MD5 and SHA1
      for file integrity monitoring, SSL/TLS certificate verification, HTTP content
      validation, and MySQL RSA key verification. SHA256 provides stronger cryptographic
@@ -129,9 +132,6 @@ Fixed: When the system had no filedescriptors limit, monit displayed confusing s
 Fixed: Issue #1144: Monit GUI drops the Strict-Transport-Security header when sending HTTP error responses.
 
 Fixed: SSL/TLS: Disable obsoleted CBC ciphers by default.
-
-New: SSL/TLS: Add support for quantum-resistant cryptography: hybrid ML-KEM key exchange mechanisms with TLS 1.3.
-     Monit must be linked with an SSL library that supports ML-KEM, such as OpenSSL 3.5, for this functionality to work.
 
 
 Version 5.35.2
