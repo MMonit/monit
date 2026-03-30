@@ -890,7 +890,7 @@ static void do_foot(HttpResponse res) {
         StringBuffer_append(res->outputbuffer,
                             "</center></div></div>"
                             "<div id='footer'>"
-                            "Copyright &copy; 2001-2025 <a href=\"https://tildeslash.com/\">Tildeslash</a>. All rights reserved. "
+                            "Copyright &copy; 2001-2026 <a href=\"https://tildeslash.com/\">Tildeslash</a>. All rights reserved. "
                             "<span style='margin-left:5px;'></span>"
                             "<a href=\"https://mmonit.com/monit/\">Monit web site</a> | "
                             "<a href=\"https://mmonit.com/wiki/\">Monit Wiki</a> | "
