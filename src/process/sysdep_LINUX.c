@@ -454,7 +454,7 @@ static bool _parseProcFdCount(Proc_T proc) {
                 return false;
         }
 #else
-        // Fallback to opendir()+readdir()+closedir() in can the C library doesn't provide the getdents64 (glibc < 2.30)
+        // Fallback to opendir()+readdir()+closedir() in case the C library doesn't provide the getdents64 (glibc < 2.30)
         DIR *dirp = opendir(path);
         if (! dirp) {
                 if (Run.debug >= 2)
