@@ -134,6 +134,8 @@ Fixed: Issue #1144: Monit GUI drops the Strict-Transport-Security header when se
 
 Fixed: SSL/TLS: Disable obsoleted CBC ciphers by default.
 
+Fixed: Issue #1146: SIP check does not handle IPv6 addresses correctly.
+
 
 Version 5.35.2
 
