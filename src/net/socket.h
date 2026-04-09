@@ -166,6 +166,14 @@ Socket_Type Socket_getType(T S);
  */
 Socket_Family Socket_getFamily(T S);
 
+
+/**
+ * Return true if this is an IPv6 socket
+ * @param S A Socket_T object
+ * @return true if IPv6 otherwise false
+ */
+bool Socket_isIPv6(T S);
+
 /**
  * Get the Port object used to create this socket. If no Port object
  * was used this method returns NULL.

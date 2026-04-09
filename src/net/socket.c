@@ -510,6 +510,12 @@ Socket_Family Socket_getFamily(T S) {
 }
 
 
+bool Socket_isIPv6(T S) {
+        assert(S);
+        return S->family == Socket_Ip6;
+}
+
+
 void *Socket_getPort(T S) {
         assert(S);
         return S->Port;

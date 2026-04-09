@@ -98,15 +98,18 @@ void check_sip(Socket_T socket) {
         char buf[STRLEN];
         const char *myip = Socket_getLocalHost(socket, buf, sizeof(buf));
 
+        // RFC 3261: IPv6 addresses in SIP URIs must be enclosed in square brackets
+        bool isIPv6 = Socket_isIPv6(socket);
+
         if (Socket_print(socket,
                          "OPTIONS %s:%s SIP/2.0\r\n"
                          "Via: SIP/2.0/%s %s:%d;branch=z9hG4bKh%llx%s\r\n"
                          "Max-Forwards: %d\r\n"
                          "To: <%s:%s>\r\n"
-                         "From: monit <%s:monit@%s>;tag=%llx\r\n"
+                         "From: monit <%s:monit@%s%s%s>;tag=%llx\r\n"
                          "Call-ID: %llx\r\n"
                          "CSeq: 63104 OPTIONS\r\n"
-                         "Contact: <%s:%s:%d>\r\n"
+                         "Contact: <%s:%s%s%s:%d>\r\n"
                          "Accept: application/sdp\r\n"
                          "Content-Length: 0\r\n"
                          "User-Agent: Monit/%s\r\n\r\n",
@@ -121,11 +124,15 @@ void check_sip(Socket_T socket) {
                          proto,                        // protocol
                          target,                       // to
                          proto,                        // protocol
+                         isIPv6 ? "[" : "",            // IPv6 bracket open
                          myip,                         // from host
+                         isIPv6 ? "]" : "",            // IPv6 bracket close
                          Random_number(),              // tag
                          Random_number(),              // call id
                          proto,                        // protocol
+                         isIPv6 ? "[" : "",            // IPv6 bracket open
                          myip,                         // contact host
+                         isIPv6 ? "]" : "",            // IPv6 bracket close
                          port,                         // contact port
                          VERSION                       // user agent
                          ) < 0) {
