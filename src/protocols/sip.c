@@ -103,7 +103,7 @@ void check_sip(Socket_T socket) {
 
         if (Socket_print(socket,
                          "OPTIONS %s:%s SIP/2.0\r\n"
-                         "Via: SIP/2.0/%s %s:%d;branch=z9hG4bKh%llx%s\r\n"
+                         "Via: SIP/2.0/%s %s%s%s:%d;branch=z9hG4bKh%llx%s\r\n"
                          "Max-Forwards: %d\r\n"
                          "To: <%s:%s>\r\n"
                          "From: monit <%s:monit@%s%s%s>;tag=%llx\r\n"
@@ -116,8 +116,10 @@ void check_sip(Socket_T socket) {
                          proto,                        // protocol
                          target,                       // to
                          transport,                    // via transport udp|tcp
-                         myip,                         // who its from
-                         port,                         // our port
+                         isIPv6 ? "[" : "",            // IPv6 bracket open
+                         myip,                         // via sent-by host
+                         isIPv6 ? "]" : "",            // IPv6 bracket close
+                         port,                         // via sent-by port
                          Random_number(),              // branch
                          rport,                        // rport option
                          P->parameters.sip.maxforward ? (P->parameters.sip.maxforward == INT_MAX ? 0 : P->parameters.sip.maxforward) : 70, // maximum forwards
