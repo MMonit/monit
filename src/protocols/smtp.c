@@ -27,6 +27,10 @@
 #include "protocol.h"
 #include "SMTP.h"
 
+// libmonit
+#include "exceptions/IOException.h"
+#include "exceptions/ProtocolException.h"
+
 
 /* --------------------------------------------------------------- Public */
 
