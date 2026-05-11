@@ -136,6 +136,8 @@ Fixed: SSL/TLS: Disable obsoleted CBC ciphers by default.
 
 Fixed: Issue #1146: SIP check does not handle IPv6 addresses correctly.
 
+Fixed: Issue #1147: The SMTP EHLO response was limited to 256 bytes. Rise the limit to 512 bytes to match RFC 5321 section 4.5.3.1.5.
+
 
 Version 5.35.2
 
