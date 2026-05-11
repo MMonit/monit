@@ -63,6 +63,7 @@
 
 // libmonit
 #include "exceptions/IOException.h"
+#include "exceptions/AssertException.h"
 #include "exceptions/ProtocolException.h"
 
 
@@ -114,6 +115,10 @@ struct T {
 };
 
 
+// RFC 5321 section 4.5.3.1.5: reply line max is 512 octets including CRLF
+#define RECV_BUFFER 512
+
+
 /* ----------------------------------------------------------------- Private */
 
 
@@ -146,7 +151,7 @@ __attribute__((format (printf, 2, 3))) static void _send(T S, const char *data, 
 
 static void _receive(T S, int code, void (*callback)(T S, const char *line)) {
         int status = 0;
-        char line[STRLEN];
+        char line[RECV_BUFFER];
         do {
                 if (! Socket_readLine(S->socket, line, sizeof(line)))
                         THROW(IOException, "Error receiving data from the mailserver -- %s", STRERROR);
@@ -243,6 +248,8 @@ void SMTP_auth(T S, const char *username, const char *password) {
         // PLAIN has precedence
         if (S->flags & MTA_AuthPlain) {
                 int len = snprintf(buffer, STRLEN, "%c%s%c%s", '\0', username, '\0', password);
+                if (len >= STRLEN)
+                        THROW(AssertException, "SMTP credentials too long -- max %d characters combined", STRLEN - 3);
                 char *b64 = encode_base64(len, (unsigned char *)buffer);
                 TRY
                 {
@@ -323,6 +330,7 @@ void SMTP_dataCommit(T S) {
 
 
 void SMTP_quit(T S) {
+        assert(S);
         _send(S, "QUIT\r\n");
         _receive(S, 221, NULL);
         S->state = SMTP_Quit;
