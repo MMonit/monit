@@ -27,52 +27,6 @@
 #define MONIT_NOTIFICATION_SMTP_H
 
 
-#include "config.h"
-
-#ifdef HAVE_STDIO_H
-#include <stdio.h>
-#endif
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef HAVE_STDARG_H
-#include <stdarg.h>
-#endif
-
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-
-#ifdef HAVE_ERRNO_H
-#include <errno.h>
-#endif
-
-#ifdef HAVE_SETJMP_H
-#include <setjmp.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-
-#include "monit.h"
-#include "base64.h"
-
-// libmonit
-#include "system/Time.h"
-#include "exceptions/IOException.h"
-
-
 /**
  * SMTP interface
  *
