@@ -1329,7 +1329,7 @@ typedef struct Service_T {
                 Monitor_Mode      mode;             /**< Monitoring mode for the service */
                 Service_Type      type;                      /**< Monitored service type */
                 State_Type        state;                                 /**< Test state */
-                bool         state_changed;              /**< true if state changed */
+                bool              state_changed;              /**< true if state changed */
                 Handler_Type      flag;                     /**< The handlers state flag */
                 unsigned long long state_map;          /**< Event bitmap for last cycles */
                 unsigned int      count;                             /**< The event rate */
