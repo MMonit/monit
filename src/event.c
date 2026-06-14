@@ -131,36 +131,43 @@ static void _saveState(long id, State_Type state) {
 }
 
 
+/* Restart the state map on a state transition so the next change requires a full window of cycles to accumulate. */
+static void _resetStateMap(Event_T E, State_Type currentState) {
+        E->state_map = (currentState == State_Failed) ? ~0ULL : 0ULL;
+}
+
+
 /**
- * Return the actual event state based on event state bitmap and event ratio needed to trigger the state change
- * @param E An event object
- * @param S Actual posted state
- * @return The event state
+ * Return true if the posted state S represents a state change for event E,
+ * taking the configured occurrence watermark into account.
  */
 static bool _checkState(Event_T E, State_Type S) {
         assert(E);
-        int count = 0;
-        State_Type state = (S == State_Succeeded || S == State_ChangedNot) ? State_Succeeded : State_Failed; /* translate to 0/1 class */
+
+        /* Translate the posted state to a 0/1 (succeeded/failed) class */
+        State_Type currentState = (S == State_Succeeded || S == State_ChangedNot) ? State_Succeeded : State_Failed;
 
         /* Only failed/changed state condition can change the initial state */
-        if (! state && E->state == State_Init && ! (E->source->error & E->id))
+        if (currentState == State_Succeeded && E->state == State_Init && ! (E->source->error & E->id))
                 return false;
 
-        Action_T action = ! state ? E->action->succeeded : E->action->failed;
-
-        /* Compare as many bits as cycles able to trigger the action */
-        for (int i = 0; i < action->cycles; i++) {
-                /* Check the state of the particular cycle given by the bit position */
-                State_Type flag = (E->state_map >> i) & 0x1;
-
-                /* Count occurrences of the posted state */
-                if (flag == state)
-                        count++;
+        /* Internal instance and action events are reported on every occurrence */
+        if (E->id == Event_Instance || E->id == Event_Action) {
+                _resetStateMap(E, currentState);
+                return true;
         }
 
-        /* the internal instance and action events are handled as changed any time since we need to deliver alert whenever it occurs */
-        if (E->id == Event_Instance || E->id == Event_Action || (count >= action->count && (S != E->state || S == State_Changed))) {
-                memset(&(E->state_map), state, sizeof(E->state_map)); // Restart state map on state change, so we'll not flicker on multiple-failures condition (next state change requires full number of cycles to pass)
+        /* The action may require multiple errors/successes before switching state.
+         * Count how many of the last 'cycles' samples match the posted state. */
+        Action_T action = (currentState == State_Succeeded) ? E->action->succeeded : E->action->failed;
+        int matchingStateCounter = 0;
+        for (int i = 0; i < action->cycles; i++) {
+                if (((E->state_map >> i) & 0x1) == currentState)
+                        matchingStateCounter++;
+        }
+
+        if (matchingStateCounter >= action->count && (S != E->state || S == State_Changed)) {
+                _resetStateMap(E, currentState);
                 return true;
         }
 
@@ -348,50 +355,57 @@ static void _handleEvent(Service_T S, Event_T E) {
         assert(E->action->failed);
         assert(E->action->succeeded);
 
-        /* We will handle only first succeeded event, recurrent succeeded events
-         * or insufficient succeeded events during failed service state are
-         * ignored. Failed events are handled each time. */
-        if (! E->state_changed && (E->state == State_Succeeded || E->state == State_ChangedNot || ((E->state_map & 0x1) ^ 0x1))) {
-                DEBUG("'%s' %s\n", S->name, E->message);
-                return;
-        }
+        bool internalEvent = (E->id == Event_Instance || E->id == Event_Action);
+        bool lastSampleFailed = (E->state_map & 0x1);
 
         if (E->message) {
-                if (E->id == Event_Instance || E->id == Event_Action) {
-                        // Instance and action events are logged always with priority info
+                if (internalEvent) {
+                        // Internal "Instance" change and "Action" events are always logged at info level
                         Log_info("'%s' %s\n", S->name, E->message);
-                } else if (E->state == State_Succeeded || E->state == State_ChangedNot) {
-                        if (E->state_map & 0x1) {
-                                // Failure, but didn't reach the error threshold yet
+                } else if (E->state == State_Init || E->state == State_Succeeded || E->state == State_ChangedNot) {
+                        if (lastSampleFailed) {
+                                // Failure that hasn't reached the error threshold yet is a warning, otherwise a success
                                 Log_warning("'%s' %s\n", S->name, E->message);
-                        } else {
-                                // Success
+                        } else if (E->state_changed) {
+                                // Failure -> Success transition (this flag is always false in the case of State_Init)
                                 Log_info("'%s' %s\n", S->name, E->message);
+                        } else {
+                                // The service is OK and this is another Success event
+                                DEBUG("'%s' %s\n", S->name, E->message);
                         }
-                } else if (E->state == State_Init) {
-                        if (E->state_map & 0x1) {
-                                // Log error which occur while the service is initializing as warnings, success is not logged in the initializing state
-                                Log_warning("'%s' %s\n", S->name, E->message);
-                        }
-                        return;
                 } else {
                         Log_error("'%s' %s\n", S->name, E->message);
                 }
         }
 
-        if (E->state == State_Failed || E->state == State_Changed) {
-                if (E->id != Event_Instance && E->id != Event_Action) { // We are not interested in setting error flag for instance and action events
+        if (E->state == State_Failed || E->state == State_Changed || lastSampleFailed /* error during State_Init or State_Succeeded with not enough X in 'for X cycles' */) {
+                if (! internalEvent) {
                         S->error |= E->id;
-                        /* The error hint provides second dimension for error bitmap and differentiates between failed/changed event states (failed=0, changed=1) */
+                        /* error_hint provides a second dimension to the error bitmap: failed=0, changed=1 */
                         if (E->state == State_Changed)
                                 S->error_hint |= E->id;
                         else
                                 S->error_hint &= ~E->id;
                 }
-                _handleAction(E, E->action->failed);
+                if (E->state != State_Init && E->state != State_Succeeded) {
+                        /* During the multi-error init phase, keep the error flag set but skip the action */
+                        _handleAction(E, E->action->failed);
+                }
         } else {
-                S->error &= ~E->id;
-                _handleAction(E, E->action->succeeded);
+                /* Only clear the service error flag if no other event with the same id still has an active failure
+                 * (multiple rules may share the same event type, e.g. resource usage events) */
+                bool otherActive = false;
+                for (Event_T o = S->eventlist; o; o = o->next) {
+                        if (o != E && o->id == E->id && (o->state_map & 0x1)) {
+                                otherActive = true;
+                                break;
+                        }
+                }
+                if (! otherActive)
+                        S->error &= ~E->id;
+                if (E->state != State_Init) {
+                        _handleAction(E, E->action->succeeded);
+                }
         }
 }
 

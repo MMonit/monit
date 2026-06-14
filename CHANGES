@@ -138,6 +138,15 @@ Fixed: Issue #1146: SIP check does not handle IPv6 addresses correctly.
 
 Fixed: Issue #1147: The SMTP EHLO response was limited to 256 bytes. Rise the limit to 512 bytes to match RFC 5321 section 4.5.3.1.5.
 
+Fixed: When the service had an "existence" test that used the multiple-errors condition ("for X cycles"), and the service encountered
+       an error, Monit displayed the status as "OK" even though there were no data (e.g., a non-existent process or file).
+
+Fixed: When the state of the service changed and the test had a multiple-errors condition ("for X cycles"), the cycles counter was not
+       reinitialized properly, which could trigger another state change faster than the option settings specified.
+
+Fixed: Some tests share the same event type (e.g., the "resource event" is shared by CPU, memory, swap, load average tests). When multiple
+       errors occurred for the same event type, the last test may have reset the error, and the service would be reported as a false-positive OK.
+
 
 Version 5.35.2
 
