@@ -84,6 +84,13 @@ New: The security attribute test now supports regular expressions and negative m
 New: The "check program" output in the "monit status" CLI was limited to 200 characters. The limitation is removed
      and monit will display up to "set limits { programOutput: <size> }" characters now.
 
+Fixed: The PostgreSQL protocol test could read past the response buffer when parsing an error message
+       from the server if any error field was not properly NUL-terminated within the payload. A malicious
+       or malformed PostgreSQL server could exploit this to crash Monit or to leak stack data into the logs.
+       Thanks to Tristan Madani for finding the bug and sharing the details.
+       Workaround for vulnerable Monit versions < 6.0.0: Replace the "if failed port 5432 protocol pgsql then <action>"
+       protocol test with a generic TCP connection test: "if failed port 5432 then <action>"
+
 Fixed: If a stale pidfile existed at Monit startup, Monit could fail to start. This was fixed by
        improving the startup check that detects whether another Monit daemon is already running.
        Thanks to Lutz Mader for identifying the problem and providing an initial patch.

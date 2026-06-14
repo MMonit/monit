@@ -316,13 +316,24 @@ static void _requestTerminate(postgresql_t postgresql) {
 /* ----------------------------------------------------- Response handlers */
 
 
-static void _handleError(postgresql_t postgresql, postgresql_response_t response) {
+static void _handleError(postgresql_t postgresql, postgresql_response_t response, size_t payloadLength) {
         DEBUG("PGSQL: DEBUG: error message received\n");
         // Process subset of error messages, that will help to diagnoze the startup message failure (full list: https://www.postgresql.org/docs/current/protocol-error-fields.html)
         postgresql_error_t errorSeverity = NULL;
         postgresql_error_t errorCode = NULL;
         postgresql_error_t errorMessage = NULL;
-        for (postgresql_error_t error = (postgresql_error_t)&(response->data.buffer); error->type != 0; error = (postgresql_error_t)((char *)error + 1 + strlen(error->value) + 1)) {
+        // Iterate within the actual payload bounds and locate each field's NUL terminator with memchr, so a malformed server response that omits a NUL terminator cannot read past the buffer.
+        char *bufferStart = (char *)&(response->data.buffer);
+        char *bufferEnd = bufferStart + payloadLength;
+        for (char *p = bufferStart; p < bufferEnd && *p != 0; ) {
+                postgresql_error_t error = (postgresql_error_t)p;
+                char *value = p + 1;
+                if (value >= bufferEnd)
+                        break;
+                char *nulterminator = memchr(value, 0, (size_t)(bufferEnd - value));
+                if (! nulterminator) {
+                        THROW(IOException, "PGSQL: error response not NUL-terminated within payload\n");
+                }
                 switch (error->type) {
                         case PostgreSQLError_SeverityLocalized:
                                 errorSeverity = error;
@@ -339,6 +350,7 @@ static void _handleError(postgresql_t postgresql, postgresql_response_t response
                         default:
                                 break;
                 }
+                p = nulterminator + 1;
         }
         if (! postgresql->port->parameters.postgresql.username && ! postgresql->port->parameters.postgresql.database) {
                 // Backward compatibility: Monit < 5.29.0 used a hardcoded user and database, hence it interpreted the error as a sign that the server is able to respond (regardless of result).
@@ -417,7 +429,7 @@ static void _handleResponse(postgresql_t postgresql) {
                 }
 
                 if (response.header.type == PostgreSQLPacket_Error)
-                        _handleError(postgresql, &response);
+                        _handleError(postgresql, &response, remainingPayloadLength > 0 ? (size_t)remainingPayloadLength : 0);
                 else if (response.header.type == PostgreSQLPacket_Authentication)
                         _handleAuthentication(postgresql, &response);
                 else
