@@ -925,7 +925,7 @@ static void help(void) {
                " -t            Run syntax check for the control file\n"
                " -v            Verbose mode, work noisy (diagnostic output)\n"
                " -vv           Very verbose mode, same as -v plus log stacktrace on error\n"
-               " -H [filename] Print SHA1 and MD5 hashes of the file or of stdin if the\n"
+               " -H [filename] Print SHA256, SHA1 and MD5 hashes of the file or of stdin if the\n"
                "               filename is omitted; monit will exit afterwards\n"
                " -V            Print version number and patchlevel\n"
                " -h            Print this text\n"

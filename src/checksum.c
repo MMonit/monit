@@ -220,11 +220,14 @@ void Checksum_printHash(char *file) {
         unsigned char buffer[4096];
         size_t n;
         sha256_init(&ctx_sha256);
-        while ((n = fread(buffer, 1, sizeof(buffer), fhandle)) > 0)
-                sha256_append(&ctx_sha256, buffer, n);
-        if (ferror(fhandle)) {
-                printf("%s: %s\n", file, STRERROR);
-                exit(1);
+        while (! feof(fhandle)) {
+                n = fread(buffer, 1, sizeof(buffer), fhandle);
+                if (ferror(fhandle)) {
+                        printf("%s: %s\n", file, STRERROR);
+                        exit(1);
+                }
+                if (n > 0)
+                        sha256_append(&ctx_sha256, buffer, n);
         }
         sha256_finish(&ctx_sha256, sha256);
 
@@ -282,8 +285,13 @@ bool Checksum_getChecksum(char *file, Hash_Type hashtype, char *buf, unsigned lo
                                         unsigned char buffer[4096];
                                         size_t n;
                                         sha256_init(&ctx_sha256);
-                                        while ((n = fread(buffer, 1, sizeof(buffer), f)) > 0)
-                                                sha256_append(&ctx_sha256, buffer, n);
+                                        while (! feof(f)) {
+                                                n = fread(buffer, 1, sizeof(buffer), f);
+                                                if (ferror(f))
+                                                        break;
+                                                if (n > 0)
+                                                        sha256_append(&ctx_sha256, buffer, n);
+                                        }
                                         if (ferror(f)) {
                                                 fresult = false;
                                         } else {
