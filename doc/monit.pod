@@ -1,4 +1,6 @@
-# The right margin in this file is 72 characters.
+# The right margin in this file is 79 characters for prose, and
+# 72 characters for verbatim/code blocks (so the man rendering
+# fits inside 80 columns after its extra indentation).
 
 =head1 NAME
 
@@ -407,7 +409,7 @@ on error.
 <path> is the absolute path to the directory. If the directory does not
 exist, Monit will call the entry's start method if defined. If <path>
 does not point to a directory, monit will disable monitoring of this
-entry. If Monit runs in passive mode or the start methods is not
+entry. If Monit runs in passive mode or the start method is not
 defined, Monit will just send an alert on error.
 
 =head3 Remote host
@@ -431,7 +433,8 @@ the initial name of the host entry in M/Monit.
 
 =head3 Program
 
-    CHECK PROGRAM <unique name> PATH <executable file> [TIMEOUT <number> SECONDS]
+    CHECK PROGRAM <unique name> PATH <executable file>
+        [TIMEOUT <number> SECONDS]
 
 <path> is the absolute path to the executable program or script. The
 L<status test|/"PROGRAM STATUS TEST"> allows one to check the program's
@@ -611,7 +614,8 @@ Common SSL/TLS options can be set using the following statement and
 will apply to all SSL connections made through Monit:
 
   SET <SSL | TLS> [OPTIONS] {
-      VERSION: <AUTO | [-]SSLV2 | [-]SSLV3 | [-]TLSV1 | [-]TLSV11 | [-]TLSV12 | [-]TLSV13>, ...
+      VERSION: <AUTO | [-]SSLV2 | [-]SSLV3 | [-]TLSV1 |
+                [-]TLSV11 | [-]TLSV12 | [-]TLSV13>, ...
       VERIFY: <ENABLE | DISABLE>
       SELFSIGNED: <ALLOW | REJECT>
       CIPHERS: <string>
@@ -627,7 +631,8 @@ I<VERSION> set the specific SSL/TLS version to use. By default Monit
 uses AUTO. In AUTO mode, only TLS 1.2 and 1.3 are allowed, all other
 protocols are considered obsolete. If you want to use the obsolete
 protocol you must explicitly set the version. You can exclude the protocol
-using the "-" prefix.
+using the "-" prefix. Note, the I<SSLV2> and I<SSLV3> keywords are
+deprecated and insecure; use I<TLSV12> or later instead.
 Exclude list example:
   set ssl {
       version: auto -sslv2 -sslv3 -tlsv1 -tlsv11
@@ -652,31 +657,38 @@ or DNS hijacking are possible).
 I<CIPHERS> override default SSL/TLS ciphers.
 
 I<PEMFILE> set the path to the SSL server certificate
-"database-file" in PEM format. This options has effect only for the
+"database-file" in PEM format. This option has effect only for the
 monit HTTP interface.
 
 As an alternative to setting I<PEMFILE> with a combined chain-key file,
-I<PEMCHAIN> and I<PEMKEY> set the path to the SSL certificate chain respectively
-the server private key file in PEM format. This options has effect only for the
-monit HTTP interface.
+I<PEMCHAIN> and I<PEMKEY> set the path to the SSL certificate chain and
+the server private key file respectively, both in PEM format. This option
+has effect only for the monit HTTP interface.
 
 I<CLIENTPEMFILE> set the path to the PEM encoded SSL client certificates
 database file. If set, a client certificate authentication is enabled.
 
 I<CACERTIFICATEFILE> set the path to the PEM encoded file containing
 Certificate Authority (CA) certificates. Monit uses OpenSSL's default
-CA certificates if this options is not used (I<openssl version -d>
-can be used to get the default CA certificates). Many distributions comes
+CA certificates if this option is not used (I<openssl version -d>
+can be used to get the default CA certificates). Many distributions come
 with SSL and CA certificates already setup and using this option is
 normally not necessary.
 
 I<CACERTIFICATEPATH> set the path to the directory containing
 Certificate Authority (CA) certificates. Monit uses OpenSSL's default
-CA certificates if this options is not used. Many distributions comes
+CA certificates if this option is not used. Many distributions come
 with SSL and CA certificates already setup and using this option is
 normally not necessary.
 
-The SSL options statement will globally apply to all SSL/TLS connection
+Note, the previous top-level I<PEMFILE>, I<CLIENTPEMFILE> and
+I<ALLOWSELFCERTIFICATION> statements are deprecated, but can
+alternatively be used. Use the equivalent options inside the SSL
+block instead: I<ssl { pemfile: ... }> in place of I<PEMFILE> or
+I<CLIENTPEMFILE>, and I<ssl { selfsigned: allow }> in place of
+I<ALLOWSELFCERTIFICATION>.
+
+The SSL options statement will globally apply to all SSL/TLS connections
 made through Monit. SSL options can also be set in a local check, in
 I<mailserver> settings or in the I<mmonit> statement, and will then
 override or extend the global settings.
@@ -757,9 +769,11 @@ and listen on.
 
 B<UID> Socket owner (optional, defaults to the user who executes Monit)
 
-B<GID> Socket group (optional, defaults to primary group of the user who executes Monit)
+B<GID> Socket group (optional, defaults to primary group of the user who
+executes Monit)
 
-B<PERMISSION> Socket permissions - absolute octal mode (optional, process UMASK is applied by default)
+B<PERMISSION> Socket permissions - absolute octal mode (optional, process
+UMASK is applied by default)
 
 =head2 TCP PORT
 
@@ -827,10 +841,10 @@ server's private key and certificate. This file should be stored in a
 safe place on the filesystem and should have strict permissions, no
 more than 0700.
 
-As an alternative I<PEMCHAIN> and I<PEMKEY> sets the path to separate PEM encoded
-certificate chain and private key file. The key file should be stored in a
-safe place on the filesystem and should have strict permissions, no
-more than 0700.
+As an alternative I<PEMCHAIN> and I<PEMKEY> sets the path to separate
+PEM encoded certificate chain and private key file. The key file should
+be stored in a safe place on the filesystem and should have strict
+permissions, no more than 0700.
 
 Example for using pemfile:
 
@@ -870,13 +884,14 @@ it by using the I<SELFSIGNED: ALLOW> option:
 
 B<CLIENTPEMFILE> enables a client certificate based authentication and
 sets the path to a PEM encoded database file, that contains a list of
-allowed client certificates. A connecting client has to provide a certificate
-known to Monit (listed in I<clientpemfile>), otherwise it is rejected. This
-file must also include all necessary CA certificates. By default self-signed
-client certificates are B<rejected> for security reasons, if you want to allow
-self-signed client certificates (recommended only for testing), you have to allow
-it explicitly using the B<SELFSIGNED: ALLOW> option (see the example above).
-See your browser's documentation for how to import client certificate to it.
+allowed client certificates. A connecting client has to provide a
+certificate known to Monit (listed in I<clientpemfile>), otherwise it is
+rejected. This file must also include all necessary CA certificates. By
+default self-signed client certificates are B<rejected> for security
+reasons, if you want to allow self-signed client certificates (recommended
+only for testing), you have to allow it explicitly using the B<SELFSIGNED:
+ALLOW> option (see the example above). See your browser's documentation
+for how to import client certificate to it.
 
 Example:
 
@@ -1068,7 +1083,7 @@ access rights.
 
 =head4 Read-only http server
 
-Finally is is possible to restrict the entire web interface as
+Finally it is possible to restrict the entire web interface as
 read-only. All users, regardless if defined with or without
 the I<read-only> keyword, have only the permissions described above.
 When using this setting it is recommend to set up a B<UNIXSOCKET> as
@@ -1088,14 +1103,14 @@ Monit will raise an alert in the following situations:
  o A service does not exist (e.g. process is not running)
  o Cannot read service data (e.g. cannot get filesystem usage)
  o Execution of a service related script failed (e.g. start failed)
- o Invalid service type (e.g. if path points to directory instead of file)
+ o Invalid service type (e.g. path points to directory not file)
  o Custom test script returned error
  o Ping test failed
  o TCP/UDP connection and/or port test failed
  o Resource usage test failed (e.g. cpu usage too high)
  o Checksum mismatch or change (e.g. file changed)
  o File size test failed (e.g. file too large)
- o Timestamp test failed (e.g. file is older then expected)
+ o Timestamp test failed (e.g. file is older than expected)
  o Permission test failed (e.g. file mode doesn't match)
  o An UID test failed (e.g. file owned by different user)
  o A GID test failed (e.g. file owned by different group)
@@ -1386,7 +1401,7 @@ Example:
 
   set eventqueue basedir /var/monit slots 5000
 
-If you are running more then one Monit instance on the same
+If you are running more than one Monit instance on the same
 machine, you B<must> use separated event queue directories.
 
 
@@ -1419,9 +1434,12 @@ the I<UID> and I<GID> the executed program should switch to.
 
 Example:
 
- check process mmonit with pidfile /usr/local/mmonit/mmonit/logs/mmonit.pid
-   start program = "/usr/local/mmonit/bin/mmonit" as uid "mmonit" and gid "mmonit"
-   stop program = "/usr/local/mmonit/bin/mmonit stop" as uid "mmonit" and gid "mmonit"
+ check process mmonit
+   with pidfile /usr/local/mmonit/mmonit/logs/mmonit.pid
+   start program = "/usr/local/mmonit/bin/mmonit"
+       as uid "mmonit" and gid "mmonit"
+   stop program = "/usr/local/mmonit/bin/mmonit stop"
+       as uid "mmonit" and gid "mmonit"
 
 In the case of a process check, Monit will wait up to 30 seconds for
 the start/stop action to finish before giving up and report an error.
@@ -1452,6 +1470,10 @@ There are three variants:
 =item 1. A poll cycle multiple
 
  EVERY [number] CYCLES
+
+Note, the I<every N cycles> form is deprecated, but can alternatively
+be used. Use the cron-style form instead, e.g. I<every "*/N * * * *">
+for once every N minutes, or I<every "* * * * *"> for once per minute.
 
 =item 2. Cron-style
 
@@ -1613,6 +1635,10 @@ default mode.
 The I<passive> mode is similar to the I<active> mode, except if the
 service fails, monit will B<not> try to fix a problem by restarting
 the service and will raise alerts only.
+
+Note, the previous I<mode manual> statement is deprecated, but can
+alternatively be used. Use I<onreboot laststate> instead (see L</"SYSTEM
+REBOOT AND SERVICE STARTUP">).
 
 
 =head1 SYSTEM REBOOT AND SERVICE STARTUP
@@ -1838,20 +1864,24 @@ Where:
 
 Options legend:
 
- ----------------------------------------------------------------------------------
- | Option            | Description                                      | Default |
- ----------------------------------------------------------------------------------
- | programOutput     | limit for check program output (truncated after) | 512 B   |
- | sendExpectBuffer  | limit for send/expect protocol test              | 256 B   |
- | fileContentBuffer | limit for file content test (line)               | 512 B   |
- | httpContentBuffer | limit for HTTP content test (response body)      | 1 MB    |
- | networkTimeout    | timeout for network I/O                          | 5 s     |
- | programTimeout    | timeout for check program                        | 300 s   |
- | stopTimeout       | timeout for service stop                         | 30 s    |
- | startTimeout      | timeout for service start                        | 30 s    |
- | restartTimeout    | timeout for service restart                      | 30 s    |
- | execTimeout       | timeout for test action exec                     | nolimit |
- ----------------------------------------------------------------------------------
+ ----------------------------------------------------------------------
+ | Option            | Description                          | Default |
+ ----------------------------------------------------------------------
+ | programOutput     | check program output (truncated)     | 512 B   |
+ | sendExpectBuffer  | send/expect protocol test            | 256 B   |
+ | fileContentBuffer | file content test (per line)         | 512 B   |
+ | httpContentBuffer | HTTP content test (response body)    | 1 MB    |
+ | networkTimeout    | network I/O timeout                  | 5 s     |
+ | programTimeout    | check program timeout                | 300 s   |
+ | stopTimeout       | service stop timeout                 | 30 s    |
+ | startTimeout      | service start timeout                | 30 s    |
+ | restartTimeout    | service restart timeout              | 30 s    |
+ | execTimeout       | test action exec timeout             | nolimit |
+ ----------------------------------------------------------------------
+
+Note, the previous I<set expectbuffer> statement is deprecated, but can
+alternatively be used. Use I<set limits { sendExpectBuffer: ... }>
+instead.
 
 
 =head2 GENERAL SYNTAX
@@ -2098,82 +2128,82 @@ queue per CPU core, averaged over the specified time period. Example:
  if loadavg (5min) per core > 1.5 for 10 cycles then alert
  if loadavg (15min) per core > 1 for 8 cycles then alert
 
-If you'll omit the I<per core> option, the test will check the total load average
-regardless of CPU cores count.
+If you'll omit the I<per core> option, the test will check the total load
+average regardless of CPU cores count.
 
-I<CPU([user|system|wait|nice|hardirq|softirq|steal|guest|guestnice])> is the percent
-of time the system spend in given type of task:
+I<CPU([user|system|wait|nice|hardirq|softirq|steal|guest|guestnice])> is
+the percent of time the system spend in given type of task:
 
 =over 4
 
 =item user
 
-The CPU is running code in user space mode, which includes any process that doesn't belong
-to the kernel, such as webservers, databases, shells and desktop related programs.
+The CPU is running code in user space mode, which includes any process
+that doesn't belong to the kernel, such as webservers, databases, shells
+and desktop related programs.
 
 =item system
 
-The CPU is running the kernel, which includes drivers and other kernel modules. The kernel
-also handles requests from user space processes like memory allocation, disk and network I/O
-and creating child processes.
+The CPU is running the kernel, which includes drivers and other kernel
+modules. The kernel also handles requests from user space processes like
+memory allocation, disk and network I/O and creating child processes.
 
 =item wait
 
-I/O wait is when the CPU was idle while waiting for an I/O operation from disk or network to
-complete.
+I/O wait is when the CPU was idle while waiting for an I/O operation from
+disk or network to complete.
 
 =item nice
 
-The nice statistics accounts for user space processes that are running with altered priority
-(higher or lower then normal).
+The nice statistics accounts for user space processes that are running
+with altered priority (higher or lower than normal).
 
 =item hardirq
 
-The kernel is servicing hardware interrupt requests. Hardware interrupts come from peripherals
-like keyboard, network interfaces, disks, system clock, etc.
+The kernel is servicing hardware interrupt requests. Hardware interrupts
+come from peripherals like keyboard, network interfaces, disks, system
+clock, etc.
 
 =item softirq
 
-The kernel is servicing software interrupt requests. Software interrupts come from processes
-running in the system.
+The kernel is servicing software interrupt requests. Software interrupts
+come from processes running in the system.
 
 =item steal
 
-This applies only to virtual machines on a hypervisor. The steal time shows the percentage of
-time a virtual machine had to wait the real CPU while the hypervisor was servicing another virtual
-machine. If this number remains high, the host system is too busy and may need more physical
-CPUs or offload some virtual machines to another host.
+This applies only to virtual machines on a hypervisor. The steal time
+shows the percentage of time a virtual machine had to wait the real CPU
+while the hypervisor was servicing another virtual machine. If this number
+remains high, the host system is too busy and may need more physical CPUs
+or offload some virtual machines to another host.
 
 =item guest
 
-This applies only to host machines running a hypervisor. It shows time spent running a virtual CPU
-for guest operating systems under the control of the Linux kernel. This value is already included in
-"user" statistics.
+This applies only to host machines running a hypervisor. It shows time
+spent running a virtual CPU for guest operating systems under the control
+of the Linux kernel. This value is already included in "user" statistics.
 
 =item guestnice
 
-This applies only to host machines running a hypervisor. It shows time spent running a virtual CPU
-for guest operating systems under the control of the Linux kernel, with altered priority. This value
-is already included in "nice" statistics.
+This applies only to host machines running a hypervisor. It shows time
+spent running a virtual CPU for guest operating systems under the control
+of the Linux kernel, with altered priority. This value is already included
+in "nice" statistics.
 
 =back
 
-The user/system/wait/nice/hardirq/softirq/steal/guest/guestnice modifier is optional and the support
-depends on platform (Linux support depends on kernel version, all statistics are available since kernel
-2.6.33):
+The user/system/wait/nice/hardirq/softirq/steal/guest/guestnice modifier
+is optional and the support depends on platform (Linux support depends on
+kernel version, all statistics are available since kernel 2.6.33):
 
- -----------------------------------------------------------------------------------------------
- | Platform     | user | nice | system | wait | hardirq | softirq | steal | guest | guest nice |
- -----------------------------------------------------------------------------------------------
- | AIX          |  X   |      |   X    |  X   |         |         |       |       |            |
- | DragonFlyBSD |  X   |  X   |   X    |      |    X    |         |       |       |            |
- | FreeBSD      |  X   |  X   |   X    |      |    X    |         |       |       |            |
- | Linux        |  X   |  X   |   X    |  X   |    X    |    X    |   X   |   X   |    X       |
- | MacOS        |  X   |  X   |   X    |      |         |         |       |       |            |
- | NetBSD       |  X   |  X   |   X    |      |    X    |         |       |       |            |
- | OpenBSD      |  X   |  X   |   X    |      |    X    |         |       |       |            |
- | Solaris      |  X   |      |   X    |  X   |         |         |       |       |            |
- -----------------------------------------------------------------------------------------------
+   user, system : all platforms
+   nice         : DragonFlyBSD, FreeBSD, Linux, MacOS, NetBSD, OpenBSD
+   wait         : AIX, Linux, Solaris
+   hardirq      : DragonFlyBSD, FreeBSD, Linux, NetBSD, OpenBSD
+   softirq      : Linux
+   steal        : Linux
+   guest        : Linux
+   guestnice    : Linux
 
 Example:
 
@@ -2189,10 +2219,12 @@ GB]. Example:
 
  if swap usage > 20% for 10 cycles then alert
 
-I<PAGEIN>, I<PAGEOUT> allows one to monitor the system's swap activity and memory pressure.
-When the system requires more memory, it may begin swapping memory pages in and out of the
-swap device. The swap device's I/O is significantly slower than RAM access, making it an
-indicator of the system's memory pressure. A general rule of thumb for swapping activity is:
+I<PAGEIN>, I<PAGEOUT> allows one to monitor the system's swap activity
+and memory pressure. When the system requires more memory, it may begin
+swapping memory pages in and out of the swap device. The swap device's
+I/O is significantly slower than RAM access, making it an indicator of
+the system's memory pressure. A general rule of thumb for swapping
+activity is:
     0     pages/sec:           Healthy
     1-10  pages/sec:           Minor paging, usually acceptable
     >100  pages/sec sustained: Memory pressure, investigate
@@ -2210,7 +2242,7 @@ I<CPU> is the CPU usage of the process itself [%]. Monit calculates
 the CPU usage based on number of threads vs. available CPU cores. If the
 process has one thread, the 100% CPU usage equals to 100% utilization
 of one CPU core. If it has 2 threads, 100% CPU usage is reported when it
-uses 2 CPU cores on 100%, etc. If the process has more threads then the
+uses 2 CPU cores on 100%, etc. If the process has more threads than the
 machine's available CPU cores, then the 100% CPU usage corresponds to
 utilization of all available CPU cores. Example:
 
@@ -2235,17 +2267,19 @@ I<MEMORY> is the memory usage of the process itself, [%] or absolute
 value [B, kB, MB, GB]. 
 
 - Linux:
-  Monit prefers the PSS (Proportional Set Size) report instead of RSS (Resident Set
-  Size). The PSS provides a more accurate measure by fairly dividing shared
-  memory among processes. RSS can be misleading because it overcounts shared
-  memory by adding the entire amount to each process that uses it. PSS gives
-  a more realistic view of both a single process's contribution and the system's
-  total memory footprint.
+  Monit prefers the PSS (Proportional Set Size) report instead of RSS
+  (Resident Set Size). The PSS provides a more accurate measure by
+  fairly dividing shared memory among processes. RSS can be misleading
+  because it overcounts shared memory by adding the entire amount to
+  each process that uses it. PSS gives a more realistic view of both
+  a single process's contribution and the system's total memory
+  footprint.
 
 - MacOS:
   Process memory usage report is in line with ActivityMonitor and shows
-  the process' physical memory footprint instead of RSS. It excludes shared memory
-  that's being used by multiple processes (to avoid double-counting).
+  the process' physical memory footprint instead of RSS. It excludes
+  shared memory that's being used by multiple processes (to avoid
+  double-counting).
 
 Example:
 
@@ -2266,10 +2300,11 @@ normally need to run as the root user to access this metrics.
 The OS usually supports the per-process I/O metrics by bytes or by
 operations.
 
-Some platforms allows one to differentiate the I/O subset that required physical
-storage access from generic I/O which was handled by cache. Note that as the
-physical I/O is usually aligned to the filesystem page, there may be difference
-between the total and physical I/O even if the process tried to read just 1 byte.
+Some platforms allows one to differentiate the I/O subset that required
+physical storage access from generic I/O which was handled by cache. Note
+that as the physical I/O is usually aligned to the filesystem page, there
+may be difference between the total and physical I/O even if the process
+tried to read just 1 byte.
 
 Per-process I/O activity statistics by platform:
 
@@ -2430,12 +2465,12 @@ Check any file changes:
 
  IF CHANGED [MD5|SHA1|SHA256] CHECKSUM THEN action
 
-The choice of MD5, SHA1, or SHA256 is optional. MD5 features a 128 bits checksum
-(32 bytes hex encoded string), SHA1 a 160 bits checksum (40 bytes
-hex encoded string), and SHA256 a 256 bits checksum (64 bytes hex encoded string).
-If this option is omitted, Monit will try to guess the method from the EXPECT 
-string or use MD5 as the default checksum. SHA256 is recommended for better
-cryptographic security.
+The choice of MD5, SHA1, or SHA256 is optional. MD5 features a 128 bits
+checksum (32 bytes hex encoded string), SHA1 a 160 bits checksum (40
+bytes hex encoded string), and SHA256 a 256 bits checksum (64 bytes hex
+encoded string). If this option is omitted, Monit will try to guess the
+method from the EXPECT string or use MD5 as the default checksum.
+SHA256 is recommended for better cryptographic security.
 
 C<expect> is optional and if used, specifies the md5, sha1, or sha256 string
 Monit should expect when testing a file's checksum. Monit will then not
@@ -2466,11 +2501,15 @@ directory service entry.
 
 Relative timestamp syntax:
 
- IF <ACCESS TIME | ATIME | MODIFICATION TIME | MTIME | CHANGE TIME | CTIME | TIME[STAMP]> <operator> <value> [unit] THEN <action>
+ IF <ACCESS TIME | ATIME | MODIFICATION TIME | MTIME |
+     CHANGE TIME | CTIME | TIME[STAMP]>
+     <operator> <value> [unit] THEN <action>
 
 Timestamp change syntax:
 
- IF CHANGED <ACCESS TIME | ATIME | MODIFICATION TIME | MTIME | CHANGE TIME | CTIME | TIME[STAMP]> THEN action
+ IF CHANGED <ACCESS TIME | ATIME | MODIFICATION TIME | MTIME |
+             CHANGE TIME | CTIME | TIME[STAMP]>
+     THEN action
 
 There are four timestamp test types:
 
@@ -2612,6 +2651,10 @@ For example:
         ignore content = "monit"
         if content = "^mrcoffee" then alert
 
+Note, the previous I<if match> and I<ignore match> statements are
+deprecated, but can alternatively be used. Use I<if content> and
+I<ignore content> instead.
+
 
 =head2 FILESYSTEM MOUNT FLAGS TEST
 
@@ -2717,18 +2760,19 @@ filesystems, others just for block devices.
 
 Platforms I/O metrics granularity and filesystem support in Monit:
 
- ---------------------------------------------------------------------------------------
- | Platform     | Granularity    | Supported filesystems                      | TBD    |
- ---------------------------------------------------------------------------------------
- | AIX          | per-disk       | Disk io monitoring currently not supported | JFSx   |
- | DragonFlyBSD | per-disk       | UFS                                        | HAMMER |
- | FreeBSD      | per-disk       | UFS, ZFS                                   |        |
- | Linux        | per-filesystem | EXTx, XFS, BTRFS, ZFS, NFS, CIFS           |        |
- | MacOS        | per-disk       | HFS                                        |        |
- | NetBSD       | per-disk       | FFS                                        | NFS    |
- | OpenBSD      | per-disk       | FFS                                        |        |
- | Solaris      | per-filesystem | ZFS, UFS, NFS                              |        |
- ---------------------------------------------------------------------------------------
+ -----------------------------------------------------------------------
+ | Platform     | Granularity    | Supported filesystems      | TBD    |
+ -----------------------------------------------------------------------
+ | AIX          | per-disk       | not supported              | JFSx   |
+ | DragonFlyBSD | per-disk       | UFS                        | HAMMER |
+ | FreeBSD      | per-disk       | UFS, ZFS                   |        |
+ | Linux        | per-filesystem | EXTx, XFS, BTRFS, ZFS,     |        |
+ |              |                | NFS, CIFS                  |        |
+ | MacOS        | per-disk       | HFS                        |        |
+ | NetBSD       | per-disk       | FFS                        | NFS    |
+ | OpenBSD      | per-disk       | FFS                        |        |
+ | Solaris      | per-filesystem | ZFS, UFS, NFS              |        |
+ -----------------------------------------------------------------------
 
 =head3 Read: bytes per second
 
@@ -3054,15 +3098,17 @@ Example for AppArmor:
 
 =head2 SYSTEM AND PER-PROCESS FILEDESCRIPTORS TEST
 
-Monit can test the filedescriptors usage on the system and process level. You can check either
-an absolute value or percentual usage of the current maximum. The per-process percentual
-usage can be used only if the system exposes per-process maximum.
+Monit can test the filedescriptors usage on the system and process level.
+You can check either an absolute value or percentual usage of the current
+maximum. The per-process percentual usage can be used only if the system
+exposes per-process maximum.
 
 Syntax:
 
  IF FILEDESCRIPTORS <operator> <number> [%] THEN action
 
-For process only, you can also check accumulated number for the process and all its children.
+For process only, you can also check accumulated number for the process
+and all its children.
 
 Syntax:
 
@@ -3195,11 +3241,15 @@ increase the limit using the L<set limits|"LIMITS"> statement.
 
 Examples:
 
- check program disk0_smart with path "/usr/sbin/nvme smart-log /dev/nvme0"
+ check program disk0_smart
+       with path "/usr/sbin/nvme smart-log /dev/nvme0"
        if content != "critical_warning[ ]+: 0" then alert
 
  check program ip_route with path "/usr/bin/ip route"
        if content changed then alert
+
+Note, the previous I<if match> statement is deprecated, but can
+alternatively be used. Use I<if content> instead.
 
 
 =head2 NETWORK INTERFACE TESTS
@@ -3237,6 +3287,9 @@ detected.
 
 Mixing "link up" and "link down" in the same "check network" is not supported.
 
+Note, the previous I<if failed link> statement is deprecated, but can
+alternatively be used. Use I<if link down> instead.
+
 Examples:
 
  check network eth0 with interface eth0
@@ -3272,7 +3325,7 @@ The test will match if the link mode has changed (e.g. maximum speed
 dropped) or if the duplex mode has changed.
 
 NOTE: not all interface types allow for capacity monitoring. Pseudo
-interfaces such as loopback device or VMWare interfaces does not have
+interfaces such as the loopback device or VMWare interfaces do not have
 a speed attribute.
 
 Example:
@@ -3326,11 +3379,13 @@ Download speed test syntax (per second):
 
 Total upload data test syntax:
 
- IF TOTAL UPLOADED operator value unit IN LAST number time-unit THEN action
+ IF TOTAL UPLOADED operator value unit
+    IN LAST number time-unit THEN action
 
 Total download data test syntax:
 
- IF TOTAL DOWNLOADED operator value unit IN LAST number time-unit THEN action
+ IF TOTAL DOWNLOADED operator value unit
+    IN LAST number time-unit THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
@@ -3372,11 +3427,13 @@ Current download bandwidth rate test syntax:
 
 Total upload test syntax:
 
- IF TOTAL UPLOADED operator value PACKETS IN LAST number time-unit THEN action
+ IF TOTAL UPLOADED operator value PACKETS
+    IN LAST number time-unit THEN action
 
 Total download test syntax:
 
- IF TOTAL DOWNLOADED operator value PACKETS IN LAST number time-unit THEN action
+ IF TOTAL DOWNLOADED operator value PACKETS
+    IN LAST number time-unit THEN action
 
 I<operator> is a choice of "<",">","!=","==" in c notation, "gt",
 "lt", "eq", "ne" in shell sh notation and "greater", "less",
@@ -3475,7 +3532,9 @@ or with all parameters; Send five 128 byte pings to mmonit.com and wait
 for up to 10 seconds for a reply
 
   check host mmonit.com with address mmonit.com
-        if failed ping count 5 size 128 with timeout 10 seconds then alert
+        if failed ping count 5 size 128
+            with timeout 10 seconds
+        then alert
 
 You can also watch host, that is supposed to be offline:
 
@@ -3532,7 +3591,8 @@ Examples:
 
  if failed port 53 type udp protocol dns then alert
 
- if succeeded host example.org port 3306 type tcp protocol mysql then alert
+ if succeeded host example.org port 3306 type tcp
+    protocol mysql then alert
 
  if failed unixsocket /var/run/sophie then alert
 
@@ -3560,7 +3620,11 @@ until there are no more addresses left to try.
 I<TYPE [TCP | UDP]>. Optionally specify the socket type Monit
 should use when trying to connect to the port. The different socket
 types are: TCP or UDP, where TCP is a regular stream based socket, UDP,
-a datagram socket. The default socket type is TCP.
+a datagram socket. The default socket type is TCP. Note, the previous
+I<type tcpssl> statement is deprecated, but can alternatively be used.
+Use I<type tcp> combined with I<with ssl { ... }>, or use the secure
+protocol variant directly (e.g. I<protocol https>, I<protocol smtps>)
+instead.
 
 I<[SSL | TLS] [with options {...}]>. Set SSL/TLS L<options|"SSL
 OPTIONS"> and override global/default SSL options. You can set the
@@ -3577,15 +3641,21 @@ for better cryptographic security. You can use the I<openssl> command
 line tool to get the checksum value for your certificate, which you can
 then use in Monit's control file:
 
- openssl x509 -fingerprint -sha256 -in server.crt | head -1 | cut -f2 -d'='
+ openssl x509 -fingerprint -sha256 -in server.crt |
+     head -1 | cut -f2 -d'='
 
 Example:
 
  if failed
      port 443
      protocol https
-     and certificate checksum = "1ED948A6F4258ACAB964227EF4EB19FCC453B0F8"
+     and certificate checksum =
+         "1ED948A6F4258ACAB964227EF4EB19FCC453B0F8"
  then alert
+
+Note, the previous I<certmd5> statement is deprecated, but can
+alternatively be used. Use I<certificate checksum> with SHA1 or SHA256
+instead.
 
 I<CERTIFICATE VALID for number DAYS>. Send
 an alert if the certificate will expire in the given number of days.
@@ -3848,7 +3918,9 @@ its default address of http://www.example.com/server-status.
 
 Syntax:
 
- PROTOCOL APACHE-STATUS [PATH <path>] [USERNAME <string>] [PASSWORD <string>] [<property> <operator> <number>]+
+ PROTOCOL APACHE-STATUS [PATH <path>]
+                        [USERNAME <string>] [PASSWORD <string>]
+                        [<property> <operator> <number>]+
 
 I<PATH> is an optional path to apache status ("/server-status" by default)
 
@@ -3899,8 +3971,9 @@ I<USERNAME> MQTT username
 
 I<PASSWORD> MQTT password
 
-Username and password (credentials) are B<optional>. If not used, Monit will try anonymous connect, which may
-trigger authorization error => credentials are recommended unless your server allows anonymous connect.
+Username and password (credentials) are B<optional>. If not used, Monit
+will try anonymous connect, which may trigger authorization error =>
+credentials are recommended unless your server allows anonymous connect.
 
 Example:
 
@@ -3914,28 +3987,31 @@ Example:
 
 Syntax:
 
- PROTOCOL MYSQL[S] [USERNAME string PASSWORD string [RSAKEY CHECKSUM [MD5|SHA1|SHA256] string]]
+ PROTOCOL MYSQL[S] [USERNAME string PASSWORD string
+                    [RSAKEY CHECKSUM [MD5|SHA1|SHA256] string]]
 
 I<USERNAME> MySQL username.
 
-I<PASSWORD> MySQL password (special characters can be used, but for non-alphanumerics
-the password has to be quoted).
+I<PASSWORD> MySQL password (special characters can be used, but for
+non-alphanumerics the password has to be quoted).
 
-I<RSAKEY CHECKSUM> If you use unsecured connection (plain MYSQL without TLS), you can set
-the expected MD5, SHA1, or SHA256 checksum of the server's RSA key to protect against
-man-in-the-middle attacks. SHA256 is recommended for better cryptographic security. Monit
-will check the key fingerprint before sending the password to the server.
+I<RSAKEY CHECKSUM> If you use unsecured connection (plain MYSQL without
+TLS), you can set the expected MD5, SHA1, or SHA256 checksum of the
+server's RSA key to protect against man-in-the-middle attacks. SHA256
+is recommended for better cryptographic security. Monit will check the
+key fingerprint before sending the password to the server.
 
 Username and password (credentials) are B<optional> and if not set,
 Monit will perform the test using anonymous login. This can cause an
 authentication error to be logged in your MySQL log, depending on your
 MySQL configuration.
 
-If credentials are set, Monit will try to login. Monit does not require any database
-privileges, it just needs the database user. You might want to create standalone user
-for Monit to use when testing, for example:
+If credentials are set, Monit will try to login. Monit does not require
+any database privileges, it just needs the database user. You might want
+to create standalone user for Monit to use when testing, for example:
 
- CREATE USER 'monit'@'host_from_which_monit_performs_testing' IDENTIFIED BY 'mysecretpassword';
+ CREATE USER 'monit'@'host_from_which_monit_performs_testing'
+    IDENTIFIED BY 'mysecretpassword';
  FLUSH PRIVILEGES;
 
 Example:
@@ -3958,7 +4034,8 @@ or with unix-socket start/stop commands
         protocol mysql username "foo" password "bar"
      then alert
 
-You can enable the TLS encryption for the test by using MYSQLS as protocol name:
+You can enable the TLS encryption for the test by using MYSQLS as
+protocol name:
 
      if failed
         port 3306
@@ -3974,23 +4051,27 @@ Syntax:
 
 I<USERNAME> PostgreSQL username.
 
-I<PASSWORD> PostgreSQL password (special characters can be used, but for non-alphanumerics
-the password has to be quoted).
+I<PASSWORD> PostgreSQL password (special characters can be used, but for
+non-alphanumerics the password has to be quoted).
 
-I<DATABASE> PostgreSQL database (defaults to the database that matches the username if not set).
+I<DATABASE> PostgreSQL database (defaults to the database that matches
+the username if not set).
 
-Username and password (credentials) are B<optional> and if not set, Monit will perform the
-test with hardcoded user=root and database=root, which may trigger errors in PostgreSQL logs.
+Username and password (credentials) are B<optional> and if not set,
+Monit will perform the test with hardcoded user=root and database=root,
+which may trigger errors in PostgreSQL logs.
 
-If credentials are set, Monit will try to login. You might want to create standalone user
-for Monit to use when testing.
+If credentials are set, Monit will try to login. You might want to create
+standalone user for Monit to use when testing.
 
-Monit currently supports only 'password' and 'md5' PostgreSQL authentication methods. If the server
-asks for authentication method that Monit doesn't support (such as 'scram-sha-256'), Monit terminates the
-connection and the test succeeds (although monit cannot authenticate, the server is communicating).
+Monit currently supports only 'password' and 'md5' PostgreSQL
+authentication methods. If the server asks for authentication method
+that Monit doesn't support (such as 'scram-sha-256'), Monit terminates
+the connection and the test succeeds (although monit cannot
+authenticate, the server is communicating).
 
-To allow access to Monit for testing purposes, one can create an account and allow access for
-example like this:
+To allow access to Monit for testing purposes, one can create an account
+and allow access for example like this:
 
 PostgreSQL pg_hba.conf entry example:
 
@@ -4108,7 +4189,8 @@ I<HOST> you may specify an alternative Host header
 
 I<REQUEST> you may specify an alternative request, default is "/"
 
-I<ORIGIN> you may specify an alternative origin, default is "https://mmonit.com"
+I<ORIGIN> you may specify an alternative origin, default is
+"https://mmonit.com"
 
 I<VERSION> you may specify an alternative version, default is "0"
 
@@ -4362,8 +4444,8 @@ service if it is not running:
        then restart
        group database
 
-This resource checks example will send an alert if CPU usage of the
-Apache's HTTP daemon and its child processes goes beyond 60% for two
+This resource check example will send an alert if CPU usage of the
+Apache HTTP daemon and its child processes goes beyond 60% for two
 cycles. Apache is restarted if the CPU usage is over 80% for five
 cycles or the memory usage is over 100Mb for five cycles:
 
@@ -4586,7 +4668,8 @@ The following environment variables can be used for debugging:
 To debug the SSL/TLS connections, Monit supports the SSLKEYLOGFILE=<path>
 environment variable in debug mode (with the -v option). The log file can
 be used with Wireshark to decrypt the SSL/TLS communication (set the path
-to the logfile in Wireshark's "Settings -> Protocols -> TLS -> (Pre)-Master-Secret log filename".
+to the logfile in Wireshark's "Settings -> Protocols -> TLS ->
+(Pre)-Master-Secret log filename".
 
 =back
 
