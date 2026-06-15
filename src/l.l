@@ -27,12 +27,13 @@
 
 
 %{
-/* Turn off unreachable code warnings for the entire generated lexer */
+/* Turn off some warnings for the generated lexer */
 #if defined(__clang__) || defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunreachable-code"
+#pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #endif
-        
+
 /*
  * DESCRIPTION
  *
