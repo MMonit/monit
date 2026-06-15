@@ -230,7 +230,7 @@ AC_CHECK_DECLS([sigsetjmp], [], [AC_MSG_FAILURE([sigsetjmp is required])], [[#in
 # Require that we have vsnprintf that conforms to c99. I.e. does bounds check
 AC_CHECK_FUNC([vsnprintf], [], [AC_MSG_FAILURE([vsnprintf is required])])
 
-AC_CHECK_FUNCS([timegm getgrouplist getrandom arc4random_buf clock_gettime])
+AC_CHECK_FUNCS([timegm getgrouplist getrandom arc4random_buf clock_gettime strcasestr])
 
 # ------------------------------------------------------------------------
 # Architecture/OS

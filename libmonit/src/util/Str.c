@@ -53,6 +53,28 @@
  */
 
 
+/* ----------------------------------------------------------- Definitions */
+
+
+#ifndef HAVE_STRCASESTR
+static char *strcasestr(const char *haystack, const char *needle) {
+        if (!*needle)
+                return (char *)haystack;
+        for (; *haystack; haystack++) {
+                const char *h = haystack;
+                const char *n = needle;
+                while (*h && *n && tolower((uchar_t)*h) == tolower((uchar_t)*n)) {
+                        h++;
+                        n++;
+                }
+                if (!*n)
+                        return (char *)haystack;
+        }
+        return NULL;
+}
+#endif
+
+
 /* -------------------------------------------------------- Public Methods */
 
 
