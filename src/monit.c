@@ -667,7 +667,7 @@ reload:
 
                         if (Run.flags & Run_DoWakeup) {
                                 Run.flags &= ~Run_DoWakeup;
-                                Log_info("Awakened by User defined signal 1\n");
+                                DEBUG("Awakened by User defined signal 1\n");
                         }
 
                         if (Run.flags & Run_Stopped) {
