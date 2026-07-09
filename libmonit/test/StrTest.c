@@ -24,11 +24,18 @@ int main(void) {
         printf("=> Test1: copy\n");
         {
                 char s3[STRLEN];
-                printf("\tResult: %s\n", Str_copy(s3, "The abc house", 7));
-                assert(Str_isEqual(s3, "The abc"));
+                printf("\tResult: %s\n", Str_copy(s3, "The abc house", 8));
+                assert(Str_isEqual(s3, "The abc")); // n=8 => 7 chars + '\0'
                 printf("\tTesting for NULL argument\n");
                 assert(!Str_copy(NULL, NULL, 7));
                 assert(Str_isEqual(Str_copy(s3, NULL, sizeof(s3)), ""));
+                char s3b[4];
+                Str_copy(s3b, "abcdef", 4);         // truncates to n-1 = 3 chars
+                assert(Str_isEqual(s3b, "abc"));
+                Str_copy(s3b, "ab", 4);             // src shorter than n-1: full copy
+                assert(Str_isEqual(s3b, "ab"));
+                Str_copy(s3b, "xyz", 1);            // n=1: room for '\0' only
+                assert(Str_isEqual(s3b, ""));
         }
         printf("=> Test1: OK\n\n");
 

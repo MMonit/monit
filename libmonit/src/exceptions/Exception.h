@@ -178,7 +178,7 @@
 typedef struct T {
         const char *name;
 } T;
-#define EXCEPTION_MESSAGE_LENGTH 511
+#define EXCEPTION_MESSAGE_LENGTH 512
 typedef struct Exception_Frame Exception_Frame;
 struct Exception_Frame {
         int line;
@@ -187,7 +187,7 @@ struct Exception_Frame {
 	const char *file;
 	const T *exception;
 	Exception_Frame *prev;
-        char message[EXCEPTION_MESSAGE_LENGTH + 1];
+        char message[EXCEPTION_MESSAGE_LENGTH];
 };
 enum {
         Exception_entered = 0,

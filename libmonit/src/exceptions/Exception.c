@@ -101,7 +101,7 @@ void Exception_throw(const T *e, const char *func, const char *file, int line, c
 
 
 void Exception_vthrow(const T *e, const char *func, const char *file, int line, const char *cause, ...) {
-        char message[EXCEPTION_MESSAGE_LENGTH + 1];
+        char message[EXCEPTION_MESSAGE_LENGTH];
         if (cause) {
                 va_list ap;
                 va_start(ap, cause);
