@@ -560,10 +560,17 @@ static HttpRequest create_HttpRequest(Socket_T S) {
                 internal_error(S, SC_BAD_REQUEST, "[error] URL too long");
                 return NULL;
         }
+        Util_urlDecode(url);
+        // Reject control characters (CR, LF, etc.) in the decoded URL
+        for (const unsigned char *p = (const unsigned char *)url; *p; p++) {
+                if (*p < 0x20 || *p == 0x7f) {
+                        internal_error(S, SC_BAD_REQUEST, "Invalid control character in URL");
+                        return NULL;
+                }
+        }
         HttpRequest req = NULL;
         NEW(req);
         req->S = S;
-        Util_urlDecode(url);
         req->url = Str_dup(url);
         req->method = Str_dup(method);
         req->protocol = Str_dup(protocol);
