@@ -11,8 +11,7 @@ Fixed: HTTP protocol test combined with content or checksum: a monitored server 
        with a very large chunk-size line.
 
 Fixed: Process execution: when a program was configured to run under a specific uid without an explicit gid (or vice
-       versa), the child process could silently retain the parent's (typically root's) group id and supplementary
-       groups.
+       versa), the child process could silently retain the parent's (typically root's) group id and supplementary groups.
 
 Fixed: MySQL protocol test: Reject an empty salt during the handshake.
 
