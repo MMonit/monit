@@ -5123,26 +5123,28 @@ static void addhtpasswdentry(char *filename, char *username, Digest_Type dtype) 
         FILE *handle = NULL;
         int credentials_added = 0;
         char realpath[PATH_MAX] = {};
+        char *path = filename;
 
         assert(filename);
 
-        // Check that the htpasswd is a real file and not e.g. a directory
+        // Resolve a relative htpasswd path to its canonical absolute path (this also verifies that the path exists)
         if (filename[0] != SEPARATOR_CHAR) {
-                if (! File_realPath(filename, realpath)) {
+                path = File_realPath(filename, realpath);
+                if (! path) {
                         yyerror2("Error getting path for the htpasswd file '%s' -- %s\n", filename, STRERROR);
                         return;
                 }
         }
-        if (! File_isFile(filename)) {
-                yyerror2("The htpasswd file '%s' is not a file", filename);
+        if (! File_isFile(path)) {
+                yyerror2("The htpasswd file '%s' is not a file", path);
                 return;
         }
 
-        if (! (handle = fopen(filename, "r"))) {
+        if (! (handle = fopen(path, "r"))) {
                 if (username)
-                        yyerror2("Cannot read htpasswd (%s) for user %s", filename, username);
+                        yyerror2("Cannot read htpasswd (%s) for user %s", path, username);
                 else
-                        yyerror2("Cannot read htpasswd (%s)", filename);
+                        yyerror2("Cannot read htpasswd (%s)", path);
                 return;
         }
 
@@ -5184,9 +5186,9 @@ static void addhtpasswdentry(char *filename, char *username, Digest_Type dtype) 
 
         if (credentials_added == 0) {
                 if (username == NULL)
-                        yywarning2("htpasswd file (%s) has no usable credentials", filename);
+                        yywarning2("htpasswd file (%s) has no usable credentials", path);
                 else
-                        yywarning2("htpasswd file (%s) has no usable credentials for user %s", filename, username);
+                        yywarning2("htpasswd file (%s) has no usable credentials for user %s", path, username);
         }
         fclose(handle);
 }
