@@ -342,7 +342,7 @@ void *file_readQueue(FILE *file, size_t *size) {
         /* read data if any (allow 1MB at maximum to prevent enormous memory allocation) */
         void *data = NULL;
         if (*size > 0 && *size < 1048576) {
-                data = CALLOC(1, *size);
+                data = CALLOC(1, *size + 1);
                 if ((rv = fread(data, 1, *size, file)) != *size) {
                         FREE(data);
                         if (feof(file) || ferror(file))
