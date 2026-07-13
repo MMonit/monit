@@ -77,6 +77,11 @@
  */
 
 
+#ifndef O_NOFOLLOW
+#define O_NOFOLLOW 0
+#endif
+
+
 /* ------------------------------------------------------------------ Public */
 
 
@@ -164,9 +169,16 @@ bool file_createPidFile(void) {
         Run.files.pidfile_changed = false;
         /* Create the pidfile and write our PID */
         unlink(Run.files.pidfile);
-        FILE *F = fopen(Run.files.pidfile, "w");
+        int fd = open(Run.files.pidfile, O_CREAT | O_EXCL | O_WRONLY | O_NOFOLLOW, 0644);
+        if (fd < 0) {
+                Log_error("Error opening pidfile '%s' for writing -- %s\n", Run.files.pidfile, STRERROR);
+                return false;
+        }
+        FILE *F = fdopen(fd, "w");
         if (! F) {
                 Log_error("Error opening pidfile '%s' for writing -- %s\n", Run.files.pidfile, STRERROR);
+                close(fd);
+                unlink(Run.files.pidfile);
                 return false;
         }
         fprintf(F, "%d\n", (int)getpid());
