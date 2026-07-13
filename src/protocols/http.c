@@ -148,7 +148,7 @@ static int _readDataFromSocket(Socket_T socket, char *data, int wantBytes) {
 static void _readData(Socket_T socket, Port_T P, char **data, int wantBytes, int *haveBytes, ChecksumContext_T context) {
         if (P->url_request && P->url_request->regex) {
                 // The content test is required => cache the whole body
-                *data = realloc(*data, *haveBytes + wantBytes + 1);
+                RESIZE(*data, (size_t)*haveBytes + (size_t)wantBytes + 1);
                 *haveBytes += _readDataFromSocket(socket, *data + *haveBytes, wantBytes);
                 if (P->parameters.http.checksum)
                         Checksum_append(context, *data, wantBytes);
@@ -168,14 +168,16 @@ static void _readData(Socket_T socket, Port_T P, char **data, int wantBytes, int
 
 static void _processBodyChunked(Socket_T socket, Port_T P, char **data, __attribute__ ((unused)) int *contentLength, ChecksumContext_T context) {
         char crlf[2] = {};
-        int wantBytes = 0;
+        unsigned int chunkSize = 0;
         int haveBytes = 0;
-        while ((wantBytes = _getChunkSize(socket)) && haveBytes < Run.limits.httpContentBuffer) {
-                if (haveBytes + wantBytes > Run.limits.httpContentBuffer) {
-                        DEBUG("HTTP: content buffer limit exceeded -- limiting the data to %d\n", Run.limits.httpContentBuffer);
-                        wantBytes = Run.limits.httpContentBuffer - haveBytes;
+        int limit = Run.limits.httpContentBuffer;
+        while ((chunkSize = _getChunkSize(socket)) > 0 && haveBytes < limit) {
+                unsigned int roomLeft = (unsigned int)(limit - haveBytes);
+                if (chunkSize > roomLeft) {
+                        DEBUG("HTTP: content buffer limit exceeded -- limiting the data to %d\n", limit);
+                        chunkSize = roomLeft;
                 }
-                _readData(socket, P, data, wantBytes, &haveBytes, context);
+                _readData(socket, P, data, (int)chunkSize, &haveBytes, context);
                 // Read the CRLF terminator
                 _readDataFromSocket(socket, crlf, 2);
         }
@@ -208,7 +210,7 @@ static void _processBodyUntilEOF(Socket_T socket, Port_T P, char **data, __attri
                         haveBytes += readBytes;
                         if (haveBytes + wantBytes > Run.limits.httpContentBuffer)
                                 wantBytes = Run.limits.httpContentBuffer - haveBytes;
-                        *data = realloc(*data, haveBytes + wantBytes + 1);
+                        RESIZE(*data, (size_t)haveBytes + (size_t)wantBytes + 1);
                 }
                 *(*data + haveBytes) = 0;
         } else {
