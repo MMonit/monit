@@ -498,6 +498,10 @@ static void _greeting(mysql_t *mysql) {
         _getPadding(&mysql->response, 10); // reserved bytes
         if (mysql->response.data.handshake.capabilities & CLIENT_SECURE_CONNECTION)
                 snprintf(mysql->salt + 8, 13, "%s", _getString(&mysql->response)); // auth_plugin_data_part_2
+        if (! *mysql->salt) {
+                // A valid handshake always carries a non-empty authentication salt used as the modulus when encrypting the password for the caching_sha2_password
+                THROW(ProtocolException, "Invalid MySQL handshake -- server sent an empty authentication salt");
+        }
         mysql->capabilities = mysql->response.data.handshake.capabilities; // Save capabilities
         if (mysql->capabilities & CLIENT_PLUGIN_AUTH) {
                 _parsePlugin(mysql, _getString(&mysql->response));
