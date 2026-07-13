@@ -101,7 +101,7 @@ char* Fmt_bytes2str(double bytes, char s[static FMT_BYTES_BUFSIZE]) {
         }
         // Find and set appropriate unit
         size_t unit;
-        for (unit = 0; unit < FMT_BYTES_UNITS; unit++) {
+        for (unit = 0; unit < FMT_BYTES_UNITS - 1; unit++) {
                 if (bytes >= 1024) {
                         bytes /= 1024;
                 } else {
