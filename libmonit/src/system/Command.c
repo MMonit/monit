@@ -229,8 +229,10 @@ static inline char **_env(T C) {
         if (List_length(C->env) == 0)
                 return environ;
         for (int i = 0; environ[i]; i++) {
-                size_t len = strchr(environ[i], '=') - environ[i];
-                if (_findEnv(C, environ[i], len))
+                // Determine the variable name length (the part before '='). A well-formed entry is 'name=value', guard against a malformed entry with no '='
+                const char *eq = strchr(environ[i], '=');
+                size_t len = eq ? (size_t)(eq - environ[i]) : 0;
+                if (len > 0 && _findEnv(C, environ[i], len))
                         continue;
                 List_append(C->env, environ[i]);
         }
