@@ -370,6 +370,18 @@ int main(void) {
                 assert(t.tm_min  == 38);
                 assert(t.tm_sec  == 8);
                 assert(t.TM_GMTOFF == -28800);
+                // Hours-only timezone offset at the very end of the string
+                char *hhonly = Str_dup("2026-07-13 10:20:30+05");
+                assert(Time_toDateTime(hhonly, &t));
+                assert(t.tm_hour == 10);
+                assert(t.tm_min  == 20);
+                assert(t.tm_sec  == 30);
+                assert(t.TM_GMTOFF == 18000); // +05h = 5 * 3600, no minutes
+                FREE(hhonly);
+                char *hhonlyNeg = Str_dup("2026-07-13 10:20:30-05");
+                assert(Time_toDateTime(hhonlyNeg, &t));
+                assert(t.TM_GMTOFF == -18000);
+                FREE(hhonlyNeg);
                 // Date without time, tz should not be set
                 assert(Time_toDateTime("2013-12-15-0800 ", &t));
                 assert(t.TM_GMTOFF == 0);
