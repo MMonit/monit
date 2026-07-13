@@ -1514,6 +1514,11 @@ bool Util_checkCredentials(char *uname, char *outside) {
         char outside_crypt[STRLEN];
         if (c == NULL)
                 return false;
+#ifdef HAVE_LIBPAM
+        // Balance the getpwnam() NSS lookup for build-in users (which skip NSS lookup), to prevent timing attack for username harvesting
+        if (c->digesttype != Digest_Pam)
+                (void)getpwnam(uname);
+#endif
         switch (c->digesttype) {
                 case Digest_Cleartext:
                         outside_crypt[sizeof(outside_crypt) - 1] = 0;
@@ -1569,6 +1574,12 @@ bool Util_checkCredentials(char *uname, char *outside) {
                         return false;
         }
         return Str_authcmp(outside_crypt, c->passwd);
+}
+
+
+void Util_hashDummyPassword(const char *password) {
+        char result[STRLEN] = {};
+        md5_crypt(password ? password : "", "$1$", "monitxx", result, sizeof(result));
 }
 
 

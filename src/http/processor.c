@@ -844,6 +844,7 @@ static bool basic_authenticate(HttpRequest req) {
         *password++ = 0;
         /* Check if user exist */
         if (! Util_getUserCredentials(uname)) {
+                Util_hashDummyPassword(password);
                 Log_error("HttpRequest: access denied -- client [%s]: unknown user '%s'\n", NVLSTR(Socket_getRemoteHost(req->S)), uname);
                 return false;
         }

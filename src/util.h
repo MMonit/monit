@@ -188,6 +188,14 @@ bool Util_checkCredentials(char *uname, char *outside);
 
 
 /**
+ * A dummy constant-time password digest computation comparable to a real credential check,
+ * which allows to prevent user name harvesting.
+ * @param password The password supplied by the client
+ */
+void Util_hashDummyPassword(const char *password);
+
+
+/**
  * Reset the service information structure
  * @param s A Service_T object
  */
