@@ -1560,6 +1560,11 @@ bool Util_checkCredentials(char *uname, char *outside) {
                         char *temp;
                         snprintf(salt, 3, "%c%c", c->passwd[0], c->passwd[1]);
                         temp = crypt(outside, salt);
+                        if (! temp) {
+                                // crypt() returns NULL if the salt/hash method is not supported by the platform
+                                Log_error("Cannot generate crypt digest -- %s\n", STRERROR);
+                                return false;
+                        }
                         outside_crypt[sizeof(outside_crypt) - 1] = 0;
                         strncpy(outside_crypt, temp, sizeof(outside_crypt) - 1);
                         break;
