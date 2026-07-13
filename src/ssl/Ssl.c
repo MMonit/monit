@@ -84,6 +84,7 @@
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/x509v3.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
@@ -597,6 +598,35 @@ static bool _setServerNameIdentification(T C, const char *hostname) {
 }
 
 
+// Require the peer certificate to match the expected hostname/IP
+static bool _setHostnameValidation(T C, const char *name) {
+        if (name && _optionsVerify(C->options->verify) && ! _optionsAllowSelfSigned(C->options->allowSelfSigned)) {
+#ifdef HAVE_SSL_HOSTNAME_VALIDATION
+                X509_VERIFY_PARAM *param = SSL_get0_param(C->handler);
+                X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+                struct sockaddr_storage addr;
+                if (inet_pton(AF_INET, name, &(((struct sockaddr_in *)&addr)->sin_addr))
+#ifdef HAVE_IPV6
+                    || inet_pton(AF_INET6, name, &(((struct sockaddr_in6 *)&addr)->sin6_addr))
+#endif
+                   ) {
+                        if (! X509_VERIFY_PARAM_set1_ip_asc(param, name)) {
+                                Log_error("SSL: unable to enable certificate IP address validation for %s\n", name);
+                                return false;
+                        }
+                } else if (! X509_VERIFY_PARAM_set1_host(param, name, 0)) {
+                        Log_error("SSL: unable to enable certificate hostname validation for %s\n", name);
+                        return false;
+                }
+#else
+                Log_error("SSL: certificate hostname validation is not supported by the SSL library -- the connection to %s cannot be authenticated against MITM\n", name);
+                return false;
+#endif
+        }
+        return true;
+}
+
+
 static bool _setClientCertificate(T C, const char *file) {
         if (SSL_CTX_use_certificate_chain_file(C->ctx, file) != 1) {
                 Log_error("SSL client certificate chain loading failed: %s\n", SSLERROR);
@@ -780,6 +810,8 @@ void Ssl_connect(T C, int socket, int timeout, const char *name) {
         SSL_set_connect_state(C->handler);
         SSL_set_fd(C->handler, C->socket);
         _setServerNameIdentification(C, name);
+        if (! _setHostnameValidation(C, name))
+                THROW(IOException, "SSL: unable to enable server certificate identity validation");
         bool retry = false;
         do {
                 ERR_clear_error();

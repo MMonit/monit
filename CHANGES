@@ -4,6 +4,9 @@
 
 Version 6.1.0
 
+Fixed: SSL/TLS: Monit checked the certificate chain is valid but never matched the certificate's subjectAltName/CN against the
+       host it connected to. Enforce host name / IP address validation on the CA-verification path.
+
 Fixed: HTTP protocol test combined with content or checksum: a monitored server could crash Monit by sending a chunked response
        with a very large chunk-size line.
 

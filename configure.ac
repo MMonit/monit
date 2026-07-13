@@ -1057,6 +1057,17 @@ if test $with_sslstatic -eq 1 || test $with_ssl -eq 1; then
         if test "$sslkeylogfile" = "yes" ; then
                 AC_DEFINE([HAVE_SSL_CTX_SET_KEYLOG_CALLBACK], 1, [Define to 1 if you have ssl library with SSL_CTX_set_keylog_callback])
         fi
+
+        AC_MSG_CHECKING([for X509_VERIFY_PARAM hostname validation support])
+        AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <openssl/ssl.h>
+#include <openssl/x509v3.h>], [X509_VERIFY_PARAM *p = SSL_get0_param(0); X509_VERIFY_PARAM_set_hostflags(p, 0); X509_VERIFY_PARAM_set1_host(p, 0, 0); X509_VERIFY_PARAM_set1_ip_asc(p, 0);])],
+                [sslhostvalidation=yes],
+                [sslhostvalidation=no])
+        AC_MSG_RESULT($sslhostvalidation)
+        if test "$sslhostvalidation" = "yes" ; then
+                AC_DEFINE([HAVE_SSL_HOSTNAME_VALIDATION], 1, [Define to 1 if you have ssl library with X509_VERIFY_PARAM hostname/IP validation API])
+        fi
 fi
 
 
