@@ -40,7 +40,9 @@
  * @file
  */
 
+#undef assert
 extern void assert(int e);
+
 #define assert(e) ((void)((e)||(Exception_throw(&(AssertException), __func__, __FILE__, __LINE__, #e),0)))
 
 #endif
