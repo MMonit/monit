@@ -638,6 +638,10 @@ void Event_queue_process(void) {
                                 goto error3;
                         if (size != sizeof(*e))
                                 goto error4;
+                        e->source = NULL;
+                        e->message = NULL;
+                        e->action = NULL;
+                        e->next = NULL;
 
                         /* read source */
                         char *service = file_readQueue(file, &size);
