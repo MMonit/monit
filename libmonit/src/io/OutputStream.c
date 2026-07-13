@@ -462,8 +462,14 @@ int OutputStream_vprint(T S, const char *fmt, va_list ap) {
                                 if (c == 'd' || c == 'i')
                                         c = 'l';
                         }
-                        assert(cvt[c]);
-                        cvt[c](S, c, &box, flags, width, precision);
+                        if (cvt[c]) {
+                                cvt[c](S, c, &box, flags, width, precision);
+                        } else {
+                                // Unsupported conversion specifier
+                                assert(cvt[c]);
+                                write_byte(S, '%');
+                                write_byte(S, c);
+                        }
                 }
         }
         va_end(box.ap);
