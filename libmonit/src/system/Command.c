@@ -91,6 +91,7 @@ struct Process_T {
 };
 
 struct _usergroups {
+        gid_t gid;
         int ngroups;
         gid_t groups[NGROUPS_MAX];
 };
@@ -350,7 +351,9 @@ struct _usergroups *_getUserGroups(T C, struct _usergroups *ug) {
         if (!result)
                 return NULL;
         Command_setEnv(C, "HOME", result->pw_dir);
-        if (getgrouplist(result->pw_name, C->gid,
+        // Use the explicitly requested gid, or fall back to the user's primary group when no gid was set, so the child never inherits the parent's (root's) group id
+        ug->gid = C->gid ? C->gid : result->pw_gid;
+        if (getgrouplist(result->pw_name, ug->gid,
 #ifdef __APPLE__
                          (int *)ug->groups,
 #else
@@ -793,25 +796,35 @@ static void Process_exec(Process_T P, T C) {
                 if (i != P->ctrl_pipe[1])
                         close(i);
         }
-        if (C->gid) {
-                if (setgid(C->gid) < 0)
+        // Drop privileges. The group id and the supplementary groups must be set before the user id, because once the uid is dropped we may no longer be permitted to change
+        // the group memberships. Both the gid and the supplementary group list are always set, so the child never silently retains the parent's (root's) gid
+        if (C->uid || C->gid) {
+                gid_t gid = C->gid;
+                if (C->uid) {
+                        struct _usergroups ug = {.groups = {}, .ngroups = NGROUPS_MAX};
+                        if (!_getUserGroups(C, &ug))
+                                goto fail;
+                        gid = ug.gid;
+                        if (setgroups(ug.ngroups, ug.groups) < 0)
+                                goto fail;
+                } else {
+                        // gid only: drop the parent's supplementary groups
+                        if (setgroups(1, &gid) < 0)
+                                goto fail;
+                }
+                if (setgid(gid) < 0)
                         goto fail;
-                if (getgid() != C->gid) {
+                if (getgid() != gid) {
                         errno = EPERM;
                         goto fail;
                 }
-        }
-        if (C->uid) {
-                struct _usergroups ug = {.groups = {}, .ngroups = NGROUPS_MAX};
-                if (!_getUserGroups(C, &ug))
-                        goto fail;
-                if (setgroups(ug.ngroups, ug.groups) < 0)
-                        goto fail;
-                if (setuid(C->uid) < 0)
-                        goto fail;
-                if (getuid() != C->uid) {
-                        errno = EPERM;
-                        goto fail;
+                if (C->uid) {
+                        if (setuid(C->uid) < 0)
+                                goto fail;
+                        if (getuid() != C->uid) {
+                                errno = EPERM;
+                                goto fail;
+                        }
                 }
         }
         umask(C->umask);
