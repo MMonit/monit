@@ -312,6 +312,7 @@ static void _updateChecksum(Service_T S, char *hash) {
         if (S->checksum && S->checksum->test_changes) {
                 S->checksum->initialized = false;
                 strncpy(S->checksum->hash, hash, sizeof(S->checksum->hash) - 1);
+                S->checksum->hash[sizeof(S->checksum->hash) - 1] = 0;
         }
 }
 
@@ -332,6 +333,7 @@ static void _restoreV4(void) {
         // Services state
         State4_T state;
         while (read(file, &state, sizeof(state)) == sizeof(state)) {
+                state.name[sizeof(state.name) - 1] = 0;
                 Service_T service = Util_getService(state.name);
                 if (service && service->type == state.type) {
                         _updateStart(service, state.nstart, state.ncycle);
@@ -380,6 +382,7 @@ static void _restoreV3(void) {
         // Services state
         State3_T state;
         while (read(file, &state, sizeof(state)) == sizeof(state)) {
+                state.name[sizeof(state.name) - 1] = 0;
                 Service_T service = Util_getService(state.name);
                 if (service && service->type == state.type) {
                         _updateStart(service, state.nstart, state.ncycle);
@@ -423,6 +426,7 @@ static void _restoreV2(void) {
         // Services state
         State2_T state;
         while (read(file, &state, sizeof(state)) == sizeof(state)) {
+                state.name[sizeof(state.name) - 1] = 0;
                 Service_T service = Util_getService(state.name);
                 if (service && service->type == state.type) {
                         _updateStart(service, state.nstart, state.ncycle);
@@ -466,6 +470,7 @@ static void _restoreV1(void) {
         // Services state
         State1_T state;
         while (read(file, &state, sizeof(state)) == sizeof(state)) {
+                state.name[sizeof(state.name) - 1] = 0;
                 Service_T service = Util_getService(state.name);
                 if (service && service->type == state.type) {
                         _updateStart(service, state.nstart, state.ncycle);
@@ -486,6 +491,7 @@ static void _restoreV0(int services) {
                 State0_T state;
                 if (read(file, &state, sizeof(state)) != sizeof(state))
                         THROW(IOException, "Unable to read service state");
+                state.name[sizeof(state.name) - 1] = 0;
                 Service_T service = Util_getService(state.name);
                 if (service) {
                         _updateStart(service, state.nstart, state.ncycle);
