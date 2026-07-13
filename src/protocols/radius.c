@@ -172,7 +172,9 @@ void check_radius(Socket_T socket) {
                 if (attr[0] == 0x50) {
                         /* FIXME: validate it */
                 }
+                // advance to the next attribute: attr[1] is the attribute length (already validated)
                 left -= attr[1];
+                attr += attr[1];
         }
 
         /* save the reply authenticator, and copy the request authenticator over */
