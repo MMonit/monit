@@ -169,6 +169,8 @@ int InputStream_read(T S) {
 char *InputStream_readLine(T S, char *s, int size) {
         assert(S);
         assert(s);
+        if (size <= 0) // No room for even the NUL terminator
+                return NULL;
         uchar_t *p = (uchar_t *)s;
         for (int c = 0; (--size > 0) && ((c = read_byte(S)) > 0);) { // Stop if \0 is read or no more data
                 *p++ = c;
