@@ -114,7 +114,7 @@ void check_dns(Socket_T socket) {
         response = buf + offset_response;
 
         /* Compare transaction ID (it should be the same as in our request): */
-        if (response[0] != 0x00 && response[1] != 0x01)
+        if (response[0] != 0x00 || response[1] != 0x01)
                 THROW(ProtocolException, "DNS: response transaction ID mismatch -- received 0x%x%x, expected 0x1", response[0], response[1]);
 
         /* Compare flags: */
@@ -129,7 +129,7 @@ void check_dns(Socket_T socket) {
                 THROW(ProtocolException, "DNS: invalid response code: 0x%x", rc);
 
         /* Compare queries count (it should be one as in our request): */
-        if (response[4] != 0x00 && response[5] != 0x01)
+        if (response[4] != 0x00 || response[5] != 0x01)
                 THROW(ProtocolException, "DNS: invalid query count in response -- received 0x%x%x, expected 1", response[4], response[5]);
 
         /* Compare answer and authority resource record counts (they shouldn't be both zero) */
