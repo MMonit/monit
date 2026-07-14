@@ -2857,6 +2857,20 @@ static char *get_monitoring_status(Output_Type type, Service_T s, char *buf, int
 }
 
 
+__attribute__((format (printf, 3, 4))) static char *_statusAppend(char *p, char *end, const char *fmt, ...) {
+        if (p >= end - 1)
+                return p;
+        va_list ap;
+        va_start(ap, fmt);
+        int n = vsnprintf(p, (size_t)(end - p), fmt, ap);
+        va_end(ap);
+        if (n < 0)
+                return p;
+        p += n;
+        return p < end ? p : end - 1;
+}
+
+
 static char *get_service_status(Output_Type type, Service_T s, char *buf, int buflen) {
         assert(s);
         assert(buf);
@@ -2867,6 +2881,7 @@ static char *get_service_status(Output_Type type, Service_T s, char *buf, int bu
         } else {
                 // In the case that the service has actually some failure, the error bitmap will be non zero
                 char *p = buf;
+                char *end = buf + buflen;
                 EventTable_T *et = Event_Table;
                 while ((*et).id) {
                         if (s->error & (*et).id) {
@@ -2874,24 +2889,24 @@ static char *get_service_status(Output_Type type, Service_T s, char *buf, int bu
                                 if ((*et).id == Event_Link && s->inverseStatus)
                                         inverse = true;
                                 if (p > buf)
-                                        p += snprintf(p, buflen - (p - buf), " | ");
+                                        p = _statusAppend(p, end, " | ");
                                 if (s->error_hint & (*et).id) {
                                         if (type == HTML)
-                                                p += snprintf(p, buflen - (p - buf), "<span class='orange-text'>%s</span>", (*et).description_changed);
+                                                p = _statusAppend(p, end, "<span class='orange-text'>%s</span>", (*et).description_changed);
                                         else
-                                                p += snprintf(p, buflen - (p - buf), TextColor_lightYellow("%s", (*et).description_changed));
+                                                p = _statusAppend(p, end, TextColor_lightYellow("%s", (*et).description_changed));
                                 } else {
                                         if (type == HTML)
-                                                p += snprintf(p, buflen - (p - buf), "<span class='red-text'>%s</span>", inverse ? (*et).description_succeeded : (*et).description_failed);
+                                                p = _statusAppend(p, end, "<span class='red-text'>%s</span>", inverse ? (*et).description_succeeded : (*et).description_failed);
                                         else
-                                                p += snprintf(p, buflen - (p - buf), TextColor_lightRed("%s", inverse ? (*et).description_succeeded : (*et).description_failed));
+                                                p = _statusAppend(p, end, TextColor_lightRed("%s", inverse ? (*et).description_succeeded : (*et).description_failed));
                                 }
                         }
                         et++;
                 }
         }
         if (s->doaction)
-                snprintf(buf + strlen(buf), buflen - strlen(buf) - 1, " - %s pending", Action_Names[s->doaction]);
+                _statusAppend(buf + strlen(buf), buf + buflen, " - %s pending", Action_Names[s->doaction]);
         return buf;
 }
 
