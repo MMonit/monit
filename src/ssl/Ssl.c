@@ -92,6 +92,7 @@
 #include <openssl/rand.h>
 
 #include "monit.h"
+#include "checksum.h"
 #include "Ssl.h"
 #include "SslServer.h"
 
@@ -230,7 +231,8 @@ static Ssl_Version _optionsVersion(int version) {
 
 
 static bool _optionsVerify(short verify) {
-        return verify != -1 ? verify : Run.ssl.verify != -1 ? Run.ssl.verify : false;
+        // Verify the server certificate by default
+        return verify != -1 ? verify : Run.ssl.verify != -1 ? Run.ssl.verify : true;
 }
 
 
@@ -480,21 +482,18 @@ static int _checkChecksum(T C, X509_STORE_CTX *ctx, X509 *certificate) {
                                 snprintf(C->error, sizeof(C->error), "Invalid SSL certificate checksum type (0x%x)", checksumType);
                                 return 0;
                 }
-                unsigned int len, i = 0;
+                // Compare the configured checksum against the certificate digest
+                unsigned int len;
                 unsigned char realChecksum[EVP_MAX_MD_SIZE];
                 X509_digest(certificate, hash, realChecksum, &len);
-                while ((i < len) && (checksum[2 * i] != '\0') && (checksum[2 * i + 1] != '\0')) {
-                        unsigned char c = (checksum[2 * i] > 57 ? checksum[2 * i] - 87 : checksum[2 * i] - 48) * 0x10 + (checksum[2 * i + 1] > 57 ? checksum[2 * i + 1] - 87 : checksum[2 * i + 1] - 48);
-                        if (c != realChecksum[i]) {
-                                X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
-                                snprintf(C->error, sizeof(C->error), "SSL server certificate checksum failed");
-                                return 0;
-                        }
-                        i++;
+                MD_T hexChecksum = {};
+                Checksum_digest2Bytes(realChecksum, (int)len, hexChecksum);
+                if (strlen(checksum) != (size_t)len * 2 || strncasecmp(hexChecksum, checksum, (size_t)len * 2) != 0) {
+                        X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
+                        snprintf(C->error, sizeof(C->error), "SSL server certificate checksum failed");
+                        return 0;
                 }
-                if (checksumType != Hash_Unknown && STR_DEF(checksum)) {
-                        DEBUG("SSL certificate %s checksum test succeeded [%s]\n", Checksum_Names[checksumType], checksum);
-                }
+                DEBUG("SSL certificate %s checksum test succeeded [%s]\n", Checksum_Names[checksumType], checksum);
         }
         return 1;
 }

@@ -642,17 +642,20 @@ Example of allowed protocols list:
       version: tlsv12 tlsv13
   }
 
-I<VERIFY> enable SSL server certificate verification. This will verify
-and report an error if the server certificate is not trusted, not valid
-or has expired. By default certificate verification is disabled, though
-we recommend enabling it, otherwise there is no guarantee that Monit
-speaks with the server you think it speaks with.
+I<VERIFY> enable or disable SSL server certificate verification. When
+enabled, Monit reports an error and the test fails if the server certificate
+is not trusted, is not valid, has expired, or does not match the host Monit
+connects to (the certificate's subjectAltName/CN is checked against the host).
+Certificate verification is B<enabled by default> since version 6.1.0 (it was
+disabled by default in earlier versions); use I<verify: disable> to turn it
+off. Disabling verification means there is no guarantee that Monit speaks with
+the server you think it speaks with.
 
-I<SELFSIGNED> self-signed certificates are rejected by default. Use
-this option to allow self-signed certificates. Warning: not recommended
-in production for security reasons, as in such case the client cannot
-verify it talks to the correct server and attack types like man-in-the-middle
-or DNS hijacking are possible).
+I<SELFSIGNED> self-signed certificates are rejected by default (as they cannot
+be verified against a trusted CA). Use this option to accept a self-signed
+certificate. Warning: not recommended in production for security reasons, as
+in such case the client cannot verify it talks to the correct server and
+attack types like man-in-the-middle or DNS hijacking are possible.
 
 I<CIPHERS> override default SSL/TLS ciphers.
 
@@ -700,14 +703,14 @@ I<.monitrc> file:
 
 Here is an example of setting both global and local SSL options:
 
-    # Enable certificate verification for all SSL connections
-    # Self-signed certificates are not allowed by default
+    # Certificate verification is enabled by default; you can set global SSL
+    # options explicitly, for example to restrict the allowed TLS versions
     set ssl options {
-            verify: enable
+            version: tlsv12 tlsv13
     }
 
-    # Verify certificate (via global setting)
-    # Allow self-signed certificate for this check
+    # Certificate is verified by default; allow a self-signed certificate
+    # for this particular check
     check host example with address example.com
             if failed
                     port 443
@@ -715,7 +718,7 @@ Here is an example of setting both global and local SSL options:
                     with ssl options {selfsigned: allow}
             then alert
 
-    # Do not verify example2.com's certificate (override global setting)
+    # Do not verify example2.com's certificate at all (opt out of the default)
     check host example2 with address example2.com
             if failed
                     port 443

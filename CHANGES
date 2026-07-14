@@ -4,6 +4,16 @@
 
 Version 6.1.0
 
+INCOMPATIBLE CHANGE: SSL/TLS server certificate verification is now ENABLED BY DEFAULT for all outgoing TLS connections.
+       Previously verification was OFF by default (for backward compatibility). As a consequence, connections to servers
+       presenting an untrusted, expired, wrong-host or self-signed certificate now FAIL by default.
+       To restore the previous behavior, either add a trusted CA, or explicitly relax verification per check or globally:
+           with ssl options {verify: disable}       # do not verify the certificate at all
+           with ssl options {selfsigned: allow}     # accept a self-signed certificate
+       The same options can be set globally with 'set ssl options { ... }'.
+
+Fixed: SSL/TLS: Make the certificate checksum comparison case-insensitive.
+
 Fixed: SSL/TLS: Monit checked the certificate chain is valid but never matched the certificate's subjectAltName/CN against the
        host it connected to. Enforce host name / IP address validation on the CA-verification path.
 

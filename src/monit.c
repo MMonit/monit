@@ -127,7 +127,12 @@ static void handle_wakeup(int);    /* Signalhandler for a daemon wakeup call */
 /* ------------------------------------------------------------------ Global */
 
 
-struct Run_T Run = {.files.pidfile_lock = -1};  /**< Struct holding runtime constants */
+struct Run_T Run = {
+        .files.pidfile_lock = -1,
+        .ssl.version = -1,
+        .ssl.verify = -1,
+        .ssl.allowSelfSigned = -1
+};  /**< Struct holding runtime constants */
 Service_T Service_List;                 /**< The service list (created in p.y) */
 Service_T Service_List_Conf;    /**< The service list in conf file (c. in p.y) */
 ServiceGroup_T Service_Group_List;/**< The service group list (created in p.y) */
