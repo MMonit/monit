@@ -49,7 +49,7 @@ void check_ftp(Socket_T socket) {
                 if (! Socket_readLine(socket, buf, STRLEN))
                         THROW(IOException, "FTP: error receiving data -- %s", STRERROR);
                 Str_chomp(buf);
-        } while (buf[3] == '-'); // Discard multi-line response
+        } while (strlen(buf) >= 4 && buf[3] == '-'); // Discard multi-line response
         if (sscanf(buf, "%d", &status) != 1 || status != 220)
                 THROW(ProtocolException, "FTP greeting error: %s", buf);
         if (Socket_print(socket, "QUIT\r\n") < 0)

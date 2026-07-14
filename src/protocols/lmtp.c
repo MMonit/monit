@@ -50,7 +50,7 @@ static void expect(Socket_T socket, int expect) {
                 if (! Socket_readLine(socket, buf, STRLEN))
                         THROW(IOException, "LMTP: error receiving data -- %s", STRERROR);
                 Str_chomp(buf);
-        } while (buf[3] == '-'); // Discard multi-line response
+        } while (strlen(buf) >= 4 && buf[3] == '-'); // Discard multi-line response
         if (sscanf(buf, "%d", &status) != 1 || status != expect)
                 THROW(ProtocolException, "LMTP error: %s", buf);
 }
