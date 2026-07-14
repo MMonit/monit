@@ -135,7 +135,7 @@ char* Fmt_time2str(double milli, char s[static FMT_TIME_BUFSIZE]) {
         }
         // Find and set appropriate unit
         size_t unit;
-        for (unit = 0; unit < FMT_TIME_UNITS; unit++) {
+        for (unit = 0; unit < FMT_TIME_UNITS - 1; unit++) {
                 if (milli >= time_units[unit].base) {
                         milli /= time_units[unit].base;
                 } else {
