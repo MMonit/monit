@@ -68,6 +68,10 @@ static inline void _append(T S, const char *s, va_list ap) {
                 va_copy(ap_copy, ap);
                 int n = vsnprintf((char *)(S->buffer + S->used), S->length - S->used, s, ap_copy);
                 va_end(ap_copy);
+                if (n < 0) {
+                        S->buffer[S->used] = 0;
+                        break;
+                }
                 if ((S->used + n) < S->length) {
                         S->used += n;
                         break;
