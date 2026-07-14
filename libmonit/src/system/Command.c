@@ -214,29 +214,45 @@ static void _buildArgs(T C, const char *path, va_list ap) {
 }
 
 
-// Returns an array of program args. Should only be called in the child
+// Returns a freshly allocated array of program args (does not mutate C). Built in the PARENT
+// before fork() so the child does not need to allocate. The caller frees the array with FREE().
 static inline char **_args(T C) {
         assert(C);
         return (char**)List_toArray(C->args);
 }
 
 
-// Returns an array of program environment. Must only be called in the child.
-// If the environment list is empty, just return the global environ variable.
-// Otherwise don't copy, but add references to environ entries unless already set
-static inline char **_env(T C) {
-        assert(C);
-        if (List_length(C->env) == 0)
-                return environ;
+// Build the array of program environment in the PARENT, before fork(), so the child does not need to allocate memory.
+// The command's explicit variables, the resolved HOME (when a uid is set, passed in 'home'), and the inherited environ
+// entries that are not overridden are combined into a fresh array WITHOUT mutating the C object, which may be reused for
+// repeated executions, and its env list must not accumulate environ references.
+static char **_buildChildEnvironment(T C, char *home) {
+        if (List_length(C->env) == 0 && ! home)
+                return NULL; // inherit environ as-is
+        List_T env = List_new();
+        // The resolved HOME (from the target user) takes precedence over any HOME set explicitly
+        if (home)
+                List_append(env, home);
+        for (_list_t p = C->env->head; p; p = p->next) {
+                if (home && strncmp(p->e, "HOME=", 5) == 0)
+                        continue;
+                List_append(env, p->e);
+        }
         for (int i = 0; environ[i]; i++) {
                 // Determine the variable name length (the part before '='). A well-formed entry is 'name=value', guard against a malformed entry with no '='
                 const char *eq = strchr(environ[i], '=');
                 size_t len = eq ? (size_t)(eq - environ[i]) : 0;
-                if (len > 0 && _findEnv(C, environ[i], len))
-                        continue;
-                List_append(C->env, environ[i]);
+                if (len > 0) {
+                        if (home && strncmp(home, environ[i], len) == 0 && home[len] == '=')
+                                continue;
+                        if (_findEnv(C, environ[i], len))
+                                continue;
+                }
+                List_append(env, environ[i]);
         }
-        return (char**)List_toArray(C->env);
+        char **array = (char**)List_toArray(env);
+        List_free(&env); // frees the list nodes only, not the referenced strings
+        return array;
 }
 
 
@@ -346,24 +362,45 @@ static void _resetSignals(void) {
 }
 
 
-struct _usergroups *_getUserGroups(T C, struct _usergroups *ug) {
-        // There are no threads in the child so we can use
-        // the simpler getpwuid() instead of getpwuid_r()
-        struct passwd *result = getpwuid(C->uid);
-        if (!result)
-                return NULL;
-        Command_setEnv(C, "HOME", result->pw_dir);
+// Resolve the target user's primary gid, supplementary groups and home directory in the PARENT, before fork(), because getpwuid_r()/getgrouplist() are not async-signal-safe.
+static bool _getUserGroups(T C, struct _usergroups *ug, char **home) {
+        long hint = sysconf(_SC_GETPW_R_SIZE_MAX);
+        size_t bufsize = (hint > 0 && hint <= 1024 * 1024) ? (size_t)hint : 16384;
+        char *buffer = ALLOC(bufsize);
+        struct passwd pwd;
+        struct passwd *result = NULL;
+        int rv;
+        while ((rv = getpwuid_r(C->uid, &pwd, buffer, bufsize, &result)) == ERANGE && bufsize < 1024 * 1024) {
+                bufsize *= 2;
+                RESIZE(buffer, bufsize);
+        }
+        if (rv != 0 || ! result) {
+                FREE(buffer);
+                errno = rv;
+                return false;
+        }
+        if (home)
+                *home = Str_cat("HOME=%s", result->pw_dir ? result->pw_dir : "");
         // Use the explicitly requested gid, or fall back to the user's primary group when no gid was set, so the child never inherits the parent's (root's) group id
         ug->gid = C->gid ? C->gid : result->pw_gid;
-        if (getgrouplist(result->pw_name, ug->gid,
+        ug->ngroups = NGROUPS_MAX;
+        int gl = getgrouplist(result->pw_name, ug->gid,
 #ifdef __APPLE__
                          (int *)ug->groups,
 #else
                          ug->groups,
 #endif
-                         &ug->ngroups) < 0)
-                return NULL;
-        return ug;
+                         &ug->ngroups);
+        FREE(buffer);
+        result = NULL; // points into buffer freed above
+        if (gl < 0) {
+                if (home) {
+                        FREE(*home);
+                        *home = NULL;
+                }
+                return false;
+        }
+        return true;
 }
 
 
@@ -780,8 +817,10 @@ List_T Command_command(T C) {
 // MARK: - Execute
 
 
-// Setup and exec the child process
-static void Process_exec(Process_T P, T C) {
+// Set up and exec the child process. This runs in the child, between fork() and execve(), so it
+// must call ONLY async-signal-safe functions. The potentially memory-allocating / NSS-locking
+// work (user/group lookup, building the argv/env arrays) has to be done in the parent.
+static void Process_exec(Process_T P, T C, int descriptors, char **args, char **env, struct _usergroups *ug) {
         int status = 0;
         _resetSignals();
         errno = 0;
@@ -793,7 +832,6 @@ static void Process_exec(Process_T P, T C) {
                 goto fail;
         if (!Process_setupChildPipes(P))
                 goto fail;
-        int descriptors = System_descriptors(256);
         for (int i = 3; i < descriptors; i++) {
                 if (i != P->ctrl_pipe[1])
                         close(i);
@@ -803,11 +841,8 @@ static void Process_exec(Process_T P, T C) {
         if (C->uid || C->gid) {
                 gid_t gid = C->gid;
                 if (C->uid) {
-                        struct _usergroups ug = {.groups = {}, .ngroups = NGROUPS_MAX};
-                        if (!_getUserGroups(C, &ug))
-                                goto fail;
-                        gid = ug.gid;
-                        if (setgroups(ug.ngroups, ug.groups) < 0)
+                        gid = ug->gid; // ug was resolved in the parent
+                        if (setgroups(ug->ngroups, ug->groups) < 0)
                                 goto fail;
                 } else {
                         // gid only: drop the parent's supplementary groups
@@ -830,8 +865,7 @@ static void Process_exec(Process_T P, T C) {
                 }
         }
         umask(C->umask);
-        char **args = _args(C);
-        execve(args[0], args, _env(C));
+        execve(args[0], args, env ? env : environ);
 fail:
         status = errno;
         if (status != 0)
@@ -888,19 +922,41 @@ Process_T Command_execute(T C) {
         assert(C);
         struct _block block = _block();
         Process_T P = Process_new();
+        // Everything that may allocate memory or take a libc/NSS lock is done HERE, in the parent,
+        // before fork(). The child may call only async-signal-safe functions between fork() and execve()
+        char **args = NULL;
+        char **env = NULL;
+        char *home = NULL; // "HOME=<dir>" for the target user; referenced by 'env', freed below
+        struct _usergroups ug = {.ngroups = NGROUPS_MAX};
+        bool hasUg = false;
+        int descriptors = 0;
         int status = Process_createPipes(P);
         if (status < 0) {
                 status = -status;
                 goto fail;
         }
+        if (C->uid) {
+                if (! _getUserGroups(C, &ug, &home)) {
+                        status = errno ? errno : EINVAL;
+                        goto fail;
+                }
+                hasUg = true;
+        }
+        descriptors = System_descriptors(256);
+        args = _args(C);
+        env = _buildChildEnvironment(C, home);
         if ((P->pid = fork()) < 0) {
                 status = errno;
         } else if (P->pid == 0) {
-                Process_exec(P, C);
+                Process_exec(P, C, descriptors, args, env, hasUg ? &ug : NULL);
         } else {
                 Process_ctrl(P, &status);
         }
 fail:
+        // Free the pre-fork allocations (the child has either exec'd or _exit'd)
+        FREE(args);
+        FREE(env);
+        FREE(home);
         Process_closeCtrlPipe(P);
         if (status != 0) {
                 DEBUG("Command: failed -- %s\n", System_getError(status));
