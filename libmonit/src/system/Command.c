@@ -96,6 +96,14 @@ struct _usergroups {
         gid_t groups[NGROUPS_MAX];
 };
 
+struct _childspec {
+        char **args;
+        char **env;
+        char *home;
+        int descriptors;
+        struct _usergroups ug;
+};
+
 static Array_T processTable = NULL;
 
 // Some POSIX systems does not define environ explicit
@@ -129,7 +137,7 @@ static void _childSignal(int how) {
 static void _handleChildren(__attribute__ ((unused)) int sig) {
         pid_t pid;
         int status;
-        int save_errno = errno; // Save errno on signal handler entry, before calling waitpid()
+        int save_errno = errno;
 
         while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
                 Process_T found = Array_remove(processTable, pid);
@@ -138,7 +146,7 @@ static void _handleChildren(__attribute__ ((unused)) int sig) {
                 }
         }
 
-        errno = save_errno; // Restore errno before signal handler return
+        errno = save_errno;
 }
 
 
@@ -214,32 +222,24 @@ static void _buildArgs(T C, const char *path, va_list ap) {
 }
 
 
-// Returns a freshly allocated array of program args (does not mutate C). Built in the PARENT
-// before fork() so the child does not need to allocate. The caller frees the array with FREE().
-static inline char **_args(T C) {
-        assert(C);
-        return (char**)List_toArray(C->args);
-}
-
-
-// Build the array of program environment in the PARENT, before fork(), so the child does not need to allocate memory.
-// The command's explicit variables, the resolved HOME (when a uid is set, passed in 'home'), and the inherited environ
-// entries that are not overridden are combined into a fresh array WITHOUT mutating the C object, which may be reused for
-// repeated executions, and its env list must not accumulate environ references.
 static char **_buildChildEnvironment(T C, char *home) {
         if (List_length(C->env) == 0 && ! home)
-                return NULL; // inherit environ as-is
-        List_T env = List_new();
-        // The resolved HOME (from the target user) takes precedence over any HOME set explicitly
+                return NULL;
+        int envc = 0;
+        while (environ[envc])
+                envc++;
+        char **array = CALLOC(List_length(C->env) + envc + 2, sizeof *array); // +home +NULL
+        int n = 0;
+        // The resolved HOME takes precedence over any HOME set explicitly
         if (home)
-                List_append(env, home);
+                array[n++] = home;
         for (_list_t p = C->env->head; p; p = p->next) {
                 if (home && strncmp(p->e, "HOME=", 5) == 0)
                         continue;
-                List_append(env, p->e);
+                array[n++] = p->e;
         }
         for (int i = 0; environ[i]; i++) {
-                // Determine the variable name length (the part before '='). A well-formed entry is 'name=value', guard against a malformed entry with no '='
+                // Variable name length (before '='); guard against a malformed entry with no '='
                 const char *eq = strchr(environ[i], '=');
                 size_t len = eq ? (size_t)(eq - environ[i]) : 0;
                 if (len > 0) {
@@ -248,10 +248,9 @@ static char **_buildChildEnvironment(T C, char *home) {
                         if (_findEnv(C, environ[i], len))
                                 continue;
                 }
-                List_append(env, environ[i]);
+                array[n++] = environ[i];
         }
-        char **array = (char**)List_toArray(env);
-        List_free(&env); // frees the list nodes only, not the referenced strings
+        array[n] = NULL;
         return array;
 }
 
@@ -362,7 +361,7 @@ static void _resetSignals(void) {
 }
 
 
-// Resolve the target user's primary gid, supplementary groups and home directory in the PARENT, before fork(), because getpwuid_r()/getgrouplist() are not async-signal-safe.
+// Resolve the target user's gid, supplementary groups and home; getpwuid_r()/getgrouplist() are not async-signal-safe
 static bool _getUserGroups(T C, struct _usergroups *ug, char **home) {
         long hint = sysconf(_SC_GETPW_R_SIZE_MAX);
         size_t bufsize = (hint > 0 && hint <= 1024 * 1024) ? (size_t)hint : 16384;
@@ -381,7 +380,7 @@ static bool _getUserGroups(T C, struct _usergroups *ug, char **home) {
         }
         if (home)
                 *home = Str_cat("HOME=%s", result->pw_dir ? result->pw_dir : "");
-        // Use the explicitly requested gid, or fall back to the user's primary group when no gid was set, so the child never inherits the parent's (root's) group id
+        // Explicit gid, else the user's primary group, so we never inherit root's gid
         ug->gid = C->gid ? C->gid : result->pw_gid;
         ug->ngroups = NGROUPS_MAX;
         int gl = getgrouplist(result->pw_name, ug->gid,
@@ -817,10 +816,24 @@ List_T Command_command(T C) {
 // MARK: - Execute
 
 
-// Set up and exec the child process. This runs in the child, between fork() and execve(), so it
-// must call ONLY async-signal-safe functions. The potentially memory-allocating / NSS-locking
-// work (user/group lookup, building the argv/env arrays) has to be done in the parent.
-static void Process_exec(Process_T P, T C, int descriptors, char **args, char **env, struct _usergroups *ug) {
+static int _createChildSpec(T C, struct _childspec *spec) {
+        if (C->uid && ! _getUserGroups(C, &spec->ug, &spec->home))
+                return errno ? errno : EINVAL;
+        spec->descriptors = System_descriptors(256);
+        spec->args = (char**)List_toArray(C->args);
+        spec->env = _buildChildEnvironment(C, spec->home);
+        return 0;
+}
+
+
+static void _disposeChildSpec(struct _childspec *spec) {
+        FREE(spec->args);
+        FREE(spec->env);
+        FREE(spec->home);
+}
+
+
+static void Process_exec(Process_T P, T C, const struct _childspec *spec) {
         int status = 0;
         _resetSignals();
         errno = 0;
@@ -832,20 +845,17 @@ static void Process_exec(Process_T P, T C, int descriptors, char **args, char **
                 goto fail;
         if (!Process_setupChildPipes(P))
                 goto fail;
-        for (int i = 3; i < descriptors; i++) {
+        for (int i = 3; i < spec->descriptors; i++) {
                 if (i != P->ctrl_pipe[1])
                         close(i);
         }
-        // Drop privileges. The group id and the supplementary groups must be set before the user id, because once the uid is dropped we may no longer be permitted to change
-        // the group memberships. Both the gid and the supplementary group list are always set, so the child never silently retains the parent's (root's) gid
         if (C->uid || C->gid) {
                 gid_t gid = C->gid;
                 if (C->uid) {
-                        gid = ug->gid; // ug was resolved in the parent
-                        if (setgroups(ug->ngroups, ug->groups) < 0)
+                        gid = spec->ug.gid;
+                        if (setgroups(spec->ug.ngroups, spec->ug.groups) < 0)
                                 goto fail;
                 } else {
-                        // gid only: drop the parent's supplementary groups
                         if (setgroups(1, &gid) < 0)
                                 goto fail;
                 }
@@ -865,7 +875,7 @@ static void Process_exec(Process_T P, T C, int descriptors, char **args, char **
                 }
         }
         umask(C->umask);
-        execve(args[0], args, env ? env : environ);
+        execve(spec->args[0], spec->args, spec->env ? spec->env : environ);
 fail:
         status = errno;
         if (status != 0)
@@ -885,84 +895,37 @@ static void Process_ctrl(Process_T P, int *status) {
 
 
 /*
- The Execute function.
-
- We do not use posix_spawn(2) because it's not well suited for creating
- long-running daemon processes. Although posix_spawn is more efficient, its
- limitations makes it problematic for our use. Specifically:
-
- - The POSIX standard does not support calling setsid(2) in the child
- process, which is important to have the child detach from the controlling
- terminal. Some implementations do support setsid() unofficially via the
- flag POSIX_SPAWN_SETSID, but this is not standardized.
- - posix_spawn does not inherently handle the transition of privileges
- associated with setuid/setgid programs.
- - Closing "all" descriptors in the child before calling exec is not directly
- supported. While there is limited support for closing specific descriptors,
- there is no straightforward way to unconditionally close all potentially
- open descriptors.
- - There is no support for changing the working directory (chdir) in the child
- process before exec is called. This limitation can be significant, especially
- in daemon processes where changing to a specific directory is often required.
- - Inability to Change umask: posix_spawn lacks support for changing the file
- mode creation mask (umask) in the child process.
- - Limited flexibility during child setup: On Linux, posix_spawn typically uses
- clone(2) internally, while other systems might use vfork(2), both of which
- restrict what can be safely done during the child setup phase. Operations
- that might allocate memory, such as looking up user/group information
- (getpwuid, getgrouplist) or determining system limits, become problematic
- or impossible.
-
- Traditional fork/exec offers a bit more control and flexibility. With modern OSs
- supporting Copy-On-Write (COW), the issue of unnecessary memory address space
- duplication in the child before calling exec becomes less significant, albeit
- still an annoyance.
+ The Execute function. We do not use posix_spawn(2) because it's not well
+ suited for creating long-running daemon processes. Although posix_spawn
+ is more efficient, its limitations makes it problematic for our use.
  */
 Process_T Command_execute(T C) {
         assert(C);
         struct _block block = _block();
         Process_T P = Process_new();
-        // Everything that may allocate memory or take a libc/NSS lock is done HERE, in the parent,
-        // before fork(). The child may call only async-signal-safe functions between fork() and execve()
-        char **args = NULL;
-        char **env = NULL;
-        char *home = NULL; // "HOME=<dir>" for the target user; referenced by 'env', freed below
-        struct _usergroups ug = {.ngroups = NGROUPS_MAX};
-        bool hasUg = false;
-        int descriptors = 0;
+        struct _childspec spec = {.ug = {.ngroups = NGROUPS_MAX}};
         int status = Process_createPipes(P);
         if (status < 0) {
                 status = -status;
                 goto fail;
         }
-        if (C->uid) {
-                if (! _getUserGroups(C, &ug, &home)) {
-                        status = errno ? errno : EINVAL;
-                        goto fail;
-                }
-                hasUg = true;
-        }
-        descriptors = System_descriptors(256);
-        args = _args(C);
-        env = _buildChildEnvironment(C, home);
+        if ((status = _createChildSpec(C, &spec)) != 0)
+                goto fail;
         if ((P->pid = fork()) < 0) {
                 status = errno;
         } else if (P->pid == 0) {
-                Process_exec(P, C, descriptors, args, env, hasUg ? &ug : NULL);
+                Process_exec(P, C, &spec);
         } else {
                 Process_ctrl(P, &status);
         }
 fail:
-        // Free the pre-fork allocations (the child has either exec'd or _exit'd)
-        FREE(args);
-        FREE(env);
-        FREE(home);
+        _disposeChildSpec(&spec);
         Process_closeCtrlPipe(P);
         if (status != 0) {
                 DEBUG("Command: failed -- %s\n", System_getError(status));
                 Process_free(&P);
         } else {
-                // Add Process to the hash table indexed by PID. The table is used by the SIGCHLD
+                // Add Process to processTable indexed by PID. This array is used by the SIGCHLD
                 // handler to find the Process object and update its status
                 Process_T previous = Array_put(processTable, P->pid, P);
                 if (previous)
