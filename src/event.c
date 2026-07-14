@@ -664,6 +664,10 @@ void Event_queue_process(void) {
                                 goto error5;
                         if (size != sizeof(Action_Type))
                                 goto error6;
+                        if ((int)*action < Action_Ignored || (int)*action > Action_Monitor) {
+                                Log_error("Aborting queued event %s -- invalid action id: %d\n", file_name, (int)*action);
+                                goto error6;
+                        }
                         a->id = *action;
                         switch (e->state) {
                                 case State_Succeeded:
