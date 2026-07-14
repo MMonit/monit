@@ -103,7 +103,7 @@ void *Array_put(T S, int key, void *value) {
         assert(S);
         void *prev = NULL;
         struct binding *p;
-        int i = abs(key)%S->size;
+        int i = (int)((unsigned int)key % (unsigned int)S->size);
         for (p = S->buckets[i]; p; p = p->link)
                 if (p->key == key)
                         break;
@@ -128,7 +128,7 @@ void *Array_put(T S, int key, void *value) {
 
 void *Array_get(T S, int key) {
         assert(S);
-        int i = abs(key)%S->size;
+        int i = (int)((unsigned int)key % (unsigned int)S->size);
         for (struct binding *p = S->buckets[i]; p; p = p->link) {
             if (p->key == key) {
                 return p->value;
@@ -140,7 +140,7 @@ void *Array_get(T S, int key) {
 
 void *Array_remove(T S, int key) {
         assert(S);
-        int i = abs(key)%S->size;
+        int i = (int)((unsigned int)key % (unsigned int)S->size);
         for (struct binding **pp = &S->buckets[i]; *pp; pp = &(*pp)->link) {
                 if ((*pp)->key == key) {
                         struct binding *p = *pp;
