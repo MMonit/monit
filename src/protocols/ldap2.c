@@ -51,7 +51,7 @@
  */
 void check_ldap2(Socket_T socket) {
 
-        unsigned char buf[STRLEN];
+        unsigned char buf[STRLEN] = {};
 
         unsigned char request[14] = {
                 0x30,                         /** Universal Sequence TAG */
@@ -121,7 +121,7 @@ void check_ldap2(Socket_T socket) {
         if (Socket_write(socket, (unsigned char *)request, sizeof(request)) < 0)
                 THROW(IOException, "LDAP: error sending data -- %s", STRERROR);
 
-        if (Socket_read(socket, (unsigned char *)buf, sizeof(response)) <= 0)
+        if (Socket_read(socket, (unsigned char *)buf, sizeof(response)) != (int)sizeof(response))
                 THROW(IOException, "LDAP: error receiving data -- %s", STRERROR);
 
         if (memcmp((unsigned char *)buf, (unsigned char *)response, sizeof(response)))
