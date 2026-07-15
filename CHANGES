@@ -47,6 +47,7 @@ Fixed: Monit was flooding the log with the message "Awakened by User defined sig
 
 Fixed: Issue #1153: Minor compilation fix: some older C11 compilers failed with the following error:
           invalid operands to binary expression ('bool' and '_Atomic(bool)')"
+       Thanks to Lutz Mader for the report and initial fix.
 
 
 Version 6.0.0
