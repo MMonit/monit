@@ -147,8 +147,11 @@ static bool _checkState(Event_T E, State_Type S) {
         /* Translate the posted state to a 0/1 (succeeded/failed) class */
         State_Type currentState = (S == State_Succeeded || S == State_ChangedNot) ? State_Succeeded : State_Failed;
 
-        /* Only failed/changed state condition can change the initial state */
-        if (currentState == State_Succeeded && E->state == State_Init && ! (E->source->error & E->id))
+        /* Only failed/changed state condition can change the initial state. While the event is still in the State_Init
+         * phase (the error didn't accumulate enough cycles to pass the "for X cycles" watermark), a success just clears
+         * the pending soft error and must not be reported as a state change. No failure was reported yet, so there is
+         * nothing to recover from */
+        if (currentState == State_Succeeded && E->state == State_Init)
                 return false;
 
         /* Internal instance and action events are reported on every occurrence */

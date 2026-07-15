@@ -49,6 +49,10 @@ Fixed: Issue #1153: Minor compilation fix: some older C11 compilers failed with 
           invalid operands to binary expression ('bool' and '_Atomic(bool)')"
        Thanks to Lutz Mader for the report and initial fix.
 
+Fixed: Issue #1154: (6.0.0 regression): When the test rule required multiple cycles to fail before the state transition, as soft-failure
+       followed by recovery resulted in "Succeeded" email without a previous failure notification. Thanks to Christos Chatzaras and
+       Lutz Mader for report and patches.
+
 
 Version 6.0.0
 
