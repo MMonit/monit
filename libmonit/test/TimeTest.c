@@ -159,7 +159,14 @@ int main(void) {
                 assert(Time_incron(sequence, time) == 1);
                 assert(Time_incron(sequenceoutside, time) == 0);
                 assert(Time_incron(sequenceandrange, time) == 1);
-                
+
+                // Overlapping / duplicate terms within one field must still match.
+                assert(Time_incron("0-30,20-40 * * * *", Time_build(2024, 1, 15, 10, 25, 0)) == 1); // 25 in both ranges
+                assert(Time_incron("5,5 * * * *",        Time_build(2024, 1, 15, 10, 5, 0))  == 1); // duplicate term
+                assert(Time_incron("0-10,5-15 * * * *",  Time_build(2024, 1, 15, 10, 8, 0))  == 1); // 8 in both ranges
+                assert(Time_incron("*,*/5 * * * *",      Time_build(2024, 1, 15, 10, 5, 0))  == 1); // '*' and '*/5' both match
+                assert(Time_incron("0-10,20-30 * * * *", Time_build(2024, 1, 15, 10, 15, 0)) == 0); // 15 in neither range
+
                 // Test error cases - should return -1 for parse errors
                 printf("\tTesting parse error detection:\n");
                 assert(Time_incron(invalid1, time) == -1);      // Invalid characters
