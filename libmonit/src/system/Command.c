@@ -97,6 +97,7 @@ struct _usergroups {
 };
 
 struct _childspec {
+        T C;
         char **args;
         char **env;
         char *home;
@@ -819,6 +820,7 @@ List_T Command_command(T C) {
 static int _createChildSpec(T C, struct _childspec *spec) {
         if (C->uid && ! _getUserGroups(C, &spec->ug, &spec->home))
                 return errno ? errno : EINVAL;
+        spec->C = C;
         spec->descriptors = System_descriptors(256);
         spec->args = (char**)List_toArray(C->args);
         spec->env = _buildChildEnvironment(C, spec->home);
@@ -833,7 +835,8 @@ static void _disposeChildSpec(struct _childspec *spec) {
 }
 
 
-static void Process_exec(Process_T P, T C, const struct _childspec *spec) {
+static void Process_exec(Process_T P, const struct _childspec *spec) {
+        T C = spec->C;
         int status = 0;
         _resetSignals();
         errno = 0;
@@ -914,7 +917,7 @@ Process_T Command_execute(T C) {
         if ((P->pid = fork()) < 0) {
                 status = errno;
         } else if (P->pid == 0) {
-                Process_exec(P, C, &spec);
+                Process_exec(P, &spec);
         } else {
                 Process_ctrl(P, &status);
         }
