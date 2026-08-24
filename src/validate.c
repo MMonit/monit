@@ -2119,6 +2119,7 @@ State_Type check_remote_host(Service_T s) {
 #endif
                                 } else if (icmp->responsetime.current == -1) {
                                         rv = icmp->check_invers ? State_Succeeded : State_Failed;
+                                        icmp->is_available = Connection_Failed;
                                         Event_post(s, Event_Icmp, rv, icmp->action, "ping test failed -- %s", *error ? error : "unknown error");
                                 } else {
                                         rv = icmp->check_invers ? State_Failed : State_Succeeded;
@@ -2143,8 +2144,9 @@ State_Type check_remote_host(Service_T s) {
                                 return State_Failed;
                 }
         }
-        /* If we could not ping the host we assume it's down and do not continue to check any port connections  */
-        if (last_ping && last_ping->is_available == Connection_Failed && s->portlist) {
+        /* If we could not ping the host we assume it's down and do not continue to check any port connections. An inverse ping test ("if succeeded ping") expects the host not to
+           answer, so an unanswered ping is the wanted result there and must not suppress the port tests nor fail the service */
+        if (last_ping && last_ping->is_available == Connection_Failed && ! last_ping->check_invers && s->portlist) {
                 DEBUG("'%s' icmp ping failed, skipping any port connection tests\n", s->name);
                 return State_Failed;
         }
