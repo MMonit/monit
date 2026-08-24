@@ -4594,7 +4594,8 @@ static void addmatchpath(Match_T ms, Action_Type actionnumber) {
         }
 
         // The addeventaction() called from addmatch() will reset the command1 to NULL, but we need to duplicate the command for each line, thus need to save it here
-        command_t savecommand = command1;
+        command_t savecommand = (actionnumber == Action_Exec && command1) ? copycommand(command1) : NULL;
+
         for (int linenumber = 1; ! feof(handle); linenumber++) {
                 char buf[2048];
 
