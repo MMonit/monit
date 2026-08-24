@@ -625,7 +625,7 @@ int Process_exitStatus(Process_T P) {
 
 bool Process_isRunning(Process_T P) {
         assert(P);
-        return Process_exitStatus(P) < 0;
+        return (P->pid > 0 && Process_exitStatus(P) < 0);
 }
 
 
@@ -661,12 +661,16 @@ InputStream_T Process_errorStream(Process_T P) {
 
 bool Process_terminate(Process_T P) {
         assert(P);
+        if (P->pid <= 0)
+                return false;
         return (kill(P->pid, SIGTERM) == 0);
 }
 
 
 bool Process_kill(Process_T P) {
         assert(P);
+        if (P->pid <= 0)
+                return false;
         return (kill(P->pid, SIGKILL) == 0);
 }
 
@@ -891,9 +895,13 @@ fail:
 static void Process_ctrl(Process_T P, int *status) {
         close(P->ctrl_pipe[1]);
         P->ctrl_pipe[1] = -1;
-        if (read(P->ctrl_pipe[0], status, sizeof *status) != sizeof *status)
+        if (read(P->ctrl_pipe[0], status, sizeof *status) != sizeof *status) {
                 *status = 0;
-        else waitpid(P->pid, &(int){0}, 0);
+        } else {
+                // The child reported a setup/exec error and we reap it here
+                waitpid(P->pid, &(int){0}, 0);
+                P->pid = -1;
+        }
 }
 
 
