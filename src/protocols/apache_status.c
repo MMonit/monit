@@ -35,6 +35,10 @@
 #include "exceptions/IOException.h"
 #include "exceptions/ProtocolException.h"
 
+
+/* Upper bound on the lines we read while draining the server response. The scoreboard appears early even in the full HTML status page */
+#define APACHE_STATUS_MAX_LINES 10000
+
 /**
  * Check an Apache server status using the server-status report from mod_status
  *
@@ -152,7 +156,10 @@ void check_apache_status(Socket_T socket) {
         if (rv < 0)
                 THROW(IOException, "APACHE-STATUS: error sending data -- %s", STRERROR);
         _parseResponseHeaders(socket);
+        int lines = 0;
         while (Socket_readLine(socket, buf, sizeof(buf))) {
+                if (++lines > APACHE_STATUS_MAX_LINES)
+                        THROW(ProtocolException, "APACHE-STATUS: error -- no scoreboard found within %d lines", APACHE_STATUS_MAX_LINES);
                 if (Str_startsWith(buf, "Scoreboard: ")) {
                         char *scoreboard = buf + 12; // skip header
                         parse_scoreboard(scoreboard, p);

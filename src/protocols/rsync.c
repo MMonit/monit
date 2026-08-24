@@ -35,6 +35,10 @@
 #include "exceptions/ProtocolException.h"
 
 
+/* Upper bound on the lines we read while draining the server response. A busy rsyncd exports far fewer modules than this */
+#define RSYNC_MAX_LIST_LINES 10000
+
+
 /**
  *  Check the server for greeting "@RSYNCD: XX, then send this greeting back to server, send command '#list' to get a listing of modules.
  *
@@ -68,7 +72,10 @@ void check_rsync(Socket_T socket) {
                 THROW(IOException, "RSYNC: #list command failed -- %s", STRERROR);
 
         /* Read response: discard list output and check that we've received successful exit */
+        int lines = 0;
         do {
+                if (++lines > RSYNC_MAX_LIST_LINES)
+                        THROW(ProtocolException, "RSYNC: no @RSYNCD: response within %d lines", RSYNC_MAX_LIST_LINES);
                 if (! Socket_readLine(socket, buf, sizeof(buf)))
                         THROW(IOException, "RSYNC: error receiving data -- %s", STRERROR);
                 Str_chomp(buf);

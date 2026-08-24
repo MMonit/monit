@@ -35,6 +35,10 @@
 #include "exceptions/ProtocolException.h"
 
 
+/* Upper bound on the lines we read while draining the server response. RFC 5804 servers advertise a handful of capabilities */
+#define SIEVE_MAX_CAPABILITY_LINES 1000
+
+
 /* --------------------------------------------------------------- Public */
 
 
@@ -49,7 +53,11 @@ void check_sieve(Socket_T socket) {
         assert(socket);
 
         char buf[STRLEN];
+        // Bound the capabilities to not let the server force monit endless loop
+        int lines = 0;
         do {
+                if (++lines > SIEVE_MAX_CAPABILITY_LINES)
+                        THROW(ProtocolException, "SIEVE: no OK response within %d lines of server capabilities", SIEVE_MAX_CAPABILITY_LINES);
                 if (! Socket_readLine(socket, buf, STRLEN))
                         THROW(IOException, "SIEVE: error receiving server capabilities -- %s", STRERROR);
                 Str_chomp(buf);
