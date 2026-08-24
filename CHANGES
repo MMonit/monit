@@ -53,6 +53,9 @@ Fixed: Issue #1154: (6.0.0 regression): When the test rule required multiple cyc
        followed by recovery resulted in "Succeeded" email without a previous failure notification. Thanks to Christos Chatzaras and
        Lutz Mader for report and patches.
 
+Fixed: When command execution failed (e.g. due to misconfigured non-executable "check program" or "start/stop/restart program"), Monit leaked
+       3 filedescriptor per such command each time.
+
 
 Version 6.0.0
 

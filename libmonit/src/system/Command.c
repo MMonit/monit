@@ -420,21 +420,24 @@ static void Process_closeCtrlPipe(Process_T P) {
 }
 
 
-// Close parent pipes in process, except ctrl_pipe which are used during
-// child setup before calling exec
+static inline void _closeFd(int *fd) {
+        if (*fd >= 0) {
+                close(*fd);
+                *fd = -1;
+        }
+}
+
+
+// Close all stdio pipe descriptors still open in this process, except ctrl_pipe which is used during child setup before calling exec.
+// On the success path Process_setupParentPipes() has already closed the child ends, so those are no-ops here. On any Command_execute() failure path the
+// child ends were never closed and must be closed too.
 static void Process_closePipes(Process_T P) {
-        if (P->stdin_pipe[1] >= 0) {
-                close(P->stdin_pipe[1]);  // Close write end
-                P->stdin_pipe[1] = -1;
-        }
-        if (P->stdout_pipe[0] >= 0) {
-                close(P->stdout_pipe[0]); // Close read end
-                P->stdout_pipe[0] = -1;
-        }
-        if (P->stderr_pipe[0] >= 0) {
-                close(P->stderr_pipe[0]); // Close read end
-                P->stderr_pipe[0] = -1;
-        }
+        _closeFd(&P->stdin_pipe[0]);  // child read end
+        _closeFd(&P->stdin_pipe[1]);  // parent write end
+        _closeFd(&P->stdout_pipe[0]); // parent read end
+        _closeFd(&P->stdout_pipe[1]); // child write end
+        _closeFd(&P->stderr_pipe[0]); // parent read end
+        _closeFd(&P->stderr_pipe[1]); // child write end
 }
 
 

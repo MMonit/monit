@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <pwd.h>
 
 #include "Bootstrap.h"
@@ -21,6 +22,16 @@
 /**
  * Command.c unit tests.
  */
+
+
+// Count the descriptors currently open in this process
+static int _openDescriptors(void) {
+        int count = 0;
+        for (int i = 0, n = System_descriptors(1024); i < n; i++)
+                if (fcntl(i, F_GETFD) != -1)
+                        count++;
+        return count;
+}
 
 
 static void _onExec(Process_T P) {
@@ -427,7 +438,26 @@ int main(void) {
                 Command_free(&c2);
         }
         printf("=> Test18: OK\n\n");
-        
+
+        printf("=> Test19: no descriptor leak on failed execute\n");
+        {
+                // Execute a non-executable file/directory (fails in execve)
+                Command_T c = Command_new("/tmp");
+                // Warm up once, so any one-time allocation is already accounted for
+                Process_T p = Command_execute(c);
+                assert(! p);
+                int before = _openDescriptors();
+                for (int i = 0; i < 25; i++) {
+                        p = Command_execute(c);
+                        assert(! p);
+                }
+                int after = _openDescriptors();
+                printf("\tOpen descriptors: before=%d after=%d (25 failed executes)\n", before, after);
+                assert(after == before);
+                Command_free(&c);
+        }
+        printf("=> Test19: OK\n\n");
+
         printf("============> Command Tests: OK\n\n");
 
 }
