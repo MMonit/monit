@@ -46,38 +46,42 @@
  */
 
 
+/* Upper bound on the frames we drain while waiting for the expected one */
+#define WEBSOCKET_MAX_DRAIN_FRAMES 1000
+
+
 /* ----------------------------------------------------------------- Private */
 
 
+/*
+ * Read frames until the one with the expected opcode arrives. Returns only when that frame was actually seen, any other outcome throws.
+ */
 static void read_response(Socket_T socket, int opcode) {
-        int n;
-        do {
+        for (int frame = 0; frame < WEBSOCKET_MAX_DRAIN_FRAMES; frame++) {
                 char buf[STRLEN];
                 // Read frame header
-                if ((n = Socket_read(socket, buf, 2)) != 2)
+                if (Socket_read(socket, buf, 2) != 2)
                         THROW(IOException, "WEBSOCKET: response 0x%x: header read error -- %s", opcode, STRERROR);
+                if ((*buf & 0xF) == opcode)
+                        return; // Found frame with matching opcode
                 /*
                  * As we don't know the specific protocol used by this websocket server, the pipeline
                  * may contain some frames sent by server before the response we're waiting for (such
                  * as chat prompt sent by the server on connect) => drain frames until we find what
                  * we need or timeout
                  */
-                if ((*buf & 0xF) != opcode) {
-                        // Skip payload of current frame
-                        int payload_size = *(buf + 1) & 0x7F;
-                        if ((size_t)payload_size <= sizeof(buf)) {
-                                if ((n = Socket_read(socket, buf, payload_size)) != payload_size)
-                                        THROW(IOException, "WEBSOCKET: response 0x%x: data read error", opcode);
-                        } else {
-                                /* STRLEN buffer should be sufficient for any frame spuriously sent by
-                                 * the server. Guard against too large frames. If in real life such
-                                 * situation will be valid (payload > STRLEN), then fix */
-                                THROW(ProtocolException, "WEBSOCKET: response 0x%x: unexpected payload size: %d", opcode, payload_size);
-                        }
-                } else {
-                        break; // Found frame with matching opcode
+                int payload_size = *(buf + 1) & 0x7F;
+                if ((size_t)payload_size > sizeof(buf)) {
+                        /* STRLEN buffer should be sufficient for any frame spuriously sent by
+                         * the server. Guard against too large frames. If in real life such
+                         * situation will be valid (payload > STRLEN), then fix */
+                        THROW(ProtocolException, "WEBSOCKET: response 0x%x: unexpected payload size: %d", opcode, payload_size);
                 }
-        } while (n > 0);
+                // Skip payload of current frame. An empty payload reads nothing and is not an error
+                if (payload_size > 0 && Socket_read(socket, buf, payload_size) != payload_size)
+                        THROW(IOException, "WEBSOCKET: response 0x%x: data read error", opcode);
+        }
+        THROW(ProtocolException, "WEBSOCKET: response 0x%x not received within %d frames", opcode, WEBSOCKET_MAX_DRAIN_FRAMES);
 }
 
 
