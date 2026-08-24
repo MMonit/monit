@@ -111,12 +111,12 @@ static void parse_scoreboard(char *scoreboard, Port_T p) {
 
 
 static void _parseResponseHeaders(Socket_T socket) {
-        int status;
+        int status = 0;
         char buf[STRLEN];
         if (! Socket_readLine(socket, buf, sizeof(buf)))
                 THROW(IOException, "APACHE-STATUS: error receiving data -- %s", STRERROR);
         Str_chomp(buf);
-        if (! sscanf(buf, "%*s %d", &status))
+        if (sscanf(buf, "%*s %d", &status) != 1)
                 THROW(ProtocolException, "APACHE-STATUS: error -- cannot parse HTTP status in response: %s", buf);
         if (status != 200)
                 THROW(ProtocolException, "APACHE-STATUS: error -- server returned status %d", status);

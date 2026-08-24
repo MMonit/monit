@@ -101,8 +101,8 @@ static void _parseHttpResponse(Socket_T S) {
         if (! Socket_readLine(S, buf, sizeof(buf)))
                 THROW(IOException, "Error receiving data -- %s", STRERROR);
         Str_chomp(buf);
-        int status;
-        if (! sscanf(buf, "%*s %d", &status))
+        int status = 0;
+        if (sscanf(buf, "%*s %d", &status) != 1)
                 THROW(IOException, "Cannot parse status in response: %s", buf);
         if (status < 300 || status == SC_MOVED_TEMPORARILY) {
                 // Skip HTTP headers
@@ -116,7 +116,7 @@ static void _parseHttpResponse(Socket_T S) {
                 while (Socket_readLine(S, buf, sizeof(buf))) {
                         if (! strncmp(buf, "\r\n", sizeof(buf)))
                                 break;
-                        if (Str_startsWith(buf, "Content-Length") && ! sscanf(buf, "%*s%*[: ]%d", &content_length))
+                        if (Str_startsWith(buf, "Content-Length") && sscanf(buf, "%*s%*[: ]%d", &content_length) != 1)
                                 THROW(IOException, "Invalid Content-Length header: %s", buf);
                 }
                 // Parse error response

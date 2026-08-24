@@ -227,13 +227,13 @@ static void _processBodyUntilEOF(Socket_T socket, Port_T P, char **data, __attri
 
 
 static void _processStatus(Socket_T socket, Port_T P) {
-        int status;
+        int status = 0;
         char buf[512] = {};
 
         if (! Socket_readLine(socket, buf, sizeof(buf)))
                 THROW(IOException, "HTTP: Error receiving data -- %s", STRERROR);
         Str_chomp(buf);
-        if (! sscanf(buf, "%*s %d", &status))
+        if (sscanf(buf, "%*s %d", &status) != 1)
                 THROW(ProtocolException, "HTTP error: Cannot parse HTTP status in response: %s", buf);
         if (! Util_evalQExpression(P->parameters.http.operator, status, P->parameters.http.hasStatus ? P->parameters.http.status : 400))
                 THROW(ProtocolException, "HTTP error: Server returned status %d", status);
@@ -251,7 +251,7 @@ static void _processHeaders(Socket_T socket, void (**processBody)(Socket_T socke
                         THROW(ProtocolException, "HTTP error: response header exceeded maximum size %d", sizeof(buf) - 1);
                 Str_chomp(buf);
                 if (Str_startsWith(buf, "Content-Length")) {
-                        if (! sscanf(buf, "%*s%*[: ]%d", contentLength))
+                        if (sscanf(buf, "%*s%*[: ]%d", contentLength) != 1)
                                 THROW(ProtocolException, "HTTP error: Parsing Content-Length response header '%s'", buf);
                         if (*contentLength < 0)
                                 THROW(ProtocolException, "HTTP error: Illegal Content-Length response header '%s'", buf);

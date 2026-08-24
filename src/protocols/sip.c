@@ -143,8 +143,8 @@ void check_sip(Socket_T socket) {
 
         DEBUG("Response from SIP server: %s\n", buf);
 
-        int status;
-        if (! sscanf(buf, "%*s %d", &status))
+        int status = 0;
+        if (sscanf(buf, "%*s %d", &status) != 1)
                 THROW(ProtocolException, "SIP error: cannot parse SIP status in response: %s", buf);
 
         if (status >= 400)

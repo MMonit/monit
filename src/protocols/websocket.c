@@ -112,8 +112,8 @@ void check_websocket(Socket_T socket) {
         }
         if (! Socket_readLine(socket, buf, sizeof(buf)))
                 THROW(IOException, "WEBSOCKET: error receiving data -- %s", STRERROR);
-        int status;
-        if (! sscanf(buf, "%*s %d", &status) || (status != 101))
+        int status = 0;
+        if (sscanf(buf, "%*s %d", &status) != 1 || (status != 101))
                 THROW(ProtocolException, "WEBSOCKET: error -- %s", buf);
         while (Socket_readLine(socket, buf, sizeof(buf)) && ! Str_isEqual(buf, "\r\n"))
                 ; // drop remaining HTTP response headers from the pipeline
