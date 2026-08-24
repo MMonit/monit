@@ -917,9 +917,11 @@ static HttpParameter parse_parameters(char *query_string) {
         HttpParameter head = NULL;
 
         while ((token = get_next_token(query_string, &cursor, &value))) {
-                if (token == KEY)
+                if (token == KEY) {
+                        // A KEY can be followed by another KEY without a VALUE
+                        FREE(key);
                         key = value;
-                else if (token == VALUE) {
+                } else if (token == VALUE) {
                         HttpParameter p = NULL;
                         if (! key)
                                 goto error;
