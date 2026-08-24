@@ -65,6 +65,8 @@ Fixed: When the eventqueue is enabled, multiple events from the same service wit
 Fixed: Network link test on Linux: an interface with unknown link speed (such as a virtio interface in a VM) was reported with a negative speed instead of "not available", and an
        idle such interface reported a bogus 0% link saturation instead of skipping the saturation test.
 
+Fixed: MacOS: disk service time was off by 4.63%
+
 
 Version 6.0.0
 

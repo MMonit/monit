@@ -139,13 +139,13 @@ static bool _getBlockDiskActivity(void *_inf) {
                                                 number = CFDictionaryGetValue(statistics, CFSTR(kIOBlockStorageDriverStatisticsTotalReadTimeKey));
                                                 if (number) {
                                                         CFNumberGetValue(number, kCFNumberSInt64Type, &value);
-                                                        Statistics_update(&(inf->filesystem->time.read), now, value / 1048576.); // ns -> ms
+                                                        Statistics_update(&(inf->filesystem->time.read), now, value / 1000000.); // ns -> ms
                                                 }
                                                 // Total write time
                                                 number = CFDictionaryGetValue(statistics, CFSTR(kIOBlockStorageDriverStatisticsTotalWriteTimeKey));
                                                 if (number) {
                                                         CFNumberGetValue(number, kCFNumberSInt64Type, &value);
-                                                        Statistics_update(&(inf->filesystem->time.write), now, value / 1048576.); // ns -> ms
+                                                        Statistics_update(&(inf->filesystem->time.write), now, value / 1000000.); // ns -> ms
                                                 }
                                                 //FIXME: add disk error statistics test: can use kIOBlockStorageDriverStatisticsWriteErrorsKey + kIOBlockStorageDriverStatisticsReadErrorsKey
                                                 CFRelease(statistics);
