@@ -643,6 +643,43 @@ static bool _setClientCertificate(T C, const char *file) {
 }
 
 
+static bool _handshake(T C, int timeout, char *error, int length) {
+        const char *peer = C->accepted ? "client" : "server";
+        const char *operation = C->accepted ? "SSL accept error" : "SSL connection error";
+        bool retry = false;
+        do {
+                ERR_clear_error();
+                int rv = C->accepted ? SSL_accept(C->handler) : SSL_connect(C->handler);
+                if (rv == 1) // Handshake completed and the peer certificate was verified
+                        return true;
+                if (rv == 0) {
+                        // SSL_connect/SSL_accept: the handshake failed, but was shut down controlled by the protocol
+                        snprintf(error, length, "%s: the %s shut down the TLS handshake -- %s", operation, peer, SSLERROR);
+                        return false;
+                }
+                switch (SSL_get_error(C->handler, rv)) {
+                        case SSL_ERROR_WANT_READ:
+                                retry = _retry(C->socket, &timeout, Net_canRead);
+                                break;
+                        case SSL_ERROR_WANT_WRITE:
+                                retry = _retry(C->socket, &timeout, Net_canWrite);
+                                break;
+                        default:
+                                {
+                                        long verify = SSL_get_verify_result(C->handler);
+                                        if (verify != X509_V_OK)
+                                                snprintf(error, length, "SSL %s certificate verification error: %s", peer, *C->error ? C->error : X509_verify_cert_error_string(verify));
+                                        else
+                                                snprintf(error, length, "%s: %s", operation, SSLERROR);
+                                        return false;
+                                }
+                }
+        } while (retry && ! (Run.flags & Run_Stopped));
+        snprintf(error, length, "%s: %s", operation, (Run.flags & Run_Stopped) ? "Monit is stopping" : "TLS handshake timed out");
+        return false;
+}
+
+
 /* ------------------------------------------------------------------ Public */
 
 
@@ -811,32 +848,9 @@ void Ssl_connect(T C, int socket, int timeout, const char *name) {
         _setServerNameIdentification(C, name);
         if (! _setHostnameValidation(C, name))
                 THROW(IOException, "SSL: unable to enable server certificate identity validation");
-        bool retry = false;
-        do {
-                ERR_clear_error();
-                int rv = SSL_connect(C->handler);
-                if (rv < 0) {
-                        switch (SSL_get_error(C->handler, rv)) {
-                                case SSL_ERROR_NONE:
-                                        break;
-                                case SSL_ERROR_WANT_READ:
-                                        retry = _retry(C->socket, &timeout, Net_canRead);
-                                        break;
-                                case SSL_ERROR_WANT_WRITE:
-                                        retry = _retry(C->socket, &timeout, Net_canWrite);
-                                        break;
-                                default:
-					rv = (int)SSL_get_verify_result(C->handler);
-					if (rv != X509_V_OK)
-                                                THROW(IOException, "SSL server certificate verification error: %s", *C->error ? C->error : X509_verify_cert_error_string(rv));
-					else
-                                                THROW(IOException, "SSL connection error: %s", SSLERROR);
-                                        break;
-                        }
-                } else {
-                        break;
-                }
-        } while (retry && ! (Run.flags & Run_Stopped));
+        char error[STRLEN];
+        if (! _handshake(C, timeout, error, sizeof(error)))
+                THROW(IOException, "%s", error);
 }
 
 
@@ -1167,32 +1181,11 @@ bool SslServer_accept(T C, int socket, int timeout) {
         C->socket = socket;
         SSL_set_accept_state(C->handler);
         SSL_set_fd(C->handler, C->socket);
-        bool retry = false;
-        do {
-                ERR_clear_error();
-                int rv = SSL_accept(C->handler);
-                if (rv < 0) {
-                        switch (SSL_get_error(C->handler, rv)) {
-                                case SSL_ERROR_NONE:
-                                        break;
-                                case SSL_ERROR_WANT_READ:
-                                        retry = _retry(C->socket, &timeout, Net_canRead);
-                                        break;
-                                case SSL_ERROR_WANT_WRITE:
-                                        retry = _retry(C->socket, &timeout, Net_canWrite);
-                                        break;
-                                default:
-                                        rv = (int)SSL_get_verify_result(C->handler);
-                                        if (rv != X509_V_OK)
-                                                Log_error("SSL client certificate verification error: %s\n", *C->error ? C->error : X509_verify_cert_error_string(rv));
-                                        else
-                                                Log_error("SSL accept error: %s\n", SSLERROR);
-                                        return false;
-                        }
-                } else {
-                        break;
-                }
-        } while (retry && ! (Run.flags & Run_Stopped));
+        char error[STRLEN];
+        if (! _handshake(C, timeout, error, sizeof(error))) {
+                Log_error("%s\n", error);
+                return false;
+        }
         return true;
 }
 
