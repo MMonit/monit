@@ -154,12 +154,15 @@ static void _readData(Socket_T socket, Port_T P, char **data, int wantBytes, int
                         Checksum_append(context, *data, wantBytes);
                 *(*data + *haveBytes) = 0;
         } else {
-                // No content check is required => use small buffer and compute the checksum on the fly
-                *haveBytes = 0;
-                for (int readBytes = (wantBytes < BUFSIZE) ? wantBytes : BUFSIZE; *haveBytes < wantBytes; readBytes = (wantBytes - *haveBytes) < BUFSIZE ? (wantBytes - *haveBytes) : BUFSIZE) {
+                // No content check is required => use small buffer and compute the checksum on the fly.
+                // Add to *haveBytes instead of resetting it. The caller (_processBodyChunked) accumulates the body size in it across chunks to stop at the
+                // content buffer limit.
+                for (int readTotal = 0; readTotal < wantBytes; ) {
+                        int readBytes = (wantBytes - readTotal) < BUFSIZE ? (wantBytes - readTotal) : BUFSIZE;
                         _readDataFromSocket(socket, *data, readBytes);
                         if (P->parameters.http.checksum)
                                 Checksum_append(context, *data, readBytes);
+                        readTotal += readBytes;
                         *haveBytes += readBytes;
                 }
         }
@@ -208,16 +211,24 @@ static void _processBodyUntilEOF(Socket_T socket, Port_T P, char **data, __attri
                         if (P->parameters.http.checksum)
                                 Checksum_append(context, *data + haveBytes, readBytes);
                         haveBytes += readBytes;
+                        // Never let the next read size become negative: with a content buffer limit
+                        // smaller than the initial want size, haveBytes can already exceed the limit
+                        // and RESIZE() would then shrink the buffer below haveBytes, so the NUL
+                        // terminator below would be written past the end of the allocation
                         if (haveBytes + wantBytes > Run.limits.httpContentBuffer)
-                                wantBytes = Run.limits.httpContentBuffer - haveBytes;
+                                wantBytes = Run.limits.httpContentBuffer > haveBytes ? Run.limits.httpContentBuffer - haveBytes : 0;
                         RESIZE(*data, (size_t)haveBytes + (size_t)wantBytes + 1);
                 }
                 *(*data + haveBytes) = 0;
         } else {
-                // No content check is required => use small buffer and compute the checksum on the fly
-                while ((readBytes = Socket_read(socket, *data, BUFSIZE)) > 0) {
+                // No content check is required => use small buffer and compute the checksum on the fly.
+                // Stop at the content buffer limit like the branch above and _processBodyContentLength()
+                // do, otherwise a server which never stops sending keeps this loop running forever
+                int haveBytes = 0;
+                while (haveBytes < Run.limits.httpContentBuffer && (readBytes = Socket_read(socket, *data, BUFSIZE)) > 0) {
                         if (P->parameters.http.checksum)
                                 Checksum_append(context, *data, readBytes);
+                        haveBytes += readBytes;
                 }
         }
         if (readBytes < 0) {
