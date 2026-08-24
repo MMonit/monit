@@ -66,14 +66,17 @@ static bool _update(T L, const char *interface) {
          * Get interface speed (Optional: may not be present on older kernels and readable for pseudo interface types).
          * $ cat /sys/class/net/eth0/speed
          * 1000
-         * If the link is down the file either doesn't exist or contains UINT_MAX (depends on kernel version):
+         * If the link is down the file either doesn't exist or reports an unknown speed. The kernel
+         * stores SPEED_UNKNOWN as 0xFFFFFFFF but prints it with "%d", so depending on the kernel
+         * version the file reads either as -1 or as 4294967295:
          * $ cat /sys/class/net/eth0/speed
-         * 4294967295
+         * -1
          */
         snprintf(path, sizeof(path), "/sys/class/net/%s/speed", name);
         f = fopen(path, "r");
         if (f) {
-                if (fscanf(f, "%lld\n", &(L->speed)) == 1 && L->speed != UINT_MAX)
+                // Accept a positive speed only: this rejects both spellings of the unknown speed
+                if (fscanf(f, "%lld\n", &(L->speed)) == 1 && L->speed > 0 && L->speed != UINT_MAX)
                         L->speed *= 1000000; // mbps -> bps
                 else
                         L->speed = -1LL;

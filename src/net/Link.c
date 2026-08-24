@@ -384,7 +384,7 @@ long long Link_getBytesInTotal(T L) {
 
 double Link_getSaturationInPerSecond(T L) {
         assert(L);
-        return (L->state > 0 && L->speed) ? (double)Link_getBytesInPerSecond(L) * 8. * 100. / L->speed : -1.;
+        return (L->state > 0 && L->speed > 0) ? (double)Link_getBytesInPerSecond(L) * 8. * 100. / L->speed : -1.;
 }
 
 
@@ -462,7 +462,7 @@ long long Link_getBytesOutTotal(T L) {
 
 double Link_getSaturationOutPerSecond(T L) {
         assert(L);
-        return (L->state > 0 && L->speed) ? (double)Link_getBytesOutPerSecond(L) * 8. * 100. / L->speed : -1.;
+        return (L->state > 0 && L->speed > 0) ? (double)Link_getBytesOutPerSecond(L) * 8. * 100. / L->speed : -1.;
 }
 
 

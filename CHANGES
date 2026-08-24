@@ -62,6 +62,9 @@ Fixed: The checksum-change test discarded the baseline across monit restarts.
 
 Fixed: When the eventqueue is enabled, multiple events from the same service within the same second did overwrite the same queue file, losing all but one queued event in that context.
 
+Fixed: Network link test on Linux: an interface with unknown link speed (such as a virtio interface in a VM) was reported with a negative speed instead of "not available", and an
+       idle such interface reported a bogus 0% link saturation instead of skipping the saturation test.
+
 
 Version 6.0.0
 
