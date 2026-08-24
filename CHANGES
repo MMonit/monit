@@ -67,6 +67,8 @@ Fixed: Network link test on Linux: an interface with unknown link speed (such as
 
 Fixed: MacOS: disk service time was off by 4.63%
 
+Fixed: MacOS: disk service time was not collected for APFS filesystems, so the "if service time" test always passed and no service time was shown in the status output
+
 
 Version 6.0.0
 

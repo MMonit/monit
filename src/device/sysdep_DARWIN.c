@@ -94,6 +94,35 @@ static bool _getDummyDiskActivity(__attribute__ ((unused)) void *_inf) {
 }
 
 
+/*
+ * Find the IOBlockStorageDriver behind a media object by walking the service plane upwards.
+ *
+ * DADiskCopyWholeDisk() returns the synthesized container disk for an APFS volume, and the
+ * APFS container scheme publishes only the byte and operation counters without service time.
+ * The real block storage driver higher up publishes the full set, so take every counter from it:
+ * they then all describe the same layer and remain consistent.
+ *
+ * Returns the driver (the caller must release it) or IO_OBJECT_NULL if there is none.
+ */
+static io_service_t _findBlockStorageDriver(io_service_t media) {
+        io_service_t entry = media;
+        IOObjectRetain(entry);
+        for (int i = 0; entry && i < 32; i++) {
+                if (IOObjectConformsTo(entry, kIOBlockStorageDriverClass))
+                        return entry;
+                io_registry_entry_t parent = IO_OBJECT_NULL;
+                kern_return_t kr = IORegistryEntryGetParentEntry(entry, kIOServicePlane, &parent);
+                IOObjectRelease(entry);
+                if (kr != KERN_SUCCESS)
+                        return IO_OBJECT_NULL;
+                entry = parent;
+        }
+        if (entry)
+                IOObjectRelease(entry);
+        return IO_OBJECT_NULL;
+}
+
+
 static bool _getBlockDiskActivity(void *_inf) {
         int rv = false;
         Info_T inf = _inf;
@@ -106,7 +135,16 @@ static bool _getBlockDiskActivity(void *_inf) {
                         if (wholeDisk) {
                                 io_service_t ioMedia = DADiskCopyIOMedia(wholeDisk);
                                 if (ioMedia) {
-                                        CFTypeRef statistics = IORegistryEntrySearchCFProperty(ioMedia, kIOServicePlane, CFSTR(kIOBlockStorageDriverStatisticsKey), kCFAllocatorDefault, kIORegistryIterateRecursively | kIORegistryIterateParents);
+                                        CFTypeRef statistics = NULL;
+                                        io_service_t driver = _findBlockStorageDriver(ioMedia);
+                                        if (driver) {
+                                                statistics = IORegistryEntryCreateCFProperty(driver, CFSTR(kIOBlockStorageDriverStatisticsKey), kCFAllocatorDefault, 0);
+                                                IOObjectRelease(driver);
+                                        }
+                                        if (! statistics) {
+                                                // No block storage driver above this media: fall back to the nearest statistics we can find
+                                                statistics = IORegistryEntrySearchCFProperty(ioMedia, kIOServicePlane, CFSTR(kIOBlockStorageDriverStatisticsKey), kCFAllocatorDefault, kIORegistryIterateRecursively | kIORegistryIterateParents);
+                                        }
                                         if (statistics) {
                                                 rv = true;
                                                 UInt64 value = 0;

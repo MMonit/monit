@@ -1488,6 +1488,14 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                         bool hasRunTime = Statistics_initialized(&(s->inf.filesystem->time.run));
                         // Some platforms have detailed R/W time (Linux, MacOS), other just total R/W time (*BSD), Solaris has total R/W time with wait/run granularity. To make the test cross-platform and simple, we operate on sum
                         if (! hasReadTime && ! hasWriteTime && ! hasWaitTime && ! hasRunTime) {
+                                // The test cannot be performed, so it can never fail: say so at error level
+                                // instead of hiding it in a debug message, otherwise the rule looks healthy
+                                // while it is in fact inert. Warn once, the condition does not change at runtime
+                                static bool warned = false;
+                                if (! warned) {
+                                        warned = true;
+                                        Log_error("'%s' service time test cannot be performed -- the filesystem provides no read/write time statistics on this platform\n", s->name);
+                                }
                                 DEBUG("'%s' warning -- no data are available for service time test\n", s->name);
                                 return State_Succeeded;
                         }
