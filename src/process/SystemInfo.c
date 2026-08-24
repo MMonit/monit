@@ -68,6 +68,11 @@ bool SystemInfo_update(void) {
                 goto error1;
         }
 
+        // Shift the previous paging sample, the used_system_memory_sysdep() collects the new one
+        System_Info.paging.previous.in.value = System_Info.paging.current.in.value;
+        System_Info.paging.previous.out.value = System_Info.paging.current.out.value;
+        System_Info.paging.previous.timestamp = System_Info.paging.current.timestamp;
+
         if (! used_system_memory_sysdep(&System_Info)) {
                 Log_error("'%s' statistic error -- memory usage data collection failed\n", Run.system->name);
                 goto error2;
@@ -75,9 +80,6 @@ bool SystemInfo_update(void) {
         System_Info.memory.usage.percent  = System_Info.memory.size > 0ULL ? (100. * (double)System_Info.memory.usage.bytes / (double)System_Info.memory.size) : 0.;
         System_Info.swap.usage.percent = System_Info.swap.size > 0ULL ? (100. * (double)System_Info.swap.usage.bytes / (double)System_Info.swap.size) : 0.;
 
-        System_Info.paging.previous.in.value = System_Info.paging.current.in.value;
-        System_Info.paging.previous.out.value = System_Info.paging.current.out.value;
-        System_Info.paging.previous.timestamp = System_Info.paging.current.timestamp;
         System_Info.paging.current.timestamp = Time_now();
         time_t pageinTimestampDelta = System_Info.paging.current.timestamp - System_Info.paging.previous.timestamp;
         if (pageinTimestampDelta > 0) {

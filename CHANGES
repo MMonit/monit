@@ -56,6 +56,8 @@ Fixed: Issue #1154: (6.0.0 regression): When the test rule required multiple cyc
 Fixed: When command execution failed (e.g. due to misconfigured non-executable "check program" or "start/stop/restart program"), Monit leaked
        3 filedescriptor per such command each time.
 
+Fixed: The swap paging rates were permanently zero 
+
 
 Version 6.0.0
 
