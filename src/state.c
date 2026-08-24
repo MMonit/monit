@@ -310,9 +310,9 @@ static void _updateSize(Service_T S, long long size) {
 
 static void _updateChecksum(Service_T S, char *hash) {
         if (S->checksum && S->checksum->test_changes) {
-                S->checksum->initialized = false;
                 strncpy(S->checksum->hash, hash, sizeof(S->checksum->hash) - 1);
                 S->checksum->hash[sizeof(S->checksum->hash) - 1] = 0;
+                S->checksum->initialized = STR_DEF(S->checksum->hash);
         }
 }
 

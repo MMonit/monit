@@ -58,6 +58,8 @@ Fixed: When command execution failed (e.g. due to misconfigured non-executable "
 
 Fixed: The swap paging rates were permanently zero 
 
+Fixed: The checksum-change test discarded the baseline across monit restarts.
+
 
 Version 6.0.0
 
