@@ -160,12 +160,12 @@ Handler_Type MMonit_send(Event_T E) {
                         Log_error("M/Monit: cannot open a connection to %s\n", C->url->url);
                         goto error;
                 }
+                StringBuffer_clear(sb);
                 status_xml(sb, E, 2, Socket_getLocalHost(socket, (char[STRLEN]){}, STRLEN), C);
                 if (! _send(socket, C, sb)) {
                         Log_error("M/Monit: cannot send %s message to %s\n", E ? "event" : "status", C->url->url);
                         goto error;
                 }
-                StringBuffer_clear(sb);
                 if (! _receive(socket, C)) {
                         Log_error("M/Monit: %s message to %s failed\n", E ? "event" : "status", C->url->url);
                         goto error;
