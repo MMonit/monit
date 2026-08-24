@@ -363,8 +363,12 @@ static void _handleError(postgresql_t postgresql, postgresql_response_t response
 }
 
 
-static void _handleAuthentication(postgresql_t postgresql, postgresql_response_t response) {
+static void _handleAuthentication(postgresql_t postgresql, postgresql_response_t response, size_t payloadLength) {
         postgresql_response_authentication_t a = &(response->data.authentication);
+        // The authentication type is the first field of the payload, so a message which is too short to carry it must not be interpreted: the response buffer is reused across the
+        // messages of one response, so we would read either zeroes or the bytes of the previous message.
+        if (payloadLength < sizeof(a->type))
+                THROW(ProtocolException, "PGSQL: invalid authentication message -- %zu bytes of payload, at least %zu expected", payloadLength, sizeof(a->type));
         PostgreSQLAuthentication authenticationType = ntohl(a->type);
         DEBUG("PGSQL: DEBUG: authentication message received, type=%d\n", authenticationType);
         switch (authenticationType) {
@@ -378,6 +382,9 @@ static void _handleAuthentication(postgresql_t postgresql, postgresql_response_t
                         postgresql->state = PostgreSQL_AuthenticationNeeded;
                         break;
                 case PostgreSQLAuthentication_MD5Password:
+                        // The salt follows the type: refuse a message which is too short to carry it
+                        if (payloadLength < sizeof(a->type) + sizeof(a->data.md5.salt))
+                                THROW(ProtocolException, "PGSQL: invalid MD5 authentication message -- %zu bytes of payload, at least %zu expected", payloadLength, sizeof(a->type) + sizeof(a->data.md5.salt));
                         DEBUG("PGSQL: DEBUG: MD5 password authentication required, salt %.2x%.2x%.2x%.2x\n", a->data.md5.salt[0], a->data.md5.salt[1], a->data.md5.salt[2], a->data.md5.salt[3]);
                         postgresql->state = PostgreSQL_AuthenticationNeeded;
                         memcpy(postgresql->authentication.salt, a->data.md5.salt, sizeof(a->data.md5.salt));
@@ -431,7 +438,7 @@ static void _handleResponse(postgresql_t postgresql) {
                 if (response.header.type == PostgreSQLPacket_Error)
                         _handleError(postgresql, &response, remainingPayloadLength > 0 ? (size_t)remainingPayloadLength : 0);
                 else if (response.header.type == PostgreSQLPacket_Authentication)
-                        _handleAuthentication(postgresql, &response);
+                        _handleAuthentication(postgresql, &response, remainingPayloadLength > 0 ? (size_t)remainingPayloadLength : 0);
                 else
                         DEBUG("PGSQL: DEBUG: message type '%c' received -- skipping\n", response.header.type);
 
