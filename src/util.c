@@ -578,13 +578,18 @@ int Util_handle0Escapes(char *buf) {
 
         assert(buf);
 
+        size_t buf_len = strlen(buf);
+
         for (editpos = insertpos = 0; *(buf + editpos) != '\0'; editpos++, insertpos++) {
                 if (*(buf + editpos) == '\\' ) {
                         switch (*(buf + editpos + 1)) {
                                 case '0':
-                                        if (*(buf + editpos + 2) == 'x') {
-                                                *(buf + insertpos) = _x2c(&buf[editpos+3]);
+                                        // Unescape a complete "\0xYY" sequence. A truncated one (e.g. trailing "\0x") is copied verbatim instead of being unescaped
+                                        if ((size_t)editpos + 4 < buf_len && *(buf + editpos + 2) == 'x') {
+                                                *(buf + insertpos) = _x2c(&buf[editpos + 3]);
                                                 editpos += 4;
+                                        } else {
+                                                *(buf + insertpos) = *(buf + editpos);
                                         }
                                         break;
 
