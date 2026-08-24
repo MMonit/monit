@@ -141,13 +141,9 @@ T StringBuffer_trim(T S) {
         if (S->used == 0)
                 return S;
         // Right trim
-        uchar_t *end = S->buffer + S->used - 1;
-        if (isspace(*end)) {
-                while (end >= S->buffer && isspace(*end))
-                        end--;
-                S->used = (int)(end - S->buffer) + 1;
-                S->buffer[S->used] = 0;
-        }
+        while (S->used > 0 && isspace(S->buffer[S->used - 1]))
+                S->used--;
+        S->buffer[S->used] = 0;
         // Left trim
         if (S->used > 0 && isspace(*S->buffer)) {
                 uchar_t *start = S->buffer + 1;
