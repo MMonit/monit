@@ -1427,6 +1427,7 @@ checkproc       : CHECKPROC SERVICENAME PIDFILE PATH {
                   }
                 | CHECKPROC SERVICENAME REGEXMATCH STRING {
                         createservice(Service_Process, $<string>2, $4, check_process);
+                        matchset.not = false;
                         matchset.ignore = false;
                         matchset.match_path = NULL;
                         matchset.match_string = Str_dup($4);
@@ -1434,6 +1435,7 @@ checkproc       : CHECKPROC SERVICENAME PIDFILE PATH {
                   }
                 | CHECKPROC SERVICENAME REGEXMATCH PATH {
                         createservice(Service_Process, $<string>2, $4, check_process);
+                        matchset.not = false;
                         matchset.ignore = false;
                         matchset.match_path = NULL;
                         matchset.match_string = Str_dup($4);
