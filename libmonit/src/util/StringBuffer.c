@@ -76,8 +76,9 @@ static inline void _append(T S, const char *s, va_list ap) {
                         S->used += n;
                         break;
                 }
-                S->length += STRLEN + n;
-                RESIZE(S->buffer, S->length);
+                int length = S->length + STRLEN + n;
+                RESIZE(S->buffer, length);
+                S->length = length;
         }
 }
 
