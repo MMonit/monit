@@ -97,7 +97,10 @@ void init_env(void) {
                         }
                 }
         }
-        close(devnull);
+        // Close our /dev/null descriptor only if it is not one of the std descriptors we just ensured to be open: open() returns the lowest available descriptor, so if Monit was
+        // started with stdin, stdout or stderr closed, this *is* that descriptor and closing it would leave the std descriptor closed again
+        if (devnull > STDERR_FILENO)
+                close(devnull);
         // Get password struct with user info
         char buf[4096];
         struct passwd pw, *result = NULL;
