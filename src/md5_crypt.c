@@ -59,6 +59,10 @@ static void to64(char *s, unsigned long v, int n) {
 }
 
 
+/* Number of base64 characters to64() emits for the digest */
+#define MD5_CRYPT_DIGEST_LENGTH 22
+
+
 /*
  * UNIX password MD5
  */
@@ -115,10 +119,10 @@ char *md5_crypt(const char *pw, const char *id, const char *salt, char *buf, int
                         md5_append(&ctx, (const md5_byte_t *)pw, 1);
         }
 
-        /* Now make the output string */
-        strncpy(buf, id, buflen);
-        strncat(buf, (const char *)sp, sl);
-        strcat(buf, "$");
+        /* Now make the output string: <id><salt>$<22 base64 characters><NUL>.  */
+        if (buflen < (int)strlen(id) + sl + 1 + MD5_CRYPT_DIGEST_LENGTH + 1)
+                return NULL;
+        snprintf(buf, buflen, "%s%.*s$", id, sl, (const char *)sp);
 
         md5_finish(&ctx, final);
 

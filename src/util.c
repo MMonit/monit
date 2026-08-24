@@ -1563,6 +1563,11 @@ bool Util_checkCredentials(char *uname, char *outside) {
                 {
                         char salt[3];
                         char *temp;
+                        // The crypt salt is the first two characters of the stored hash: a shorter (e.g. empty) hash in the htpasswd file is not in crypt format
+                        if (strlen(c->passwd) < 2) {
+                                Log_error("Password not in crypt format.\n");
+                                return false;
+                        }
                         snprintf(salt, 3, "%c%c", c->passwd[0], c->passwd[1]);
                         temp = crypt(outside, salt);
                         if (! temp) {
