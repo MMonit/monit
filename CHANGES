@@ -60,6 +60,8 @@ Fixed: The swap paging rates were permanently zero
 
 Fixed: The checksum-change test discarded the baseline across monit restarts.
 
+Fixed: When the eventqueue is enabled, multiple events from the same service within the same second did overwrite the same queue file, losing all but one queued event in that context.
+
 
 Version 6.0.0
 

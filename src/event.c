@@ -53,6 +53,14 @@
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
+#ifdef HAVE_ERRNO_H
+#include <errno.h>
+#endif
+
 #ifdef HAVE_DIRENT_H
 #include <dirent.h>
 #endif
@@ -66,7 +74,7 @@
 
 // libmonit
 #include "io/File.h"
-#include "system/Time.h"
+#include "system/Random.h"
 
 /**
  * Implementation of the event interface.
@@ -196,15 +204,31 @@ static void _queueAdd(Event_T E) {
                 return;
         }
 
-        /* compose the file name of actual timestamp and service name */
+        // Compose a random file name
         char file_name[PATH_MAX];
-        snprintf(file_name, PATH_MAX, "%s/%lld_%lx", Run.eventlist_dir, (long long)Time_now(), (long unsigned)E->source->name);
+        int fd = -1;
+        for (int attempt = 0; attempt < 100; attempt++) {
+                snprintf(file_name, PATH_MAX, "%s/monitevent_%016llx", Run.eventlist_dir, Random_number());
+                if ((fd = open(file_name, O_WRONLY | O_CREAT | O_EXCL, 0600)) >= 0)
+                        break;
+                if (errno != EEXIST) {
+                        Log_error("Aborting event - cannot create event file %s -- %s\n", file_name, STRERROR);
+                        return;
+                }
+        }
+        if (fd < 0) {
+                Log_error("Aborting event - cannot create a unique event file in %s\n", Run.eventlist_dir);
+                return;
+        }
 
         Log_info("Adding event to the queue file %s for later delivery\n", file_name);
 
-        FILE *file = fopen(file_name, "w");
+        FILE *file = fdopen(fd, "w");
         if (! file) {
                 Log_error("Aborting event - cannot create event file %s -- %s\n", file_name, STRERROR);
+                close(fd);
+                if (unlink(file_name) < 0)
+                        Log_error("Failed to remove event file '%s' -- %s\n", file_name, STRERROR);
                 return;
         }
 
