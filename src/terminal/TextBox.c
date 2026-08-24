@@ -132,16 +132,26 @@ static void _printHeader(T t) {
 
 
 static void _cacheColor(TextBoxColumn_T *column) {
+        int limit = (int)sizeof(column->_color) - 1; // Reserve space for the terminating NUL
+        int k = 0;
         bool ansi = false;
         if (column->value) {
-                for (int i = 0, k = 0; column->value[i]; i++) {
+                for (int i = 0; column->value[i]; i++) {
                         if (column->value[i] == '\033' && column->value[i + 1] == '[') {
                                 // Escape sequence start
+                                if (k + 2 > limit) {
+                                        k = 0;
+                                        break;
+                                }
                                 column->_color[k++] = '\033';
                                 column->_color[k++] = '[';
                                 i++;
                                 ansi = true;
                         } else if (ansi) {
+                                if (k + 1 > limit) {
+                                        k = 0;
+                                        break;
+                                }
                                 column->_color[k++] = column->value[i];
                                 // Escape sequence stop
                                 if (column->value[i] >= 64 && column->value[i] <= 126)
@@ -149,6 +159,7 @@ static void _cacheColor(TextBoxColumn_T *column) {
                         }
                 }
         }
+        column->_color[k] = 0;
 }
 
 
