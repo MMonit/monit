@@ -228,7 +228,7 @@ void SMTP_starttls(T S, SslOptions_T options) {
                 _send(S, "STARTTLS\r\n");
                 _receive(S, 220, NULL);
                 // Switch to TLS
-                Socket_enableSsl(S->socket, options, NULL);
+                Socket_enableSsl(S->socket, options);
                 // Reset state and flags and send EHLO again (see RFC 3207 section 4.2)
                 S->flags = MTA_None;
                 S->state = SMTP_Greeting;

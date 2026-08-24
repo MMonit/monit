@@ -836,7 +836,7 @@ void check_mysql(Socket_T S) {
                                 // Send SSL request to the MySQL server (https://dev.mysql.com/doc/dev/mysql-server/8.0.11/page_protocol_connection_phase.html#sect_protocol_connection_phase_initial_handshake_ssl_handshake)
                                 _sendSSLRequest(&mysql);
                                 // Switch to TLS encryption
-                                Socket_enableSsl(S, &(Run.ssl), NULL);
+                                Socket_enableSsl(S, &(Run.ssl));
                         } else {
                                 THROW(ProtocolException, "The MySQL server doesn't support SSL");
                         }

@@ -327,7 +327,7 @@ T Socket_create(const char *host, int port, Socket_Type type, Socket_Family fami
                         {
                                 S = _createIpSocket(host, r->ai_addr, r->ai_addrlen, NULL, 0, r->ai_family, r->ai_socktype, r->ai_protocol, timeout);
                                 if (options->flags == SSL_Enabled)
-                                        Socket_enableSsl(S, options, host);
+                                        Socket_enableSsl(S, options);
                         }
                         ELSE
                         {
@@ -599,7 +599,7 @@ static void _testIp(Port_T p) {
                                         TRY
                                         {
                                                 if (p->target.net.ssl.options.flags == SSL_Enabled) {
-                                                        Socket_enableSsl(S, &(p->target.net.ssl.options), p->hostname);
+                                                        Socket_enableSsl(S, &(p->target.net.ssl.options));
                                                 }
                                                 p->protocol->check(S);
                                         }
@@ -677,11 +677,12 @@ void Socket_test(void *P) {
 }
 
 
-void Socket_enableSsl(T S, SslOptions_T options, const char *name)  {
+void Socket_enableSsl(T S, SslOptions_T options)  {
         assert(S);
 #ifdef HAVE_OPENSSL
-        if ((S->ssl = Ssl_new(options)))
-                Ssl_connect(S->ssl, S->socket, S->timeout, name);
+        if (! (S->ssl = Ssl_new(options)))
+                THROW(IOException, "Cannot create the SSL context for %s", NVLSTR(S->host));
+        Ssl_connect(S->ssl, S->socket, S->timeout, S->host);
 #endif
 }
 

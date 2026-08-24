@@ -227,13 +227,14 @@ void Socket_test(void *P);
 
 
 /**
- * Enables SSL on a connected socket.
+ * Enables SSL on a connected socket. The peer certificate is verified against
+ * the host the Socket was connected to, which is also sent as the SNI TLS
+ * extension.
  * @param S A connected Socket_T object
  * @param options SSL options
- * @param name An optional server name for SNI TLS extension
  * @exception IOException or AssertException if failed
  */
-void Socket_enableSsl(T S, SslOptions_T options, const char *name);
+void Socket_enableSsl(T S, SslOptions_T options);
 
 
 /**
