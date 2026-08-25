@@ -171,7 +171,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                 pt[i].cred.gid            = pinfo[i].kp_rgid;
                 pt[i].threads.self        = pinfo[i].kp_nthreads;
                 pt[i].uptime              = System_Info.time / 10. - pinfo[i].kp_start.tv_sec;
-                pt[i].cpu.time            = (double)((pinfo[i].kp_lwp.kl_uticks + pinfo[i].kp_lwp.kl_sticks + pinfo[i].kp_lwp.kl_iticks) / 1000000.);
+                pt[i].cpu.time            = (double)((pinfo[i].kp_lwp.kl_uticks + pinfo[i].kp_lwp.kl_sticks + pinfo[i].kp_lwp.kl_iticks) / 100000.); // the ticks are microseconds, cpu.time is in 1/10s units
                 pt[i].memory.usage_rss    = (unsigned long long)pinfo[i].kp_vm_rssize * (unsigned long long)pagesize;
                 pt[i].read.bytes          = -1;
                 pt[i].read.bytesPhysical  = -1;
