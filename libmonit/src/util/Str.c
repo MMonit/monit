@@ -144,15 +144,16 @@ char *Str_unquote(char *s) {
 
 
 int Str_parseInt(const char *s) {
-        int i;
         char *e;
         if (STR_UNDEF(s))
                 THROW(NumberFormatException, "For input string null");
         errno = 0;
-        i = (int)strtol(s, &e, 10);
+        long l = strtol(s, &e, 10);
         if (errno || (e == s))
                 THROW(NumberFormatException, "For input string %s -- %s", s, System_getError(errno));
-        return i;
+        if (l < INT_MIN || l > INT_MAX)
+                THROW(NumberFormatException, "For input string %s -- %s", s, System_getError(ERANGE));
+        return (int)l;
 }
 
 
