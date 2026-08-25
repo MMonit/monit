@@ -3900,7 +3900,7 @@ static void addservice(Service_T s) {
                                 cfg_errflag++;
                         }
                         char program[PATH_MAX];
-                        strncpy(program, s->program->args->arg[0], sizeof(program) - 1);
+                        Str_copy(program, s->program->args->arg[0], sizeof(program));
                         // Require that the program exist before creating the Command object
                         if (File_isExecutable(program)) {
                                 s->program->C = Command_new(program, NULL);
