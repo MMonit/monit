@@ -76,9 +76,7 @@ struct buffer_stack_s {
 } buffer_stack[MAX_STACK_DEPTH];
 
 int lineno = 1;
-int arglineno = 1;
 char *currentfile = NULL;
-char *argcurrentfile = NULL;
 char *argyytext = NULL;
 typedef enum {
         Proc_State,
@@ -1191,9 +1189,6 @@ static int pop_buffer_state(void) {
 
 
 static void save_arg(void) {
-        arglineno = lineno;
-        FREE(argcurrentfile);
-        argcurrentfile = Str_dup(currentfile);
         FREE(argyytext);
         argyytext = Str_dup(yytext);
 }

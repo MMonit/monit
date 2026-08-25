@@ -176,11 +176,9 @@ void  yywarning2(const char *,...) __attribute__((format (printf, 1, 2)));
 int yylex(void);
 extern FILE *yyin;
 extern int lineno;
-extern int arglineno;
 extern char *yytext;
 extern char *argyytext;
 extern char *currentfile;
-extern char *argcurrentfile;
 extern int buffer_stack_ptr;
 
 /* Local variables */
@@ -3561,7 +3559,7 @@ void yyerror2(const char *s, ...) {
         va_start(ap, s);
         msg = Str_vcat(s, ap);
         va_end(ap);
-        Log_error("%s:%i: %s '%s'\n", argcurrentfile, arglineno, msg, argyytext);
+        Log_error("%s:%i: %s '%s'\n", currentfile, lineno, msg, argyytext);
         cfg_errflag++;
         FREE(msg);
 }
@@ -3577,7 +3575,7 @@ void yywarning2(const char *s, ...) {
         va_start(ap, s);
         msg = Str_vcat(s, ap);
         va_end(ap);
-        Log_warning("%s:%i: %s '%s'\n", argcurrentfile, arglineno, msg, argyytext);
+        Log_warning("%s:%i: %s '%s'\n", currentfile, lineno, msg, argyytext);
         FREE(msg);
 }
 
@@ -3614,9 +3612,6 @@ bool parse(char *controlfile) {
 
         if (argyytext != NULL)
                 FREE(argyytext);
-
-        if (argcurrentfile != NULL)
-                FREE(argcurrentfile);
 
         /*
          * Secure check the monitrc file. The run control file must have the
@@ -3655,8 +3650,6 @@ static void preparse(void) {
         /* Reset lexer */
         buffer_stack_ptr            = 0;
         lineno                      = 1;
-        arglineno                   = 1;
-        argcurrentfile              = NULL;
         argyytext                   = NULL;
         /* Reset parser */
         Run.limits.sendExpectBuffer  = LIMIT_SENDEXPECTBUFFER;
