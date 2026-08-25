@@ -227,7 +227,10 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         unsigned long long  used  = 0ULL;
 
         /* Memory */
-        kctl = kstat_open();
+        if (! (kctl = kstat_open())) {
+                Log_error("system statistic error -- kstat_open failed: %s\n", STRERROR);
+                return false;
+        }
         zoneid_t zoneid = getzoneid();
         if (zoneid != GLOBAL_ZONEID) {
                 /* Zone */
@@ -254,7 +257,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 }
         } else {
                 kstat = kstat_lookup(kctl, "unix", 0, "system_pages");
-                if (kstat_read(kctl, kstat, 0) == -1) {
+                if (! kstat || kstat_read(kctl, kstat, 0) == -1) {
                         Log_error("system statistic error -- memory usage data collection failed\n");
                         kstat_close(kctl);
                         return false;
@@ -262,22 +265,30 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                 knamed = kstat_data_lookup(kstat, "freemem");
                 if (knamed) {
                         unsigned long long freemem = (unsigned long long)knamed->value.ul * (unsigned long long)page_size, arcsize = 0ULL;
+                        /* The zfs::arcstats kstat is absent on a system without ZFS */
                         kstat = kstat_lookup(kctl, "zfs", 0, "arcstats");
-                        if (kstat_read(kctl, kstat, 0) != -1) {
+                        if (kstat && kstat_read(kctl, kstat, 0) != -1) {
                                 knamed = kstat_data_lookup(kstat, "size");
-                                arcsize = (unsigned long long)knamed->value.ul;
+                                if (knamed)
+                                        arcsize = (unsigned long long)knamed->value.ul;
                         }
                         si->memory.usage.bytes = System_Info.memory.size - freemem - arcsize;
                 }
         }
 
-        /* Paging */
-        cpu_vminfo_t vmstat;
-        kstat = kstat_lookup(kctl, "unix", 0, "vminfo");
-        if (kstat && kstat_read(kctl, kstat, &vmstat) != -1) {
-                si->paging.current.in.value = vmstat.pgswapin;
-                si->paging.current.out.value = vmstat.pgswapout;
+        /* Paging: the swap counters are maintained per CPU in cpu_stat:*:cpu_stat */
+        unsigned long long pgswapin = 0ULL, pgswapout = 0ULL;
+        for (kstat = kctl->kc_chain; kstat; kstat = kstat->ks_next) {
+                if (strncmp(kstat->ks_name, "cpu_stat", 8) == 0) {
+                        cpu_stat_t cpu_stat;
+                        if (kstat_read(kctl, kstat, &cpu_stat) != -1) {
+                                pgswapin += cpu_stat.cpu_vminfo.pgswapin;
+                                pgswapout += cpu_stat.cpu_vminfo.pgswapout;
+                        }
+                }
         }
+        si->paging.current.in.value = pgswapin;
+        si->paging.current.out.value = pgswapout;
         kstat_close(kctl);
 
         /* Swap */
@@ -337,9 +348,12 @@ bool used_system_cpu_sysdep(SystemInfo_T *si) {
 
         si->cpu.usage.user = si->cpu.usage.system = si->cpu.usage.iowait = 0;
 
-        kctl  = kstat_open();
+        if (! (kctl = kstat_open())) {
+                Log_error("system statistic error -- kstat_open failed: %s\n", STRERROR);
+                return false;
+        }
         kstat = kstat_lookup(kctl, "unix", 0, "system_misc");
-        if (kstat_read(kctl, kstat, 0) == -1) {
+        if (! kstat || kstat_read(kctl, kstat, 0) == -1) {
                 Log_error("system statistic -- failed to lookup unix::system_misc kstat\n");
                 goto error;
         }

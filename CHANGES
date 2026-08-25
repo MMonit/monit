@@ -75,6 +75,10 @@ Fixed: OpenBSD: the per-process thread count was reported for the wrong process.
 
 Fixed: OpenBSD: the timestamp used for process' disk write rate calculation was not set.
 
+Fixed: Solaris: monit could crash when collecting system statistics on a host without ZFS, or if the kstat interface was unavailable.
+
+Fixed: Solaris: the system paging (swap in/out) statistics reported meaningless values.
+
 
 Version 6.0.0
 
