@@ -107,7 +107,7 @@ time_t timegm(struct tm *tm)
         int days;
         int num_leap_year;
         long long t;
-        if(tm->tm_mon > 11) {
+        if(tm->tm_mon < 0 || tm->tm_mon > 11) {
                 return -1;
         }
         num_leap_year = count_leap_year(tm->tm_year + 1900) - count_leap_year(1970);
