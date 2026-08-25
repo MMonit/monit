@@ -1192,7 +1192,8 @@ static int pop_buffer_state(void) {
 
 static void save_arg(void) {
         arglineno = lineno;
-        argcurrentfile = currentfile;
+        FREE(argcurrentfile);
+        argcurrentfile = Str_dup(currentfile);
         FREE(argyytext);
         argyytext = Str_dup(yytext);
 }

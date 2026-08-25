@@ -3615,6 +3615,9 @@ bool parse(char *controlfile) {
         if (argyytext != NULL)
                 FREE(argyytext);
 
+        if (argcurrentfile != NULL)
+                FREE(argcurrentfile);
+
         /*
          * Secure check the monitrc file. The run control file must have the
          * same uid as the REAL uid of this process, it must have permissions
