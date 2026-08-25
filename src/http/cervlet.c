@@ -2670,8 +2670,8 @@ static void print_status(HttpRequest req, HttpResponse res, int version) {
                 StringBuffer_append(res->outputbuffer, "Monit %s uptime: %s\n\n", VERSION, _getUptime(ProcessTree_getProcessUptime(getpid()), (char[256]){}));
 
                 struct ServiceMap_T ap = {.found = 0, .data.status.res = res};
-                const char *stringGroup = Util_urlDecode((char *)get_parameter(req, "group"));
-                const char *stringService = Util_urlDecode((char *)get_parameter(req, "service"));
+                const char *stringGroup = get_parameter(req, "group");
+                const char *stringService = get_parameter(req, "service");
                 if (stringGroup) {
                         for (ServiceGroup_T sg = Service_Group_List; sg; sg = sg->next) {
                                 if (IS(stringGroup, sg->name)) {
@@ -2703,8 +2703,8 @@ static void print_summary(HttpRequest req, HttpResponse res) {
         StringBuffer_append(res->outputbuffer, "Monit %s uptime: %s\n", VERSION, _getUptime(ProcessTree_getProcessUptime(getpid()), (char[256]){}));
 
         struct ServiceMap_T ap = {.found = 0};
-        const char *stringGroup = Util_urlDecode((char *)get_parameter(req, "group"));
-        const char *stringService = Util_urlDecode((char *)get_parameter(req, "service"));
+        const char *stringGroup = get_parameter(req, "group");
+        const char *stringService = get_parameter(req, "service");
 
         ap.data.summary.box = TextBox_new(res->outputbuffer, 3, (TextBoxColumn_T []){
                         {.name = "Service Name", .width = 31, .wrap = false, .align = TextBoxAlign_Left},
@@ -2765,7 +2765,7 @@ static void _updateReportStatistics(Service_T s, ReportStatics_T statistics) {
 static void _printReport(HttpRequest req, HttpResponse res) {
         set_content_type(res, "text/plain");
         const char *type = get_parameter(req, "type");
-        const char *group = Util_urlDecode((char *)get_parameter(req, "group"));
+        const char *group = get_parameter(req, "group");
         struct ReportStatics_T reportStatics = {};
         if (group) {
                 for (ServiceGroup_T sg = Service_Group_List; sg; sg = sg->next) {
