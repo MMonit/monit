@@ -2022,8 +2022,13 @@ State_Type check_program(Service_T s) {
                 StringBuffer_trim(s->program->inprogressOutput);
                 // Swap program output (instance finished)
                 const char *lastOutput = StringBuffer_toString(s->program->inprogressOutput);
-                StringBuffer_clear(s->program->lastOutput);
-                StringBuffer_append(s->program->lastOutput, "%s", lastOutput);
+                // Serialize with the HTTP threads (StringBuffer_append may reallocate lastOutput buffer, while the http thread may be rendering the data)
+                LOCK(Run.mutex)
+                {
+                        StringBuffer_clear(s->program->lastOutput);
+                        StringBuffer_append(s->program->lastOutput, "%s", lastOutput);
+                }
+                END_LOCK;
 
                 // Evaluate program's exit status against our status checks.
                 const char *output = StringBuffer_length(s->program->inprogressOutput) ? StringBuffer_toString(s->program->inprogressOutput) : "no output";

@@ -2655,45 +2655,49 @@ static bool is_readonly(HttpRequest req) {
 
 /* Print status in the given format. Text status is default. */
 static void print_status(HttpRequest req, HttpResponse res, int version) {
-        const char *stringFormat = get_parameter(req, "format");
-        if (stringFormat && Str_startsWith(stringFormat, "xml")) {
-                char buf[STRLEN];
-                StringBuffer_T sb = StringBuffer_create(256);
-                const char *localhost = ((Run.httpd.flags & Httpd_Unix) && Socket_getFamily(req->S) == Socket_Unix) ? NULL : Socket_getLocalHost(req->S, buf, sizeof(buf));
-                status_xml(sb, NULL, version, localhost, NULL);
-                StringBuffer_append(res->outputbuffer, "%s", StringBuffer_toString(sb));
-                StringBuffer_free(&sb);
-                set_content_type(res, "text/xml");
-        } else {
-                set_content_type(res, "text/plain");
-
-                StringBuffer_append(res->outputbuffer, "Monit %s uptime: %s\n\n", VERSION, _getUptime(ProcessTree_getProcessUptime(getpid()), (char[256]){}));
-
-                struct ServiceMap_T ap = {.found = 0, .data.status.res = res};
-                const char *stringGroup = get_parameter(req, "group");
-                const char *stringService = get_parameter(req, "service");
-                if (stringGroup) {
-                        for (ServiceGroup_T sg = Service_Group_List; sg; sg = sg->next) {
-                                if (IS(stringGroup, sg->name)) {
-                                        for (_list_t m = sg->members->head; m; m = m->next) {
-                                                status_service_txt(m->e, res);
-                                                ap.found++;
-                                        }
-                                        break;
-                                }
-                        }
+        LOCK(Run.mutex)
+        {
+                const char *stringFormat = get_parameter(req, "format");
+                if (stringFormat && Str_startsWith(stringFormat, "xml")) {
+                        char buf[STRLEN];
+                        StringBuffer_T sb = StringBuffer_create(256);
+                        const char *localhost = ((Run.httpd.flags & Httpd_Unix) && Socket_getFamily(req->S) == Socket_Unix) ? NULL : Socket_getLocalHost(req->S, buf, sizeof(buf));
+                        status_xml(sb, NULL, version, localhost, NULL);
+                        StringBuffer_append(res->outputbuffer, "%s", StringBuffer_toString(sb));
+                        StringBuffer_free(&sb);
+                        set_content_type(res, "text/xml");
                 } else {
-                        _serviceMapByName(stringService, _serviceMapStatus, &ap);
-                }
-                if (ap.found == 0) {
-                        if (stringGroup)
-                                send_error(req, res, SC_BAD_REQUEST, "Service group '%s' not found", stringGroup);
-                        else if (stringService)
-                                send_error(req, res, SC_BAD_REQUEST, "Service '%s' not found", stringService);
-                        else
-                                send_error(req, res, SC_BAD_REQUEST, "No service found");
+                        set_content_type(res, "text/plain");
+
+                        StringBuffer_append(res->outputbuffer, "Monit %s uptime: %s\n\n", VERSION, _getUptime(ProcessTree_getProcessUptime(getpid()), (char[256]){}));
+
+                        struct ServiceMap_T ap = {.found = 0, .data.status.res = res};
+                        const char *stringGroup = get_parameter(req, "group");
+                        const char *stringService = get_parameter(req, "service");
+                        if (stringGroup) {
+                                for (ServiceGroup_T sg = Service_Group_List; sg; sg = sg->next) {
+                                        if (IS(stringGroup, sg->name)) {
+                                                for (_list_t m = sg->members->head; m; m = m->next) {
+                                                        status_service_txt(m->e, res);
+                                                        ap.found++;
+                                                }
+                                                break;
+                                        }
+                                }
+                        } else {
+                                _serviceMapByName(stringService, _serviceMapStatus, &ap);
+                        }
+                        if (ap.found == 0) {
+                                if (stringGroup)
+                                        send_error(req, res, SC_BAD_REQUEST, "Service group '%s' not found", stringGroup);
+                                else if (stringService)
+                                        send_error(req, res, SC_BAD_REQUEST, "Service '%s' not found", stringService);
+                                else
+                                        send_error(req, res, SC_BAD_REQUEST, "No service found");
+                        }
                 }
         }
+        END_LOCK;
 }
 
 
