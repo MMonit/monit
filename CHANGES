@@ -86,6 +86,7 @@ Fixed: Linux: the disk I/O statistics were not collected for a filesystem whose 
               time values stayed empty for such a filesystem, without reporting an error.
 
 
+
 Version 6.0.0
 
 New: SSL/TLS: Add support for quantum-resistant cryptography: hybrid ML-KEM key exchange mechanisms with TLS 1.3.

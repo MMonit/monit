@@ -316,7 +316,7 @@ bool used_system_cpu_sysdep(SystemInfo_T *si) {
 
         if (perfstat_cpu_total(NULL, &cpu, sizeof(perfstat_cpu_total_t), 1) < 0) {
                 Log_error("system statistic error -- perfstat_cpu_total failed: %s\n", STRERROR);
-                return -1;
+                return false;
         }
 
         cpu_total_new = (cpu.user + cpu.sys + cpu.wait + cpu.idle) / cpu.ncpus;
