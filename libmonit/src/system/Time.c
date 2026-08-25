@@ -1182,58 +1182,76 @@ struct time_monotonic_t Time_monotonic(void) {
 }
 
 
+static struct tm *_localtime(time_t time, struct tm *tm) {
+        if (! localtime_r(&time, tm)) {
+                // The localtime_r() failure sets errno and leaves the 'tm' struct in unspecified state
+                memset(tm, 0, sizeof *tm);
+        }
+        return tm;
+}
+
+
+static struct tm *_gmtime(time_t time, struct tm *tm) {
+        if (! gmtime_r(&time, tm)) {
+                // The gmtime_r() failure sets errno and leaves the 'tm' struct in unspecified state
+                memset(tm, 0, sizeof *tm);
+        }
+        return tm;
+}
+
+
 int Time_seconds(time_t time) {
         struct tm tm;
-        localtime_r(&time, &tm);
+        _localtime(time, &tm);
         return tm.tm_sec;
 }
 
 
 int Time_minutes(time_t time) {
         struct tm tm;
-        localtime_r(&time, &tm);
+        _localtime(time, &tm);
         return tm.tm_min;
 }
 
 
 int Time_hour(time_t time) {
         struct tm tm;
-        localtime_r(&time, &tm);
+        _localtime(time, &tm);
         return tm.tm_hour;
 }
 
 
 int Time_weekday(time_t time) {
         struct tm tm;
-        localtime_r(&time, &tm);
+        _localtime(time, &tm);
         return tm.tm_wday;
 }
 
 
 int Time_day(time_t time) {
         struct tm tm;
-        localtime_r(&time, &tm);
+        _localtime(time, &tm);
         return tm.tm_mday;
 }
 
 
 int Time_month(time_t time) {
         struct tm tm;
-        localtime_r(&time, &tm);
+        _localtime(time, &tm);
         return (tm.tm_mon + 1);
 }
 
 
 int Time_year(time_t time) {
         struct tm tm;
-        localtime_r(&time, &tm);
+        _localtime(time, &tm);
         return (tm.tm_year + 1900);
 }
 
 
 char *Time_localStr(time_t time, char result[static 26]) {
         struct tm ts;
-        localtime_r((const time_t *)&time, &ts);
+        _localtime(time, &ts);
         memcpy(result, "aaa, xx aaa xxxx xx:xx:xx\0", 26);
         /*              0    5  8   1214 17 20 23 25 */
         memcpy(result, _days + (3 * ts.tm_wday), 3);
@@ -1250,7 +1268,7 @@ char *Time_localStr(time_t time, char result[static 26]) {
 
 char *Time_str(time_t time, char result[static 30]) {
         struct tm ts;
-        gmtime_r(&time, &ts);
+        _gmtime(time, &ts);
         memcpy(result, "aaa, xx aaa xxxx xx:xx:xx GMT\0", 30);
         /*              0    5  8   1214 17 20 23    29 */
         memcpy(result, _days + (3 * ts.tm_wday), 3);
@@ -1269,7 +1287,7 @@ char *Time_localFmt(char *result, int size, const char *format, time_t time) {
         struct tm tm;
         assert(result);
         assert(format);
-        localtime_r(&time, &tm);
+        _localtime(time, &tm);
         if (strftime(result, size, format, &tm) == 0)
                 *result = 0;
         return result;
@@ -1280,7 +1298,7 @@ char *Time_fmt(char *result, int size, const char *format, time_t time) {
         struct tm tm;
         assert(result);
         assert(format);
-        gmtime_r(&time, &tm);
+        _gmtime(time, &tm);
         if (strftime(result, size, format, &tm) == 0)
                 *result = 0;
         return result;
@@ -1325,7 +1343,7 @@ int Time_incron(const char *cron, time_t time) {
         int matched[5] = {};
         // Convert UTC time to local time
         struct tm tm;
-        localtime_r(&time, &tm);
+        _localtime(time, &tm);
         int fields[] = {tm.tm_min, tm.tm_hour, tm.tm_mday, tm.tm_mon + 1, tm.tm_wday};
 parse:
         yytoken = yycursor;
