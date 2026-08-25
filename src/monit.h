@@ -883,6 +883,7 @@ typedef struct Program_T {
         int exitStatus;                 /**< Sub-process exit status for reporting */
         StringBuffer_T lastOutput;                        /**< Last program output */
         StringBuffer_T inprogressOutput; /**< Output of the pending program instance */
+        bool checking;    /**< true while check_program() is running for this service */
 } *Program_T;
 
 

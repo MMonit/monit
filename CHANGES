@@ -69,6 +69,8 @@ Fixed: MacOS: disk service time was off by 4.63%
 
 Fixed: MacOS: disk service time was not collected for APFS filesystems, so the "if service time" test always passed and no service time was shown in the status output
 
+Fixed: A 'check program' could run the program twice in the same cycle and report a spurious "content changed" when another service depended on it and restart action is triggered.
+
 
 Version 6.0.0
 

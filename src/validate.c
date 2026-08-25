@@ -1978,7 +1978,7 @@ State_Type check_fifo(Service_T s) {
  * Validate a program status. Events are posted according to
  * its configuration. In case of a fatal event false is returned.
  */
-State_Type check_program(Service_T s) {
+static State_Type _checkProgram(Service_T s) {
         assert(s);
         assert(s->program);
         State_Type rv = State_Succeeded;
@@ -2102,6 +2102,32 @@ State_Type check_program(Service_T s) {
                         }
                 }
         }
+        return rv;
+}
+
+
+State_Type check_program(Service_T s) {
+        assert(s);
+        assert(s->program);
+        /*
+         * Guard against re-entering the check for this service. An event raised by the check can run an action (e.g. "if status != 0 then restart") and control_service() then starts
+         * the services which depend on this one, which re-checks this service while we are still inside it.
+         */
+        if (s->program->checking) {
+                DEBUG("'%s' program check skipped -- a check is already in progress for this service\n", s->name);
+                return s->error ? State_Failed : State_Succeeded;
+        }
+        s->program->checking = true;
+        volatile State_Type rv = State_Succeeded;
+        TRY
+        {
+                rv = _checkProgram(s);
+        }
+        FINALLY
+        {
+                s->program->checking = false;
+        }
+        END_TRY;
         return rv;
 }
 
