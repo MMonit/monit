@@ -363,7 +363,7 @@ static bool _getProcfsBlockDiskActivity(void *_inf) {
                         int minor;
                         char name[256] = {};
                         // Note: There are 17 fields in kernel 5.5+, we may use them in the future
-                        rv = fscanf(f, " %d %d %255s %llu %*u %llu %llu %llu %*u %llu %llu", &major, &minor, name, &readOperations, &readSectors, &readTime, &writeOperations, &writeSectors, &writeTime);
+                        rv = sscanf(line, " %d %d %255s %llu %*u %llu %llu %llu %*u %llu %llu", &major, &minor, name, &readOperations, &readSectors, &readTime, &writeOperations, &writeSectors, &writeTime);
                         if (rv == 9 && major == inf->filesystem->object.number.major && minor == inf->filesystem->object.number.minor) {
                                 Statistics_update(&(inf->filesystem->time.read), now, readTime);
                                 Statistics_update(&(inf->filesystem->read.bytes), now, readSectors * 512);

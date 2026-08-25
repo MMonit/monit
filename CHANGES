@@ -82,6 +82,9 @@ Fixed: Solaris: the system paging (swap in/out) statistics reported meaningless 
 Fixed: MacOS: the command line of processes with many arguments was collected incompletely or not at all, so "check process ... matching" patterns failed to match such processes.
               Processes with 128 to 255 arguments produced no command line at all, and processes with 256 or more arguments had their command line truncated.
 
+Fixed: Linux: the disk I/O statistics were not collected for a filesystem whose block device is the first entry in /proc/diskstats. The read and write byte, operation and service
+              time values stayed empty for such a filesystem, without reporting an error.
+
 
 Version 6.0.0
 
