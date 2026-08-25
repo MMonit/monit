@@ -209,7 +209,7 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                         pt[index].write.bytes         = -1;
                         pt[index].write.bytesPhysical = -1;
                         pt[index].write.operations    = pinfo[i].p_uru_oublock;
-                        pt[index].read.time           = pt[i].write.time = now;
+                        pt[index].read.time           = pt[index].write.time = now;
                         if (pflags & ProcessEngine_CollectCommandLine) {
                                 char **args = kvm_getargv(kvm_handle, &pinfo[i], 0);
                                 if (args) {
@@ -224,8 +224,8 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                                         pt[index].cmdline = Str_dup(pinfo[i].p_comm);
                                 }
                         }
-                } else {
-                        pt[index].threads.self++;
+                } else if (count > 0) {
+                        pt[count - 1].threads.self++;
                 }
         }
         if (pflags & ProcessEngine_CollectCommandLine)

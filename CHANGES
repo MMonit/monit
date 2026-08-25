@@ -71,6 +71,10 @@ Fixed: MacOS: disk service time was not collected for APFS filesystems, so the "
 
 Fixed: A 'check program' could run the program twice in the same cycle and report a spurious "content changed" when another service depended on it and restart action is triggered.
 
+Fixed: OpenBSD: the per-process thread count was reported for the wrong process.
+
+Fixed: OpenBSD: the timestamp used for process' disk write rate calculation was not set.
+
 
 Version 6.0.0
 
