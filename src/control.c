@@ -469,6 +469,8 @@ bool control_service(const char *S, Action_Type A) {
                         // Stop this service only if all children which depend on it were stopped
                         if (_doDepend(s, Action_Stop, true))
                                 rv = _doStop(s, true);
+                        else
+                                rv = false; // A child could not be stopped, so we did not even try to stop this service: not a success
                         break;
 
                 case Action_Restart:
@@ -485,8 +487,11 @@ bool control_service(const char *S, Action_Type A) {
                                         } else {
                                                 /* enable monitoring of this service again to allow the restart retry in the next cycle up to timeout limit */
                                                 Util_monitorSet(s);
+                                                rv = false; // We could not stop the service, so it was not restarted
                                         }
                                 }
+                        } else {
+                                rv = false; // A child could not be stopped, so we did not even try to restart this service
                         }
                         break;
 
