@@ -670,6 +670,19 @@ void Event_queue_process(void) {
                         e->action = NULL;
                         e->next = NULL;
 
+                        /* validate the event id */
+                        bool validId = false;
+                        for (EventTable_T *et = Event_Table; (*et).id; et++) {
+                                if (e->id == (*et).id) {
+                                        validId = true;
+                                        break;
+                                }
+                        }
+                        if (! validId) {
+                                Log_error("Aborting queued event %s -- invalid event id: %ld\n", file_name, e->id);
+                                goto error4;
+                        }
+
                         /* read source */
                         char *service = file_readQueue(file, &size);
                         if (! service)
