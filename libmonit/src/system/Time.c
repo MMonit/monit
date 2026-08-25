@@ -1331,7 +1331,7 @@ char *Time_uptime(long sec, char result[static 24]) {
  where fields may have a numeric type, an asterix, a range, or step values
  With cron we compute the time in local time. Return -1 on parse error
  */
-int Time_incron(const char *cron, time_t time) {
+static int _incron(const char *cron, time_t time) {
         assert(cron);
         const char *yymarker;
         const char *yytoken;
@@ -1575,6 +1575,22 @@ parse:
                 }
         }
         return found == 5;
+}
+
+
+int Time_incron(const char *cron, time_t time) {
+        assert(cron);
+        volatile int rv = -1;
+        TRY
+        {
+                rv = _incron(cron, time);
+        }
+        ELSE
+        {
+                rv = -1;
+        }
+        END_TRY;
+        return rv;
 }
 
 
