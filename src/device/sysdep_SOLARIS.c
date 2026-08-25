@@ -106,12 +106,16 @@ static bool _getZfsDiskActivity(void *_inf) {
         Info_T inf = _inf;
         bool rv = false;
         libzfs_handle_t *z = libzfs_init();
+        if (! z) {
+                Log_error("filesystem statistic error: libzfs_init failed for %s -- %s\n", inf->filesystem->object.mountpoint, STRERROR);
+                return false;
+        }
         libzfs_print_on_error(z, 1);
         zpool_handle_t *zp = zpool_open_canfail(z, inf->filesystem->object.key);
         if (zp) {
                 nvlist_t *zpoolConfig = zpool_get_config(zp, NULL);
                 nvlist_t *zpoolVdevTree = NULL;
-                if (nvlist_lookup_nvlist(zpoolConfig, ZPOOL_CONFIG_VDEV_TREE, &zpoolVdevTree) == 0) {
+                if (zpoolConfig && nvlist_lookup_nvlist(zpoolConfig, ZPOOL_CONFIG_VDEV_TREE, &zpoolVdevTree) == 0) {
                         vdev_stat_t *zpoolStatistics = NULL;
                         uint_t zpoolStatisticsCount = 0;
                         if (nvlist_lookup_uint64_array(zpoolVdevTree, ZPOOL_CONFIG_VDEV_STATS, (uint64_t **)&zpoolStatistics, &zpoolStatisticsCount) == 0) {
