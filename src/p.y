@@ -731,7 +731,11 @@ limit           : SENDEXPECTBUFFER ':' NUMBER unit {
                         if ($3 <= 0) {
                                 yyerror2("The fileContentBuffer value must be > 0");
                         } else {
-                                Run.limits.fileContentBuffer = $3 * $<number64>4;
+                                long long value = $3 * $<number64>4;
+                                if (value > INT_MAX)
+                                        yyerror2("The fileContentBuffer value must be <= %d", INT_MAX);
+                                else
+                                        Run.limits.fileContentBuffer = (size_t)value;
                         }
                   }
                 | HTTPCONTENTBUFFER ':' NUMBER unit {
