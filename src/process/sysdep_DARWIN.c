@@ -202,11 +202,13 @@ int init_processtree_sysdep(ProcessTree_T **reference, ProcessEngine_Flags pflag
                                  *        }
                                  * The strings are terminated with '\0' and may have variable '\0' padding
                                  */
-                                int argc = *args;
+                                int argc;
+                                memcpy(&argc, args, sizeof(int));
                                 char *p = args + sizeof(int); // arguments beginning
                                 StringBuffer_clear(cmdline);
                                 p += strlen(p); // skip exename
-                                while (argc > 0 && p < args + System_Info.argmax) {
+                                // Stop at the amount of data sysctl returned: the buffer is reused for each process and may still hold the tail of the previous one
+                                while (argc > 0 && p < args + size) {
                                         if (*p == 0) { // skip terminating 0 and variable length 0 padding
                                                 p++;
                                                 continue;
