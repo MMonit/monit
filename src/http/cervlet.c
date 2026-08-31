@@ -981,7 +981,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                 _displayTableRow(res, true, NULL, "Logfile", "%s", Run.files.log);
         _displayTableRow(res, true, NULL, "Pidfile",    "%s", Run.files.pidfile);
         _displayTableRow(res, true, NULL, "State file", "%s", Run.files.state);
-        _displayTableRow(res, true, NULL, "Debug",      "%s", Run.debug ? "True" : "False");
+        _displayTableRow(res, true, NULL, "Debug",      "%s", Run.debug ? "On" : "Off");
         _displayTableRow(res, true, NULL, "Log",        "%s", (Run.flags & Run_Log) ? "True" : "False");
         _displayTableRow(res, true, NULL, "Use syslog", "%s", (Run.flags & Run_UseSyslog) ? "True" : "False");
 
@@ -1117,6 +1117,19 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                                     "</form>"
                                     "</td>",
                                     res->token);
+
+
+                StringBuffer_append(res->outputbuffer,
+                                    "<td>"
+                                    "<form method=POST action='_runtime'>Turn debug mode "
+                                    "<input type=hidden name='securitytoken' value='%s'>"
+                                    "<input type=hidden name='debug' value='%d'>"
+                                    "<input type=submit value='%s'>"
+                                    "</form>"
+                                    "</td>",
+                                    res->token,
+                                    Run.debug ? 0 : 1,
+                                    Run.debug ? "Off" : "On");
 
                 if ((Run.flags & Run_Log) && ! (Run.flags & Run_UseSyslog)) {
                         StringBuffer_append(res->outputbuffer,
@@ -1273,6 +1286,12 @@ static void handle_runtime_action(HttpRequest req, HttpResponse res) {
                         send_error(req, res, SC_SERVICE_UNAVAILABLE, "The Monit http server is stopped");
                         Engine_stop();
                         return;
+                }
+        } else {
+                const char *debug = get_parameter(req, "debug");
+                if (debug) {
+                        Run.debug = IS(debug, "0") ? false : true;
+                        Log_info("%s the debug mode on user request\n", Run.debug ? "On" : "Off");
                 }
         }
         handle_runtime(req, res);

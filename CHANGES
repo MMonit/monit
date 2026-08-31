@@ -12,6 +12,9 @@ INCOMPATIBLE CHANGE: SSL/TLS server certificate verification is now ENABLED BY D
            with ssl options {selfsigned: allow}     # accept a self-signed certificate
        The same options can be set globally with 'set ssl options { ... }'.
 
+New: A Debug mode On/Off button has been added to the Monit HTTP GUI. This simplifies runtime debugging when Monit is running
+     as PID 1, such as in a Docker container. Thanks to Lutz Mader.
+
 Fixed: SSL/TLS: Make the certificate checksum comparison case-insensitive.
 
 Fixed: SSL/TLS: Monit checked the certificate chain is valid but never matched the certificate's subjectAltName/CN against the
