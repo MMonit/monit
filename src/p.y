@@ -365,6 +365,7 @@ int yydebug = 1;
 %token IDFILE STATEFILE SEND EXPECT CYCLE COUNT REMINDER REPEAT
 %token LIMITS SENDEXPECTBUFFER EXPECTBUFFER FILECONTENTBUFFER HTTPCONTENTBUFFER PROGRAMOUTPUT NETWORKTIMEOUT PROGRAMTIMEOUT STARTTIMEOUT STOPTIMEOUT RESTARTTIMEOUT EXECTIMEOUT
 %token PIDFILE START STOP PATHTOK RSAKEY
+%token ARGEND
 %token HOST HOSTNAME PORT IPV4 IPV6 TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
 %token ALERT NOALERT MAILFORMAT UNIXSOCKET SIGNATURE
 %token TIMEOUT RETRY RESTART CHECKSUM EVERY NOTEVERY
@@ -1541,8 +1542,11 @@ restart         : RESTART argumentlist restarttimeout {
                   }
                 ;
 
-argumentlist    : argument
-                | argumentlist argument
+argumentlist    : arguments ARGEND
+                ;
+
+arguments       : argument
+                | arguments argument
                 ;
 
 useroptionlist  : useroption

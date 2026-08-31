@@ -794,6 +794,7 @@ group[ \t]+       {
 
   \"              {
                       BEGIN(INITIAL);
+                      return ARGEND;
                   }
 
   \'[^\']*\'      {
