@@ -139,7 +139,7 @@ In order for the team to accept your change, you must complete the [Tildeslash C
 REPORTING A BUG
 ===============
 
-If you believe you have found a bug, please use the [issue tracker](https://bitbucket.org/tildeslash/monit/issues) to report the problem.
+If you believe you have found a bug, please use the [issue tracker](https://github.com/tildeslash/monit) to report the problem.
 Remember to include the necessary information that will enable us to understand and reproduce this problem.
 
 If you have found a security vulnerabilities we appreciate if you will send this information to [cve@tildeslash.com](mailto:cve@tildeslash.com).
