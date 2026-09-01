@@ -1003,10 +1003,10 @@ static void _crontab(time_t now) {
 }
 
 
-// M/Monit heartbeat and cron thread
+// Scheduler thread (used for cron and M/Monit heartbeat)
 static void *do_heartbeat(__attribute__ ((unused)) void *args) {
         set_thread_signal_block(false);
-        Log_info("M/Monit heartbeat started\n");
+        Log_info("Scheduler started\n");
         int frequency = Num_min(Run.polltime, 17); // At least once every 17s
         time_t last_minute = 0;
 
@@ -1035,7 +1035,7 @@ static void *do_heartbeat(__attribute__ ((unused)) void *args) {
 #ifdef HAVE_OPENSSL
         Ssl_threadCleanup();
 #endif
-        Log_info("M/Monit heartbeat stopped\n");
+        Log_info("Scheduler stopped\n");
         return NULL;
 }
 
