@@ -1474,10 +1474,6 @@ There are three variants:
 
  EVERY [number] CYCLES
 
-Note, the I<every N cycles> form is deprecated, but can alternatively
-be used. Use the cron-style form instead, e.g. I<every "*/N * * * *">
-for once every N minutes, or I<every "* * * * *"> for once per minute.
-
 =item 2. Cron-style
 
  EVERY [cron]
