@@ -1291,7 +1291,7 @@ static void handle_runtime_action(HttpRequest req, HttpResponse res) {
                 const char *debug = get_parameter(req, "debug");
                 if (debug) {
                         Run.debug = IS(debug, "0") ? false : true;
-                        Log_info("%s the debug mode on user request\n", Run.debug ? "On" : "Off");
+                        Log_info("The debug mode %s on user request\n", Run.debug ? "enabled" : "disabled");
                 }
         }
         handle_runtime(req, res);
