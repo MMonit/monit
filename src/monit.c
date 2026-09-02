@@ -116,7 +116,7 @@ static void do_action(List_T);           /* Dispatch to the submitted action */
 static void do_exit(bool);                                 /* Finalize monit */
 static void do_default(void);                           /* Do default action */
 static void do_options(int, char **, List_T);      /* Handle program options */
-static void *do_heartbeat(void *args);           /* M/Monit heartbeat thread */
+static void *do_heartbeat(void *args);                   /* Scheduler thread */
 static void help(void);              /* Print program help message to stdout */
 static void version(void);                      /* Print version information */
 static void handle_reload(int);         /* Signalhandler for a daemon reload */
