@@ -1,6 +1,6 @@
 # Copyright (C) Tildeslash Ltd. All rights reserved.
 
-AUTOMAKE_OPTIONS = foreign no-dependencies subdir-objects
+AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS	 = -I m4
 
 EXTRA_DIST	= COPYING bootstrap doc src config monitrc system libmonit monit.1

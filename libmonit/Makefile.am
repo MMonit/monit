@@ -1,6 +1,6 @@
 # Copyright (C) Tildeslash Ltd. All rights reserved.
 
-AUTOMAKE_OPTIONS = foreign no-dependencies subdir-objects
+AUTOMAKE_OPTIONS = foreign subdir-objects
 ACLOCAL_AMFLAGS  = -I m4
 
 SUBDIRS         = . $(UNIT_TEST)
