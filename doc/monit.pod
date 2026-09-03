@@ -3175,9 +3175,9 @@ You can also send parameters with the program:
 
 Arguments to the program or script is a sequence of whitespace
 separated strings. In the above example the strings '-lrt' and '/tmp/'
-are arguments to the program '/bin/ls'. If arguments are used, it is
-recommended to use quotes B<"> to enclose the string, otherwise, if no
-arguments are used, quotes are not needed.
+are arguments to the program '/bin/ls'. If arguments are used, the
+program and its arguments must be enclosed in quotes B<">, otherwise, if
+no arguments are used, quotes are not needed.
 
 Notes: If the program is a script, the interpreter is required
 in the first line. The program or script must also be executable.

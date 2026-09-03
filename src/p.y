@@ -1542,7 +1542,13 @@ restart         : RESTART argumentlist restarttimeout {
                   }
                 ;
 
+/*
+ * A quoted program statement is terminated by the closing quote (ARGEND), so no
+ * text following it can be absorbed as an extra argument. An unquoted program is
+ * accepted as well, but then it is limited to the program name alone.
+ */
 argumentlist    : arguments ARGEND
+                | argument
                 ;
 
 arguments       : argument
