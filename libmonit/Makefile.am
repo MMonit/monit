@@ -1,7 +1,7 @@
 # Copyright (C) Tildeslash Ltd. All rights reserved.
 
 AUTOMAKE_OPTIONS = foreign subdir-objects
-ACLOCAL_AMFLAGS  = -I m4
+ACLOCAL_AMFLAGS  = -I m4 -I config
 
 SUBDIRS         = . $(UNIT_TEST)
 DIST_SUBDIRS    = . test
