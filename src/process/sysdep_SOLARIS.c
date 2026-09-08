@@ -118,8 +118,16 @@ bool init_systeminfo_sysdep(void) {
                 if (kstat) {
                         if (kstat_read(kctl, kstat, 0) != -1) {
                                 kstat_named_t *knamed = kstat_data_lookup(kstat, "boot_time");
-                                if (knamed)
-                                        System_Info.booted = (unsigned long long)knamed->value.ul;
+                                if (knamed) {
+                                        // The boot_time is a 32-bit unsigned kstat: read it by its type (reading value.ul returns garbage on the big-endian SPARC)
+                                        switch (knamed->data_type) {
+                                                case KSTAT_DATA_INT32:  System_Info.booted = knamed->value.i32 > 0 ? (unsigned long long)knamed->value.i32 : 0ULL; break;
+                                                case KSTAT_DATA_UINT32: System_Info.booted = (unsigned long long)knamed->value.ui32; break;
+                                                case KSTAT_DATA_INT64:  System_Info.booted = knamed->value.i64 > 0 ? (unsigned long long)knamed->value.i64 : 0ULL; break;
+                                                case KSTAT_DATA_UINT64: System_Info.booted = (unsigned long long)knamed->value.ui64; break;
+                                                default:                System_Info.booted = (unsigned long long)knamed->value.ul; break;
+                                        }
+                                }
                         }
                 }
                 kstat_close(kctl);

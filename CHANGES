@@ -88,6 +88,8 @@ Fixed: Solaris: monit could crash when collecting system statistics on a host wi
 
 Fixed: Solaris: the system paging (swap in/out) statistics reported meaningless values.
 
+Fixed: Solaris on SPARC: the system boot time and uptime were wrong.
+
 Fixed: MacOS: the command line of processes with many arguments was collected incompletely or not at all, so "check process ... matching" patterns failed to match such processes.
               Processes with 128 to 255 arguments produced no command line at all, and processes with 256 or more arguments had their command line truncated.
 
