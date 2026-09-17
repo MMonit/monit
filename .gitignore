@@ -25,6 +25,7 @@ libtool
 Makefile
 config/*
 libmonit/config/
+.deps/
 .claude/
 
 system/startup/monit.service
