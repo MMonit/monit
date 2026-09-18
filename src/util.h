@@ -74,29 +74,6 @@ int Util_handle0Escapes(char *buf);
 
 
 /**
- * @param name A service name as stated in the config file
- * @return the named service or NULL if not found
- */
-Service_T Util_getService(const char *name);
-
-
-/**
- * @param name A service name as stated in the config file
- * @return true if the service name exist in the
- * servicelist, otherwise false
- */
-bool Util_existService(const char *name);
-
-
-/**
- * Get the length of the service list, that is; the number of services
- * managed by monit
- * @return The number of services monitored
- */
-int Util_getNumberOfServices(void);
-
-
-/**
  * Print the Runtime object
  */
 void Util_printRunList(void);
@@ -196,21 +173,6 @@ void Util_hashDummyPassword(const char *password);
 
 
 /**
- * Reset the service information structure
- * @param s A Service_T object
- */
-void Util_resetInfo(Service_T s);
-
-
-/**
- * Are service status data available?
- * @param s The service to test
- * @return true if available otherwise false
- */
-bool Util_hasServiceStatus(Service_T s);
-
-
-/**
  * Construct a HTTP/1.1 Host header utilizing information from the
  * socket. The returned hostBuf is set to "hostname:port" or to the
  * empty string if information is not available or not applicable.
@@ -240,20 +202,6 @@ bool Util_evalQExpression(Operator_Type operator, long long left, long long righ
  * @return the boolean value of the expression
  */
 bool Util_evalDoubleQExpression(Operator_Type operator, double left, double right);
-
-
-/*
- * This will enable service monitoring in the case that it was disabled.
- * @param s A Service_T object
- */
-void Util_monitorSet(Service_T s);
-
-
-/*
- * This will disable service monitoring in the case that it is enabled
- * @param s A Service_T object
- */
-void Util_monitorUnset(Service_T s);
 
 
 /*

@@ -83,6 +83,7 @@
 #include "processor.h"
 #include "base64.h"
 #include "event.h"
+#include "service.h"
 #include "alert.h"
 #include "ProcessTree.h"
 #include "device.h"
@@ -358,6 +359,25 @@ static char *_getUptime(time_t delta, char s[256]) {
 }
 
 
+/**
+ * @return The first of the given event types which is in a failed or changed state on the service, or Event_Null if none is
+ */
+static Event_Type _anyError(Service_T s, int count, ...) {
+        Event_Type rv = Event_Null;
+        va_list ap;
+        va_start(ap, count);
+        for (int i = 0; i < count; i++) {
+                Event_Type e = va_arg(ap, Event_Type);
+                if (s->status[e] != State_Succeeded) {
+                        rv = e;
+                        break;
+                }
+        }
+        va_end(ap);
+        return rv;
+}
+
+
 __attribute__((format (printf, 7, 8))) static void _formatStatus(const char *name, Event_Type errorType, Output_Type type, HttpResponse res, Service_T s, bool validValue, const char *value, ...) {
         if (type == HTML) {
                 StringBuffer_append(res->outputbuffer, "<tr><td>%c%s</td>", toupper(name[0]), name + 1);
@@ -372,7 +392,7 @@ __attribute__((format (printf, 7, 8))) static void _formatStatus(const char *nam
                 char *_value = Str_vcat(value, ap);
                 va_end(ap);
 
-                if (errorType != Event_Null && s->error & errorType)
+                if (errorType != Event_Null && s->status[errorType] != State_Succeeded)
                         StringBuffer_append(res->outputbuffer, type == HTML ? "<td class='red-text'>" : COLOR_LIGHTRED);
                 else
                         StringBuffer_append(res->outputbuffer, type == HTML ? "<td>" : COLOR_DEFAULT);
@@ -411,30 +431,33 @@ __attribute__((format (printf, 7, 8))) static void _formatStatus(const char *nam
 
 static void _printIOStatistics(Output_Type type, HttpResponse res, Service_T s, IOStatistics_T io, const char *name) {
         char header[STRLEN] = {};
+        bool read = Str_isEqual(name, "read");
+        Event_Type bytesEvent = read ? Event_ReadBytes : Event_WriteBytes;
+        Event_Type operationsEvent = read ? Event_ReadOperations : Event_WriteOperations;
         if (Statistics_initialized(&(io->bytes))) {
                 snprintf(header, sizeof(header), "%s bytes", name);
                 double deltaBytesPerSec = Statistics_deltaNormalize(&(io->bytes));
-                _formatStatus(header, Event_Resource, type, res, s, true, "%s/s [%s total]", Fmt_bytes2str(deltaBytesPerSec, (char[10]){}), Fmt_bytes2str(Statistics_raw(&(io->bytes)), (char[10]){}));
+                _formatStatus(header, bytesEvent, type, res, s, true, "%s/s [%s total]", Fmt_bytes2str(deltaBytesPerSec, (char[10]){}), Fmt_bytes2str(Statistics_raw(&(io->bytes)), (char[10]){}));
         }
         if (Statistics_initialized(&(io->bytesPhysical))) {
                 snprintf(header, sizeof(header), "disk %s bytes", name);
                 double deltaBytesPerSec = Statistics_deltaNormalize(&(io->bytesPhysical));
-                _formatStatus(header, Event_Resource, type, res, s, true, "%s/s [%s total]", Fmt_bytes2str(deltaBytesPerSec, (char[10]){}), Fmt_bytes2str(Statistics_raw(&(io->bytesPhysical)), (char[10]){}));
+                _formatStatus(header, bytesEvent, type, res, s, true, "%s/s [%s total]", Fmt_bytes2str(deltaBytesPerSec, (char[10]){}), Fmt_bytes2str(Statistics_raw(&(io->bytesPhysical)), (char[10]){}));
         }
         if (Statistics_initialized(&(io->operations))) {
                 snprintf(header, sizeof(header), "disk %s operations", name);
                 double deltaOpsPerSec = Statistics_deltaNormalize(&(io->operations));
-                _formatStatus(header, Event_Resource, type, res, s, true, "%.1f %ss/s [%llu %ss total]", deltaOpsPerSec, name, Statistics_raw(&(io->operations)), name);
+                _formatStatus(header, operationsEvent, type, res, s, true, "%.1f %ss/s [%llu %ss total]", deltaOpsPerSec, name, Statistics_raw(&(io->operations)), name);
         }
 }
 
 
 static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
-        if (Util_hasServiceStatus(s)) {
+        if (Service_hasStatus(s)) {
                 switch (s->type) {
                         case Service_System:
                                 {
-                                        _formatStatus("load average", Event_Resource, type, res, s, true, "[%.2f] [%.2f] [%.2f]", System_Info.loadavg[0], System_Info.loadavg[1], System_Info.loadavg[2]);
+                                        _formatStatus("load average", _anyError(s, 3, Event_LoadAverage1m, Event_LoadAverage5m, Event_LoadAverage15m), type, res, s, true, "[%.2f] [%.2f] [%.2f]", System_Info.loadavg[0], System_Info.loadavg[1], System_Info.loadavg[2]);
                                         StringBuffer_T sb = StringBuffer_create(256);
                                         if (System_Info.statisticsAvailable & Statistics_CpuUser)
                                                 StringBuffer_append(sb, "%.1f%%usr ", System_Info.cpu.usage.user > 0. ? System_Info.cpu.usage.user : 0.);
@@ -454,27 +477,27 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                                 StringBuffer_append(sb, "%.1f%%guest ", System_Info.cpu.usage.guest > 0. ? System_Info.cpu.usage.guest : 0.);
                                         if (System_Info.statisticsAvailable & Statistics_CpuGuestNice)
                                                 StringBuffer_append(sb, "%.1f%%guestnice ", System_Info.cpu.usage.guest_nice > 0. ? System_Info.cpu.usage.guest_nice : 0.);
-                                        _formatStatus("cpu", Event_Resource, type, res, s, true, "%s", StringBuffer_toString(sb));
+                                        _formatStatus("cpu", Event_Cpu, type, res, s, true, "%s", StringBuffer_toString(sb));
                                         StringBuffer_free(&sb);
-                                        _formatStatus("memory usage", Event_Resource, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.memory.usage.bytes, (char[10]){}), System_Info.memory.usage.percent);
-                                        _formatStatus("swap usage", Event_Resource, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.swap.usage.bytes, (char[10]){}), System_Info.swap.usage.percent);
+                                        _formatStatus("memory usage", Event_Memory, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.memory.usage.bytes, (char[10]){}), System_Info.memory.usage.percent);
+                                        _formatStatus("swap usage", Event_Swap, type, res, s, true, "%s [%.1f%%]", Fmt_bytes2str(System_Info.swap.usage.bytes, (char[10]){}), System_Info.swap.usage.percent);
                                         if (System_Info.paging.initialized) {
-                                                _formatStatus("swap pagein/s", Event_Resource, type, res, s, true, "%llu", System_Info.paging.average.in);
-                                                _formatStatus("swap pageout/s", Event_Resource, type, res, s, true, "%llu", System_Info.paging.average.out);
+                                                _formatStatus("swap pagein/s", Event_Pagein, type, res, s, true, "%llu", System_Info.paging.average.in);
+                                                _formatStatus("swap pageout/s", Event_Pageout, type, res, s, true, "%llu", System_Info.paging.average.out);
                                         } else {
-                                                _formatStatus("swap pagein/s", Event_Resource, type, res, s, false, NULL);
-                                                _formatStatus("swap pageout/s", Event_Resource, type, res, s, false, NULL);
+                                                _formatStatus("swap pagein/s", Event_Pagein, type, res, s, false, NULL);
+                                                _formatStatus("swap pageout/s", Event_Pageout, type, res, s, false, NULL);
                                         }
                                         _formatStatus("uptime", Event_Uptime, type, res, s, System_Info.booted > 0, "%s", _getUptime(Time_now() - System_Info.booted, (char[256]){}));
                                         _formatStatus("boot time", Event_Null, type, res, s, true, "%s", Time_localStr(System_Info.booted, (char[32]){}));
                                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerSystem) {
                                                 if (System_Info.filedescriptors.maximum > 0) {
                                                         if (System_Info.filedescriptors.maximum < LLONG_MAX)
-                                                                _formatStatus("filedescriptors", Event_Resource, type, res, s, true, "%lld [%.1f%% of %lld limit]", System_Info.filedescriptors.allocated, (float)100 * (float)System_Info.filedescriptors.allocated / (float)System_Info.filedescriptors.maximum, System_Info.filedescriptors.maximum);
+                                                                _formatStatus("filedescriptors", Event_Filedescriptors, type, res, s, true, "%lld [%.1f%% of %lld limit]", System_Info.filedescriptors.allocated, (float)100 * (float)System_Info.filedescriptors.allocated / (float)System_Info.filedescriptors.maximum, System_Info.filedescriptors.maximum);
                                                         else
-                                                                _formatStatus("filedescriptors", Event_Resource, type, res, s, true, "%lld", System_Info.filedescriptors.allocated); // No limit
+                                                                _formatStatus("filedescriptors", Event_Filedescriptors, type, res, s, true, "%lld", System_Info.filedescriptors.allocated); // No limit
                                                 } else {
-                                                        _formatStatus("filedescriptors", Event_Resource, type, res, s, false, NULL);
+                                                        _formatStatus("filedescriptors", Event_Filedescriptors, type, res, s, false, NULL);
                                                 }
                                         }
                                 }
@@ -485,12 +508,12 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                 _formatStatus("uid", Event_Uid, type, res, s, s->inf.file->uid >= 0, "%d", s->inf.file->uid);
                                 _formatStatus("gid", Event_Gid, type, res, s, s->inf.file->gid >= 0, "%d", s->inf.file->gid);
                                 _formatStatus("size", Event_Size, type, res, s, s->inf.file->size >= 0, "%s", Fmt_bytes2str(s->inf.file->size, (char[10]){}));
-                                _formatStatus("hardlink", Event_Resource, type, res, s, s->inf.file->nlink != -1LL, "%llu", (unsigned long long)s->inf.file->nlink);
-                                _formatStatus("access timestamp", Event_Timestamp, type, res, s, s->inf.file->timestamp.access > 0, "%s", Time_localStr(s->inf.file->timestamp.access, (char[32]){}));
-                                _formatStatus("change timestamp", Event_Timestamp, type, res, s, s->inf.file->timestamp.change > 0, "%s", Time_localStr(s->inf.file->timestamp.change, (char[32]){}));
-                                _formatStatus("modify timestamp", Event_Timestamp, type, res, s, s->inf.file->timestamp.modify > 0, "%s", Time_localStr(s->inf.file->timestamp.modify, (char[32]){}));
+                                _formatStatus("hardlink", Event_Hardlink, type, res, s, s->inf.file->nlink != -1LL, "%llu", (unsigned long long)s->inf.file->nlink);
+                                _formatStatus("access timestamp", Event_TimestampAccess, type, res, s, s->inf.file->timestamp.access > 0, "%s", Time_localStr(s->inf.file->timestamp.access, (char[32]){}));
+                                _formatStatus("change timestamp", _anyError(s, 2, Event_TimestampChange, Event_Timestamp), type, res, s, s->inf.file->timestamp.change > 0, "%s", Time_localStr(s->inf.file->timestamp.change, (char[32]){}));
+                                _formatStatus("modify timestamp", _anyError(s, 2, Event_TimestampModify, Event_Timestamp), type, res, s, s->inf.file->timestamp.modify > 0, "%s", Time_localStr(s->inf.file->timestamp.modify, (char[32]){}));
                                 if (s->matchlist)
-                                        _formatStatus("content match", Event_Content, type, res, s, true, "%s", (s->error & Event_Content) ? "yes" : "no");
+                                        _formatStatus("content match", Event_Content, type, res, s, true, "%s", (s->status[Event_Content] != State_Succeeded) ? "yes" : "no");
                                 if (s->checksum)
                                         _formatStatus("checksum", Event_Checksum, type, res, s, *s->inf.file->cs_sum, "%s (%s)", s->inf.file->cs_sum, Checksum_Names[s->checksum->type]);
                                 break;
@@ -499,20 +522,20 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                 _formatStatus("permission", Event_Permission, type, res, s, s->inf.directory->mode >= 0, "%o", s->inf.directory->mode & 07777);
                                 _formatStatus("uid", Event_Uid, type, res, s, s->inf.directory->uid >= 0, "%d", s->inf.directory->uid);
                                 _formatStatus("gid", Event_Gid, type, res, s, s->inf.directory->gid >= 0, "%d", s->inf.directory->gid);
-                                _formatStatus("hardlink", Event_Resource, type, res, s, s->inf.directory->nlink != -1LL, "%llu", (unsigned long long)s->inf.directory->nlink);
-                                _formatStatus("access timestamp", Event_Timestamp, type, res, s, s->inf.directory->timestamp.access > 0, "%s", Time_localStr(s->inf.directory->timestamp.access, (char[32]){}));
-                                _formatStatus("change timestamp", Event_Timestamp, type, res, s, s->inf.directory->timestamp.change > 0, "%s", Time_localStr(s->inf.directory->timestamp.change, (char[32]){}));
-                                _formatStatus("modify timestamp", Event_Timestamp, type, res, s, s->inf.directory->timestamp.modify > 0, "%s", Time_localStr(s->inf.directory->timestamp.modify, (char[32]){}));
+                                _formatStatus("hardlink", Event_Hardlink, type, res, s, s->inf.directory->nlink != -1LL, "%llu", (unsigned long long)s->inf.directory->nlink);
+                                _formatStatus("access timestamp", Event_TimestampAccess, type, res, s, s->inf.directory->timestamp.access > 0, "%s", Time_localStr(s->inf.directory->timestamp.access, (char[32]){}));
+                                _formatStatus("change timestamp", _anyError(s, 2, Event_TimestampChange, Event_Timestamp), type, res, s, s->inf.directory->timestamp.change > 0, "%s", Time_localStr(s->inf.directory->timestamp.change, (char[32]){}));
+                                _formatStatus("modify timestamp", _anyError(s, 2, Event_TimestampModify, Event_Timestamp), type, res, s, s->inf.directory->timestamp.modify > 0, "%s", Time_localStr(s->inf.directory->timestamp.modify, (char[32]){}));
                                 break;
 
                         case Service_Fifo:
                                 _formatStatus("permission", Event_Permission, type, res, s, s->inf.fifo->mode >= 0, "%o", s->inf.fifo->mode & 07777);
                                 _formatStatus("uid", Event_Uid, type, res, s, s->inf.fifo->uid >= 0, "%d", s->inf.fifo->uid);
                                 _formatStatus("gid", Event_Gid, type, res, s, s->inf.fifo->gid >= 0, "%d", s->inf.fifo->gid);
-                                _formatStatus("hardlink", Event_Resource, type, res, s, s->inf.fifo->nlink != -1LL, "%llu", (unsigned long long)s->inf.fifo->nlink);
-                                _formatStatus("access timestamp", Event_Timestamp, type, res, s, s->inf.fifo->timestamp.access > 0, "%s", Time_localStr(s->inf.fifo->timestamp.access, (char[32]){}));
-                                _formatStatus("change timestamp", Event_Timestamp, type, res, s, s->inf.fifo->timestamp.change > 0, "%s", Time_localStr(s->inf.fifo->timestamp.change, (char[32]){}));
-                                _formatStatus("modify timestamp", Event_Timestamp, type, res, s, s->inf.fifo->timestamp.modify > 0, "%s", Time_localStr(s->inf.fifo->timestamp.modify, (char[32]){}));
+                                _formatStatus("hardlink", Event_Hardlink, type, res, s, s->inf.fifo->nlink != -1LL, "%llu", (unsigned long long)s->inf.fifo->nlink);
+                                _formatStatus("access timestamp", Event_TimestampAccess, type, res, s, s->inf.fifo->timestamp.access > 0, "%s", Time_localStr(s->inf.fifo->timestamp.access, (char[32]){}));
+                                _formatStatus("change timestamp", _anyError(s, 2, Event_TimestampChange, Event_Timestamp), type, res, s, s->inf.fifo->timestamp.change > 0, "%s", Time_localStr(s->inf.fifo->timestamp.change, (char[32]){}));
+                                _formatStatus("modify timestamp", _anyError(s, 2, Event_TimestampModify, Event_Timestamp), type, res, s, s->inf.fifo->timestamp.modify > 0, "%s", Time_localStr(s->inf.fifo->timestamp.modify, (char[32]){}));
                                 break;
 
                         case Service_Net:
@@ -525,11 +548,11 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                         long long ipackets = Link_getPacketsInPerSecond(s->inf.net->stats);
                                         long long opackets = Link_getPacketsOutPerSecond(s->inf.net->stats);
                                         if (ierrors >= 0 && oerrors >= 0) {
-                                                _formatStatus("link", Event_Link, type, res, s, Link_getState(s->inf.net->stats) == 1, "%lld errors", ierrors + oerrors);
+                                                _formatStatus("link", _anyError(s, 3, Event_LinkStatus, Event_LinkErrorsIn, Event_LinkErrorsOut), type, res, s, Link_getState(s->inf.net->stats) == 1, "%lld errors", ierrors + oerrors);
                                         }
                                         if (ibytes >= 0 && obytes >= 0) {
                                                 if (speed > 0) {
-                                                        _formatStatus("capacity", Event_Speed, type, res, s, Link_getState(s->inf.net->stats) == 1, "%.0lf Mb/s %s-duplex",
+                                                        _formatStatus("capacity", _anyError(s, 2, Event_LinkSpeed, Event_LinkDuplex), type, res, s, Link_getState(s->inf.net->stats) == 1, "%.0lf Mb/s %s-duplex",
                                                                 (double)speed / 1000000., Link_getDuplex(s->inf.net->stats) == 1 ? "full" : "half");
                                                         _formatStatus("download bytes", Event_ByteIn, type, res, s, Link_getState(s->inf.net->stats) == 1, "%s/s (%.1f%% link saturation)",
                                                                 Fmt_bytes2str(ibytes, (char[10]){}), 100. * ibytes * 8 / (double)speed);
@@ -564,13 +587,13 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                 _formatStatus("space free for non superuser", Event_Null, type, res, s, true, "%s [%.1f%%]",
                                         s->inf.filesystem->f_bsize > 0 ? Fmt_bytes2str(s->inf.filesystem->f_blocksfree * s->inf.filesystem->f_bsize, (char[10]){}) : "0 MB",
                                         s->inf.filesystem->f_blocks > 0 ? ((float)100 * (float)s->inf.filesystem->f_blocksfree / (float)s->inf.filesystem->f_blocks) : 0);
-                                _formatStatus("space free total", Event_Resource, type, res, s, true, "%s [%.1f%%]",
+                                _formatStatus("space free total", Event_Space, type, res, s, true, "%s [%.1f%%]",
                                         s->inf.filesystem->f_bsize > 0 ? Fmt_bytes2str(s->inf.filesystem->f_blocksfreetotal * s->inf.filesystem->f_bsize, (char[10]){}) : "0 MB",
                                         s->inf.filesystem->f_blocks > 0 ? ((float)100 * (float)s->inf.filesystem->f_blocksfreetotal / (float)s->inf.filesystem->f_blocks) : 0);
                                 if (s->inf.filesystem->f_files > 0) {
                                         _formatStatus("inodes total", Event_Null, type, res, s, true, "%lld", s->inf.filesystem->f_files);
                                         if (s->inf.filesystem->f_filesfree > 0)
-                                                _formatStatus("inodes free", Event_Resource, type, res, s, true, "%lld [%.1f%%]", s->inf.filesystem->f_filesfree, (float)100 * (float)s->inf.filesystem->f_filesfree / (float)s->inf.filesystem->f_files);
+                                                _formatStatus("inodes free", Event_Inode, type, res, s, true, "%lld [%.1f%%]", s->inf.filesystem->f_filesfree, (float)100 * (float)s->inf.filesystem->f_filesfree / (float)s->inf.filesystem->f_files);
                                 }
                                 _printIOStatistics(type, res, s, &(s->inf.filesystem->read), "read");
                                 _printIOStatistics(type, res, s, &(s->inf.filesystem->write), "write");
@@ -600,24 +623,24 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                 _formatStatus("pid", Event_Pid, type, res, s, s->inf.process->pid >= 0, "%d", s->inf.process->pid);
                                 _formatStatus("parent pid", Event_PPid, type, res, s, s->inf.process->ppid >= 0, "%d", s->inf.process->ppid);
                                 _formatStatus("uid", Event_Uid, type, res, s, s->inf.process->uid >= 0, "%d", s->inf.process->uid);
-                                _formatStatus("effective uid", Event_Uid, type, res, s, s->inf.process->euid >= 0, "%d", s->inf.process->euid);
+                                _formatStatus("effective uid", Event_Euid, type, res, s, s->inf.process->euid >= 0, "%d", s->inf.process->euid);
                                 _formatStatus("gid", Event_Gid, type, res, s, s->inf.process->gid >= 0, "%d", s->inf.process->gid);
                                 _formatStatus("uptime", Event_Uptime, type, res, s, s->inf.process->uptime >= 0, "%s", _getUptime(s->inf.process->uptime, (char[256]){}));
                                 if (Run.flags & Run_ProcessEngineEnabled) {
-                                        _formatStatus("threads", Event_Resource, type, res, s, s->inf.process->threads >= 0, "%d", s->inf.process->threads);
-                                        _formatStatus("children", Event_Resource, type, res, s, s->inf.process->children >= 0, "%d", s->inf.process->children);
-                                        _formatStatus("cpu", Event_Resource, type, res, s, s->inf.process->cpu_percent >= 0, "%.1f%%", s->inf.process->cpu_percent);
-                                        _formatStatus("cpu total", Event_Resource, type, res, s, s->inf.process->total_cpu_percent >= 0, "%.1f%%", s->inf.process->total_cpu_percent);
-                                        _formatStatus("memory", Event_Resource, type, res, s, s->inf.process->mem_percent >= 0, "%.1f%% [%s]", s->inf.process->mem_percent, Fmt_bytes2str(s->inf.process->mem, (char[10]){}));
-                                        _formatStatus("memory total", Event_Resource, type, res, s, s->inf.process->total_mem_percent >= 0, "%.1f%% [%s]", s->inf.process->total_mem_percent, Fmt_bytes2str(s->inf.process->total_mem, (char[10]){}));
+                                        _formatStatus("threads", Event_Threads, type, res, s, s->inf.process->threads >= 0, "%d", s->inf.process->threads);
+                                        _formatStatus("children", Event_Children, type, res, s, s->inf.process->children >= 0, "%d", s->inf.process->children);
+                                        _formatStatus("cpu", Event_Cpu, type, res, s, s->inf.process->cpu_percent >= 0, "%.1f%%", s->inf.process->cpu_percent);
+                                        _formatStatus("cpu total", Event_CpuTotal, type, res, s, s->inf.process->total_cpu_percent >= 0, "%.1f%%", s->inf.process->total_cpu_percent);
+                                        _formatStatus("memory", Event_Memory, type, res, s, s->inf.process->mem_percent >= 0, "%.1f%% [%s]", s->inf.process->mem_percent, Fmt_bytes2str(s->inf.process->mem, (char[10]){}));
+                                        _formatStatus("memory total", Event_MemoryTotal, type, res, s, s->inf.process->total_mem_percent >= 0, "%.1f%% [%s]", s->inf.process->total_mem_percent, Fmt_bytes2str(s->inf.process->total_mem, (char[10]){}));
 #ifdef LINUX
-                                        _formatStatus("security attribute", Event_Invalid, type, res, s, *(s->inf.process->secattr), "%s", s->inf.process->secattr);
+                                        _formatStatus("security attribute", Event_SecurityAttribute, type, res, s, *(s->inf.process->secattr), "%s", s->inf.process->secattr);
                                         long long limit = s->inf.process->filedescriptors.limit.soft < s->inf.process->filedescriptors.limit.hard ? s->inf.process->filedescriptors.limit.soft : s->inf.process->filedescriptors.limit.hard;
                                         if (limit > 0)
-                                                _formatStatus("filedescriptors", Event_Resource, type, res, s, s->inf.process->filedescriptors.open != -1LL, "%lld [%.1f%% of %lld limit]", s->inf.process->filedescriptors.open, (float)100 * (float)s->inf.process->filedescriptors.open / (float)limit, limit);
+                                                _formatStatus("filedescriptors", Event_Filedescriptors, type, res, s, s->inf.process->filedescriptors.open != -1LL, "%lld [%.1f%% of %lld limit]", s->inf.process->filedescriptors.open, (float)100 * (float)s->inf.process->filedescriptors.open / (float)limit, limit);
                                         else
-                                                _formatStatus("filedescriptors", Event_Resource, type, res, s, s->inf.process->filedescriptors.open != -1LL, "N/A");
-                                        _formatStatus("total filedescriptors", Event_Resource, type, res, s, s->inf.process->filedescriptors.openTotal != -1LL, "%lld", s->inf.process->filedescriptors.openTotal);
+                                                _formatStatus("filedescriptors", Event_Filedescriptors, type, res, s, s->inf.process->filedescriptors.open != -1LL, "N/A");
+                                        _formatStatus("total filedescriptors", Event_FiledescriptorsTotal, type, res, s, s->inf.process->filedescriptors.openTotal != -1LL, "%lld", s->inf.process->filedescriptors.openTotal);
 #endif
                                 }
                                 _printIOStatistics(type, res, s, &(s->inf.process->read), "read");
@@ -626,8 +649,8 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
 
                         case Service_Program:
                                 if (s->program->started) {
-                                        _formatStatus("last exit value", Event_Status, type, res, s, true, "%d", s->program->exitStatus);
-                                        _formatStatus("last output", Event_Status, type, res, s, StringBuffer_length(s->program->lastOutput), "%s", StringBuffer_toString(s->program->lastOutput));
+                                        _formatStatus("last exit value", _anyError(s, 2, Event_Status, Event_Spawn), type, res, s, true, "%d", s->program->exitStatus);
+                                        _formatStatus("last output", _anyError(s, 2, Event_Status, Event_Spawn), type, res, s, StringBuffer_length(s->program->lastOutput), "%s", StringBuffer_toString(s->program->lastOutput));
                                 }
                                 break;
 
@@ -650,7 +673,7 @@ static void _printStatus(Output_Type type, HttpResponse res, Service_T s) {
                                         snprintf(buf, sizeof(buf), "using TLS (certificate valid for %d days) ", p->target.net.ssl.certificate.validDays);
                                 Event_Type highlight = p->check_invers ? Event_Connection : Event_Null;
                                 if (p->target.net.ssl.certificate.validDays < p->target.net.ssl.certificate.minimumDays)
-                                        highlight |= Event_Timestamp;
+                                        highlight = Event_Certificate;
                                 _formatStatus("port response time", highlight, type, res, s, p->is_available != Connection_Init, "%s to %s:%d%s type %s/%s %sprotocol %s", Fmt_time2str(p->responsetime.current, (char[11]){}), p->hostname, p->target.net.port, Util_portRequestDescription(p), Util_portTypeDescription(p), Util_portIpDescription(p), buf, p->protocol->name);
                         }
                 }
@@ -1194,7 +1217,7 @@ static void handle_service(HttpRequest req, HttpResponse res) {
                 send_error(req, res, SC_NOT_FOUND, "Service name required");
                 return;
         }
-        Service_T s = Util_getService(++name);
+        Service_T s = Service_get(++name);
         if (! s) {
                 send_error(req, res, SC_NOT_FOUND, "There is no service named \"%s\"", name);
                 return;
@@ -1219,7 +1242,7 @@ static void handle_service_action(HttpRequest req, HttpResponse res) {
                         if (ap.data.action.id == Action_Ignored) {
                                 send_error(req, res, SC_BAD_REQUEST, "Invalid action \"%s\"", ap.data.action.name);
                         } else {
-                                Service_T s = Util_getService(++name);
+                                Service_T s = Service_get(++name);
                                 if (! s) {
                                         send_error(req, res, SC_NOT_FOUND, "There is no service named \"%s\"", name);
                                         return;
@@ -1460,38 +1483,38 @@ static void do_home_process(HttpResponse res) {
                                     on ? " class='stripe'" : "",
                                     s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
                                     get_service_status(HTML, s, buf, sizeof(buf)));
-                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Util_hasServiceStatus(s) || s->inf.process->uptime < 0) {
+                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Service_hasStatus(s) || s->inf.process->uptime < 0) {
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 } else {
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%s</td>", _getUptime(s->inf.process->uptime, (char[256]){}));
                 }
-                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Util_hasServiceStatus(s) || s->inf.process->total_cpu_percent < 0) {
+                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Service_hasStatus(s) || s->inf.process->total_cpu_percent < 0) {
                                 StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 } else {
-                        StringBuffer_append(res->outputbuffer, "<td class='right%s'>%.1f%%</td>", (s->error & Event_Resource) ? " red-text" : "", s->inf.process->total_cpu_percent);
+                        StringBuffer_append(res->outputbuffer, "<td class='right%s'>%.1f%%</td>", (s->status[Event_CpuTotal] != State_Succeeded) ? " red-text" : "", s->inf.process->total_cpu_percent);
                 }
-                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Util_hasServiceStatus(s) || s->inf.process->total_mem_percent < 0) {
+                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Service_hasStatus(s) || s->inf.process->total_mem_percent < 0) {
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 } else {
-                        StringBuffer_append(res->outputbuffer, "<td class='right%s'>%.1f%% [%s]</td>", (s->error & Event_Resource) ? " red-text" : "", s->inf.process->total_mem_percent, Fmt_bytes2str(s->inf.process->total_mem, buf));
+                        StringBuffer_append(res->outputbuffer, "<td class='right%s'>%.1f%% [%s]</td>", (s->status[Event_MemoryTotal] != State_Succeeded) ? " red-text" : "", s->inf.process->total_mem_percent, Fmt_bytes2str(s->inf.process->total_mem, buf));
                 }
                 bool hasReadBytes = Statistics_initialized(&(s->inf.process->read.bytes));
                 bool hasReadOperations = Statistics_initialized(&(s->inf.process->read.operations));
-                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Util_hasServiceStatus(s) || (! hasReadBytes && ! hasReadOperations)) {
+                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Service_hasStatus(s) || (! hasReadBytes && ! hasReadOperations)) {
                         StringBuffer_append(res->outputbuffer, "<td class='right column'>-</td>");
                 } else if (hasReadBytes) {
-                        StringBuffer_append(res->outputbuffer, "<td class='right column%s'>%s/s</td>", (s->error & Event_Resource) ? " red-text" : "", Fmt_bytes2str(Statistics_deltaNormalize(&(s->inf.process->read.bytes)), (char[10]){}));
+                        StringBuffer_append(res->outputbuffer, "<td class='right column%s'>%s/s</td>", (s->status[Event_ReadBytes] != State_Succeeded) ? " red-text" : "", Fmt_bytes2str(Statistics_deltaNormalize(&(s->inf.process->read.bytes)), (char[10]){}));
                 } else if (hasReadOperations) {
-                        StringBuffer_append(res->outputbuffer, "<td class='right column%s'>%.1f/s</td>", (s->error & Event_Resource) ? " red-text" : "", Statistics_deltaNormalize(&(s->inf.process->read.operations)));
+                        StringBuffer_append(res->outputbuffer, "<td class='right column%s'>%.1f/s</td>", (s->status[Event_ReadOperations] != State_Succeeded) ? " red-text" : "", Statistics_deltaNormalize(&(s->inf.process->read.operations)));
                 }
                 bool hasWriteBytes = Statistics_initialized(&(s->inf.process->write.bytes));
                 bool hasWriteOperations = Statistics_initialized(&(s->inf.process->write.operations));
-                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Util_hasServiceStatus(s) || (! hasWriteBytes && ! hasWriteOperations)) {
+                if (! (Run.flags & Run_ProcessEngineEnabled) || ! Service_hasStatus(s) || (! hasWriteBytes && ! hasWriteOperations)) {
                         StringBuffer_append(res->outputbuffer, "<td class='right column'>-</td>");
                 } else if (hasWriteBytes) {
-                        StringBuffer_append(res->outputbuffer, "<td class='right column%s'>%s/s</td>", (s->error & Event_Resource) ? " red-text" : "", Fmt_bytes2str(Statistics_deltaNormalize(&(s->inf.process->write.bytes)), (char[10]){}));
+                        StringBuffer_append(res->outputbuffer, "<td class='right column%s'>%s/s</td>", (s->status[Event_WriteBytes] != State_Succeeded) ? " red-text" : "", Fmt_bytes2str(Statistics_deltaNormalize(&(s->inf.process->write.bytes)), (char[10]){}));
                 } else if (hasWriteOperations) {
-                        StringBuffer_append(res->outputbuffer, "<td class='right column%s'>%.1f/s</td>", (s->error & Event_Resource) ? " red-text" : "", Statistics_deltaNormalize(&(s->inf.process->write.operations)));
+                        StringBuffer_append(res->outputbuffer, "<td class='right column%s'>%.1f/s</td>", (s->status[Event_WriteOperations] != State_Succeeded) ? " red-text" : "", Statistics_deltaNormalize(&(s->inf.process->write.operations)));
                 }
                 StringBuffer_append(res->outputbuffer, "</tr>");
                 on = ! on;
@@ -1528,7 +1551,7 @@ static void do_home_program(HttpResponse res) {
                                     on ? "class='stripe'" : "",
                                     s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
                                     get_service_status(HTML, s, buf, sizeof(buf)));
-                if (! Util_hasServiceStatus(s)) {
+                if (! Service_hasStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<td class='left'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
@@ -1597,7 +1620,7 @@ static void do_home_net(HttpResponse res) {
                                     on ? "class='stripe'" : "",
                                     s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
                                     get_service_status(HTML, s, buf, sizeof(buf)));
-                if (! Util_hasServiceStatus(s) || Link_getState(s->inf.net->stats) != 1) {
+                if (! Service_hasStatus(s) || Link_getState(s->inf.net->stats) != 1) {
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 } else {
@@ -1640,7 +1663,7 @@ static void do_home_filesystem(HttpResponse res) {
                                     on ? "class='stripe'" : "",
                                     s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
                                     get_service_status(HTML, s, buf, sizeof(buf)));
-                if (! Util_hasServiceStatus(s)) {
+                if (! Service_hasStatus(s)) {
                         StringBuffer_append(res->outputbuffer,
                                             "<td class='right'>- [-]</td>"
                                             "<td class='right'>- [-]</td>"
@@ -1649,13 +1672,13 @@ static void do_home_filesystem(HttpResponse res) {
                 } else {
                         StringBuffer_append(res->outputbuffer,
                                             "<td class='right column%s'>%.1f%% [%s]</td>",
-                                            (s->error & Event_Resource) ? " red-text" : "",
+                                            (s->status[Event_Space] != State_Succeeded) ? " red-text" : "",
                                             s->inf.filesystem->space_percent,
                                             s->inf.filesystem->f_bsize > 0 ? Fmt_bytes2str(s->inf.filesystem->f_blocksused * s->inf.filesystem->f_bsize, buf) : "0 MB");
                         if (s->inf.filesystem->f_files > 0) {
                                 StringBuffer_append(res->outputbuffer,
                                                     "<td class='right column%s'>%.1f%% [%lld objects]</td>",
-                                                    (s->error & Event_Resource) ? " red-text" : "",
+                                                    (s->status[Event_Inode] != State_Succeeded) ? " red-text" : "",
                                                     s->inf.filesystem->inode_percent,
                                                     s->inf.filesystem->f_filesused);
                         } else {
@@ -1665,9 +1688,9 @@ static void do_home_filesystem(HttpResponse res) {
                         StringBuffer_append(res->outputbuffer,
                                             "<td class='right column%s'>%s/s</td>"
                                             "<td class='right column%s'>%s/s</td>",
-                                            (s->error & Event_Resource) ? " red-text" : "",
+                                            (s->status[Event_ReadBytes] != State_Succeeded) ? " red-text" : "",
                                             Fmt_bytes2str(Statistics_deltaNormalize(&(s->inf.filesystem->read.bytes)), (char[10]){}),
-                                            (s->error & Event_Resource) ? " red-text" : "",
+                                            (s->status[Event_WriteBytes] != State_Succeeded) ? " red-text" : "",
                                             Fmt_bytes2str(Statistics_deltaNormalize(&(s->inf.filesystem->write.bytes)), (char[10]){}));
                 }
                 StringBuffer_append(res->outputbuffer, "</tr>");
@@ -1707,19 +1730,19 @@ static void do_home_file(HttpResponse res) {
                                     on ? "class='stripe'" : "",
                                     s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
                                     get_service_status(HTML, s, buf, sizeof(buf)));
-                if (! Util_hasServiceStatus(s) || s->inf.file->size < 0)
+                if (! Service_hasStatus(s) || s->inf.file->size < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%s</td>", Fmt_bytes2str(s->inf.file->size, (char[10]){}));
-                if (! Util_hasServiceStatus(s) || s->inf.file->mode < 0)
+                if (! Service_hasStatus(s) || s->inf.file->mode < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%04o</td>", s->inf.file->mode & 07777);
-                if (! Util_hasServiceStatus(s) || s->inf.file->uid < 0)
+                if (! Service_hasStatus(s) || s->inf.file->uid < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%d</td>", s->inf.file->uid);
-                if (! Util_hasServiceStatus(s) || s->inf.file->gid < 0)
+                if (! Service_hasStatus(s) || s->inf.file->gid < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%d</td>", s->inf.file->gid);
@@ -1758,15 +1781,15 @@ static void do_home_fifo(HttpResponse res) {
                                     on ? "class='stripe'" : "",
                                     s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
                                     get_service_status(HTML, s, buf, sizeof(buf)));
-                if (! Util_hasServiceStatus(s) || s->inf.fifo->mode < 0)
+                if (! Service_hasStatus(s) || s->inf.fifo->mode < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%04o</td>", s->inf.fifo->mode & 07777);
-                if (! Util_hasServiceStatus(s) || s->inf.fifo->uid < 0)
+                if (! Service_hasStatus(s) || s->inf.fifo->uid < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%d</td>", s->inf.fifo->uid);
-                if (! Util_hasServiceStatus(s) || s->inf.fifo->gid < 0)
+                if (! Service_hasStatus(s) || s->inf.fifo->gid < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%d</td>", s->inf.fifo->gid);
@@ -1805,15 +1828,15 @@ static void do_home_directory(HttpResponse res) {
                                     on ? "class='stripe'" : "",
                                     s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
                                     get_service_status(HTML, s, buf, sizeof(buf)));
-                if (! Util_hasServiceStatus(s) || s->inf.directory->mode < 0)
+                if (! Service_hasStatus(s) || s->inf.directory->mode < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%04o</td>", s->inf.directory->mode & 07777);
-                if (! Util_hasServiceStatus(s) || s->inf.directory->uid < 0)
+                if (! Service_hasStatus(s) || s->inf.directory->uid < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%d</td>", s->inf.directory->uid);
-                if (! Util_hasServiceStatus(s) || s->inf.directory->gid < 0)
+                if (! Service_hasStatus(s) || s->inf.directory->gid < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
                 else
                         StringBuffer_append(res->outputbuffer, "<td class='right'>%d</td>", s->inf.directory->gid);
@@ -1850,7 +1873,7 @@ static void do_home_host(HttpResponse res) {
                                     on ? "class='stripe'" : "",
                                     s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
                                     get_service_status(HTML, s, buf, sizeof(buf)));
-                if (! Util_hasServiceStatus(s)) {
+                if (! Service_hasStatus(s)) {
                         StringBuffer_append(res->outputbuffer,
                                             "<td class='right'>-</td>");
                 } else {
@@ -1907,73 +1930,7 @@ static void do_home_host(HttpResponse res) {
 static void print_alerts(HttpResponse res, Mail_T s) {
         for (Mail_T r = s; r; r = r->next) {
                 _displayTableRow(res, true, NULL, "Alert mail to", "%s", r->to ? r->to : "");
-                StringBuffer_append(res->outputbuffer, "<tr><td>Alert on</td><td>");
-                if (r->events == Event_Null) {
-                        StringBuffer_append(res->outputbuffer, "No events");
-                } else if (r->events == Event_All) {
-                        StringBuffer_append(res->outputbuffer, "All events");
-                } else {
-                        if (IS_EVENT_SET(r->events, Event_Action))
-                                StringBuffer_append(res->outputbuffer, "Action ");
-                        if (IS_EVENT_SET(r->events, Event_ByteIn))
-                                StringBuffer_append(res->outputbuffer, "ByteIn ");
-                        if (IS_EVENT_SET(r->events, Event_ByteOut))
-                                StringBuffer_append(res->outputbuffer, "ByteOut ");
-                        if (IS_EVENT_SET(r->events, Event_Checksum))
-                                StringBuffer_append(res->outputbuffer, "Checksum ");
-                        if (IS_EVENT_SET(r->events, Event_Connection))
-                                StringBuffer_append(res->outputbuffer, "Connection ");
-                        if (IS_EVENT_SET(r->events, Event_Content))
-                                StringBuffer_append(res->outputbuffer, "Content ");
-                        if (IS_EVENT_SET(r->events, Event_Data))
-                                StringBuffer_append(res->outputbuffer, "Data ");
-                        if (IS_EVENT_SET(r->events, Event_Exec))
-                                StringBuffer_append(res->outputbuffer, "Exec ");
-                        if (IS_EVENT_SET(r->events, Event_Exist))
-                                StringBuffer_append(res->outputbuffer, "Exist ");
-                        if (IS_EVENT_SET(r->events, Event_FsFlag))
-                                StringBuffer_append(res->outputbuffer, "Fsflags ");
-                        if (IS_EVENT_SET(r->events, Event_Gid))
-                                StringBuffer_append(res->outputbuffer, "Gid ");
-                        if (IS_EVENT_SET(r->events, Event_Instance))
-                                StringBuffer_append(res->outputbuffer, "Instance ");
-                        if (IS_EVENT_SET(r->events, Event_Invalid))
-                                StringBuffer_append(res->outputbuffer, "Invalid ");
-                        if (IS_EVENT_SET(r->events, Event_Link))
-                                StringBuffer_append(res->outputbuffer, "Link ");
-                        if (IS_EVENT_SET(r->events, Event_NonExist))
-                                StringBuffer_append(res->outputbuffer, "Nonexist ");
-                        if (IS_EVENT_SET(r->events, Event_Permission))
-                                StringBuffer_append(res->outputbuffer, "Permission ");
-                        if (IS_EVENT_SET(r->events, Event_PacketIn))
-                                StringBuffer_append(res->outputbuffer, "PacketIn ");
-                        if (IS_EVENT_SET(r->events, Event_PacketOut))
-                                StringBuffer_append(res->outputbuffer, "PacketOut ");
-                        if (IS_EVENT_SET(r->events, Event_Pid))
-                                StringBuffer_append(res->outputbuffer, "PID ");
-                        if (IS_EVENT_SET(r->events, Event_Icmp))
-                                StringBuffer_append(res->outputbuffer, "Ping ");
-                        if (IS_EVENT_SET(r->events, Event_PPid))
-                                StringBuffer_append(res->outputbuffer, "PPID ");
-                        if (IS_EVENT_SET(r->events, Event_Resource))
-                                StringBuffer_append(res->outputbuffer, "Resource ");
-                        if (IS_EVENT_SET(r->events, Event_Saturation))
-                                StringBuffer_append(res->outputbuffer, "Saturation ");
-                        if (IS_EVENT_SET(r->events, Event_Size))
-                                StringBuffer_append(res->outputbuffer, "Size ");
-                        if (IS_EVENT_SET(r->events, Event_Speed))
-                                StringBuffer_append(res->outputbuffer, "Speed ");
-                        if (IS_EVENT_SET(r->events, Event_Status))
-                                StringBuffer_append(res->outputbuffer, "Status ");
-                        if (IS_EVENT_SET(r->events, Event_Timeout))
-                                StringBuffer_append(res->outputbuffer, "Timeout ");
-                        if (IS_EVENT_SET(r->events, Event_Timestamp))
-                                StringBuffer_append(res->outputbuffer, "Timestamp ");
-                        if (IS_EVENT_SET(r->events, Event_Uid))
-                                StringBuffer_append(res->outputbuffer, "Uid ");
-                        if (IS_EVENT_SET(r->events, Event_Uptime))
-                                StringBuffer_append(res->outputbuffer, "Uptime ");
-                }
+                StringBuffer_append(res->outputbuffer, "<tr><td>Alert on</td><td>%s", EventSet_describe(&r->events, (char[EventSet_DescribeLength]){}, EventSet_DescribeLength));
                 StringBuffer_append(res->outputbuffer, "</td></tr>");
                 if (r->reminder)
                         _displayTableRow(res, false, NULL, "Alert reminder", "%u cycles", r->reminder);
@@ -2777,7 +2734,7 @@ static void _updateReportStatistics(Service_T s, ReportStatics_T statistics) {
                 statistics->unmonitored++;
         else if (s->monitor & Monitor_Init)
                 statistics->init++;
-        else if (s->error)
+        else if (Service_hasErrors(s))
                 statistics->down++;
         else
                 statistics->up++;
@@ -2899,33 +2856,30 @@ static char *get_service_status(Output_Type type, Service_T s, char *buf, int bu
         assert(buf);
         if (s->monitor == Monitor_Not || s->monitor & Monitor_Init) {
                 get_monitoring_status(type, s, buf, buflen);
-        } else if (s->error == 0) {
+        } else if (! Service_hasErrors(s)) {
                 snprintf(buf, buflen, type == HTML ? "<span class='green-text'>OK</span>" : TextColor_lightGreen("OK"));
         } else {
-                // In the case that the service has actually some failure, the error bitmap will be non zero
+                // The service has some failure: list the description of every event type which is in the failed or changed state
                 char *p = buf;
                 char *end = buf + buflen;
-                EventTable_T *et = Event_Table;
-                while ((*et).id) {
-                        if (s->error & (*et).id) {
-                                bool inverse = false;
-                                if ((*et).id == Event_Link && s->inverseStatus)
-                                        inverse = true;
-                                if (p > buf)
-                                        p = _statusAppend(p, end, " | ");
-                                if (s->error_hint & (*et).id) {
-                                        if (type == HTML)
-                                                p = _statusAppend(p, end, "<span class='orange-text'>%s</span>", (*et).description_changed);
-                                        else
-                                                p = _statusAppend(p, end, TextColor_lightYellow("%s", (*et).description_changed));
-                                } else {
-                                        if (type == HTML)
-                                                p = _statusAppend(p, end, "<span class='red-text'>%s</span>", inverse ? (*et).description_succeeded : (*et).description_failed);
-                                        else
-                                                p = _statusAppend(p, end, TextColor_lightRed("%s", inverse ? (*et).description_succeeded : (*et).description_failed));
-                                }
+                for (int i = 1; i <= Event_Last; i++) {
+                        if (s->status[i] == State_Succeeded)
+                                continue;
+                        const EventTable_T *et = &Event_Table[i];
+                        if (p > buf)
+                                p = _statusAppend(p, end, " | ");
+                        if (s->status[i] == State_Changed) {
+                                if (type == HTML)
+                                        p = _statusAppend(p, end, "<span class='orange-text'>%s</span>", et->description_changed);
+                                else
+                                        p = _statusAppend(p, end, TextColor_lightYellow("%s", et->description_changed));
+                        } else {
+                                bool inverse = (i == Event_LinkStatus && s->inverseStatus);
+                                if (type == HTML)
+                                        p = _statusAppend(p, end, "<span class='red-text'>%s</span>", inverse ? et->description_succeeded : et->description_failed);
+                                else
+                                        p = _statusAppend(p, end, TextColor_lightRed("%s", inverse ? et->description_succeeded : et->description_failed));
                         }
-                        et++;
                 }
         }
         if (s->doaction)

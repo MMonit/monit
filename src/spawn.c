@@ -82,7 +82,7 @@ pid_t spawn(spawn_args_t args) {
         Command_setEnv(C, "MONIT_DATE", Time_localStr(Time_now(), (char[26]){}));
         Command_setEnv(C, "MONIT_SERVICE", S->name);
         Command_setEnv(C, "MONIT_HOST", Run.system->name);
-        Command_setEnv(C, "MONIT_EVENT", E ? Event_get_description(E) : cmd == S->start ? "Started" : cmd == S->stop ? "Stopped" : "No Event");
+        Command_setEnv(C, "MONIT_EVENT", E ? Event_description(E) : cmd == S->start ? "Started" : cmd == S->stop ? "Stopped" : "No Event");
         Command_setEnv(C, "MONIT_DESCRIPTION", E ? E->message : cmd == S->start ? "Started" : cmd == S->stop ? "Stopped" : "No Event");
         switch (S->type) {
                 case Service_Process:

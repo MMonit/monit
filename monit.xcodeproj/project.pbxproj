@@ -74,6 +74,8 @@
 		52F6E84E13A74F220023F87A /* spawn.c in Sources */ = {isa = PBXBuildFile; fileRef = 52F6E7A613A74F220023F87A /* spawn.c */; };
 		52F6E85013A74F220023F87A /* state.c in Sources */ = {isa = PBXBuildFile; fileRef = 52F6E7AA13A74F220023F87A /* state.c */; };
 		52F6E85213A74F220023F87A /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 52F6E7AD13A74F220023F87A /* util.c */; };
+		52F6E85213A74F220023F87B /* service.c in Sources */ = {isa = PBXBuildFile; fileRef = 52F6E85213A74F220023F87C /* service.c */; };
+		52F6E85213A74F220023F87E /* eventqueue.c in Sources */ = {isa = PBXBuildFile; fileRef = 52F6E85213A74F220023F87F /* eventqueue.c */; };
 		52F6E85313A74F220023F87A /* validate.c in Sources */ = {isa = PBXBuildFile; fileRef = 52F6E7AF13A74F220023F87A /* validate.c */; };
 		9303FB8018C47E7000138D72 /* websocket.c in Sources */ = {isa = PBXBuildFile; fileRef = 9303FB7F18C47E7000138D72 /* websocket.c */; };
 		9305FD5E1A96873200B7F8A2 /* Ssl.c in Sources */ = {isa = PBXBuildFile; fileRef = 9305FD591A96873200B7F8A2 /* Ssl.c */; };
@@ -366,6 +368,10 @@
 		52F6E7AB13A74F220023F87A /* state.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = state.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		52F6E7AD13A74F220023F87A /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = util.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52F6E7AE13A74F220023F87A /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = util.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		52F6E85213A74F220023F87C /* service.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = service.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		52F6E85213A74F220023F87D /* service.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = service.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		52F6E85213A74F220023F87F /* eventqueue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = eventqueue.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
+		52F6E85213A74F220023F880 /* eventqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = eventqueue.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		52F6E7AF13A74F220023F87A /* validate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = validate.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52FFBA1118A7E785001F9962 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		9303FB7F18C47E7000138D72 /* websocket.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = websocket.c; sourceTree = "<group>"; };
@@ -700,6 +706,10 @@
 				52F6E7AB13A74F220023F87A /* state.h */,
 				52F6E7AD13A74F220023F87A /* util.c */,
 				52F6E7AE13A74F220023F87A /* util.h */,
+				52F6E85213A74F220023F87C /* service.c */,
+				52F6E85213A74F220023F87D /* service.h */,
+				52F6E85213A74F220023F87F /* eventqueue.c */,
+				52F6E85213A74F220023F880 /* eventqueue.h */,
 				52F6E7AF13A74F220023F87A /* validate.c */,
 				93DCFED92F7A9F35005F2574 /* sha256.h */,
 				93DCFEE42F7A9F35005F2574 /* sha256.c */,
@@ -1071,6 +1081,8 @@
 				52F6E85013A74F220023F87A /* state.c in Sources */,
 				93F14A6C1EE7002500FF756B /* spamassassin.c in Sources */,
 				52F6E85213A74F220023F87A /* util.c in Sources */,
+				52F6E85213A74F220023F87B /* service.c in Sources */,
+				52F6E85213A74F220023F87E /* eventqueue.c in Sources */,
 				52F6E85313A74F220023F87A /* validate.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

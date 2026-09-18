@@ -96,6 +96,8 @@
 #include "monit.h"
 #include "alert.h"
 #include "event.h"
+#include "eventqueue.h"
+#include "service.h"
 #include "device.h"
 #include "net/net.h"
 #include "SystemInfo.h"
@@ -122,6 +124,93 @@
 
 /* ----------------------------------------------------------------- Private */
 
+
+
+/**
+ * Map a resource test to its event type
+ */
+static Event_Type _resourceEvent(Resource_Type resource) {
+        switch (resource) {
+                case Resource_CpuPercent:
+                case Resource_CpuUser:
+                case Resource_CpuSystem:
+                case Resource_CpuWait:
+                case Resource_CpuNice:
+                case Resource_CpuHardIRQ:
+                case Resource_CpuSoftIRQ:
+                case Resource_CpuSteal:
+                case Resource_CpuGuest:
+                case Resource_CpuGuestNice:
+                        return Event_Cpu;
+                case Resource_CpuPercentTotal:
+                        return Event_CpuTotal;
+                case Resource_MemoryPercent:
+                case Resource_MemoryKbyte:
+                        return Event_Memory;
+                case Resource_MemoryKbyteTotal:
+                case Resource_MemoryPercentTotal:
+                        return Event_MemoryTotal;
+                case Resource_SwapPercent:
+                case Resource_SwapKbyte:
+                        return Event_Swap;
+                case Resource_LoadAverage1m:
+                case Resource_LoadAveragePerCore1m:
+                        return Event_LoadAverage1m;
+                case Resource_LoadAverage5m:
+                case Resource_LoadAveragePerCore5m:
+                        return Event_LoadAverage5m;
+                case Resource_LoadAverage15m:
+                case Resource_LoadAveragePerCore15m:
+                        return Event_LoadAverage15m;
+                case Resource_Threads:
+                        return Event_Threads;
+                case Resource_Children:
+                        return Event_Children;
+                case Resource_ReadBytes:
+                case Resource_ReadBytesPhysical:
+                        return Event_ReadBytes;
+                case Resource_ReadOperations:
+                        return Event_ReadOperations;
+                case Resource_WriteBytes:
+                case Resource_WriteBytesPhysical:
+                        return Event_WriteBytes;
+                case Resource_WriteOperations:
+                        return Event_WriteOperations;
+                case Resource_ServiceTime:
+                        return Event_ServiceTime;
+                case Resource_Inode:
+                case Resource_InodeFree:
+                        return Event_Inode;
+                case Resource_Space:
+                case Resource_SpaceFree:
+                        return Event_Space;
+                case Resource_HardLink:
+                        return Event_Hardlink;
+                case Resource_Pagein:
+                        return Event_Pagein;
+                case Resource_Pageout:
+                        return Event_Pageout;
+        }
+        return Event_Null;
+}
+
+
+/**
+ * Map a timestamp test to its event type
+ */
+static Event_Type _timestampEvent(Timestamp_Type type) {
+        switch (type) {
+                case Timestamp_Access:
+                        return Event_TimestampAccess;
+                case Timestamp_Change:
+                        return Event_TimestampChange;
+                case Timestamp_Modification:
+                        return Event_TimestampModify;
+                case Timestamp_Default:
+                        break;
+        }
+        return Event_Timestamp;
+}
 
 /**
  * Read program output. The output is saved to StringBuffer up to Run.limits.programOutput,
@@ -176,18 +265,18 @@ retry:
         }
         if (p->responsetime.limit > -1.) {
                 if (Util_evalDoubleQExpression(p->responsetime.operator, p->responsetime.current, p->responsetime.limit)) {
-                        Event_post(s, Event_Speed, State_Succeeded, p->action, "response time %s succeeded [time %s %s]", Fmt_time2str(p->responsetime.current, (char[11]){}), OperatorShort_Names[p->responsetime.operator], Fmt_time2str(p->responsetime.limit, (char[11]){}));
+                        Event_post(s, Event_ResponseTime, State_Succeeded, p->action, "response time %s succeeded [time %s %s]", Fmt_time2str(p->responsetime.current, (char[11]){}), OperatorShort_Names[p->responsetime.operator], Fmt_time2str(p->responsetime.limit, (char[11]){}));
                 } else {
                         rv = State_Failed;
-                        Event_post(s, Event_Speed, State_Failed, p->action, "response time %s doesn't match limit [time %s %s]", Fmt_time2str(p->responsetime.current, (char[11]){}), OperatorShort_Names[p->responsetime.operator], Fmt_time2str(p->responsetime.limit, (char[11]){}));
+                        Event_post(s, Event_ResponseTime, State_Failed, p->action, "response time %s doesn't match limit [time %s %s]", Fmt_time2str(p->responsetime.current, (char[11]){}), OperatorShort_Names[p->responsetime.operator], Fmt_time2str(p->responsetime.limit, (char[11]){}));
                 }
         }
         if (p->target.net.ssl.options.flags && p->target.net.ssl.certificate.validDays >= 0 && p->target.net.ssl.certificate.minimumDays > 0) {
                 if (p->target.net.ssl.certificate.validDays < p->target.net.ssl.certificate.minimumDays) {
-                        Event_post(s, Event_Timestamp, State_Failed, p->action, "certificate expiry in %d days matches check limit [valid > %d days]", p->target.net.ssl.certificate.validDays, p->target.net.ssl.certificate.minimumDays);
+                        Event_post(s, Event_Certificate, State_Failed, p->action, "certificate expiry in %d days matches check limit [valid > %d days]", p->target.net.ssl.certificate.validDays, p->target.net.ssl.certificate.minimumDays);
                         rv = State_Failed;
                 } else {
-                        Event_post(s, Event_Timestamp, State_Succeeded, p->action, "certificate valid days test succeeded [valid for %d days]", p->target.net.ssl.certificate.validDays);
+                        Event_post(s, Event_Certificate, State_Succeeded, p->action, "certificate valid days test succeeded [valid for %d days]", p->target.net.ssl.certificate.validDays);
                 }
         }
         return rv;
@@ -200,10 +289,10 @@ retry:
 static State_Type _checkProcessState(Service_T s) {
         assert(s);
         if (s->inf.process->zombie) {
-                Event_post(s, Event_Data, State_Failed, s->action_DATA, "process with pid %d is a zombie", s->inf.process->pid);
+                Event_post(s, Event_Zombie, State_Failed, s->action_DATA, "process with pid %d is a zombie", s->inf.process->pid);
                 return State_Failed;
         }
-        Event_post(s, Event_Data, State_Succeeded, s->action_DATA, "zombie check succeeded");
+        Event_post(s, Event_Zombie, State_Succeeded, s->action_DATA, "zombie check succeeded");
         return State_Succeeded;
 }
 
@@ -477,7 +566,7 @@ static State_Type _checkProcessResources(Service_T s, Resource_T r) {
                         Log_error("'%s' error -- unknown resource ID: [%d]\n", s->name, r->resource_id);
                         return State_Failed;
         }
-        Event_post(s, Event_Resource, rv, r->action, "%s", report);
+        Event_post(s, _resourceEvent(r->resource_id), rv, r->action, "%s", report);
         return rv;
 }
 
@@ -735,7 +824,7 @@ static State_Type _checkSystemResources(Service_T s, Resource_T r) {
                         Log_error("'%s' error -- unknown resource ID: [%d]\n", s->name, r->resource_id);
                         return State_Failed;
         }
-        Event_post(s, Event_Resource, rv, r->action, "%s", report);
+        Event_post(s, _resourceEvent(r->resource_id), rv, r->action, "%s", report);
         return rv;
 }
 
@@ -860,10 +949,10 @@ static State_Type _checkEuid(Service_T s, int euid) {
         if (s->euid) {
                 if (euid >= 0) {
                         if ((uid_t)euid != s->euid->uid) {
-                                Event_post(s, Event_Uid, State_Failed, s->euid->action, "euid test failed for %s -- current euid is %d", s->name, euid);
+                                Event_post(s, Event_Euid, State_Failed, s->euid->action, "euid test failed for %s -- current euid is %d", s->name, euid);
                                 return State_Failed;
                         } else {
-                                Event_post(s, Event_Uid, State_Succeeded, s->euid->action, "euid test succeeded [current euid = %d]", euid);
+                                Event_post(s, Event_Euid, State_Succeeded, s->euid->action, "euid test succeeded [current euid = %d]", euid);
                                 return State_Succeeded;
                         }
                 }
@@ -898,10 +987,10 @@ static State_Type _checkSecurityAttribute(Service_T s, char *attribute) {
                 }
 
                 if (! condition_matched) {
-                        Event_post(s, Event_Invalid, State_Succeeded, a->action, "Security attribute test succeeded [current attribute = '%s']", attr);
+                        Event_post(s, Event_SecurityAttribute, State_Succeeded, a->action, "Security attribute test succeeded [current attribute = '%s']", attr);
                 } else {
                         rv = State_Failed;
-                        Event_post(s, Event_Invalid, State_Failed, a->action, "Security attribute test failed for %s -- current attribute is '%s'", s->name, attr);
+                        Event_post(s, Event_SecurityAttribute, State_Failed, a->action, "Security attribute test failed for %s -- current attribute is '%s'", s->name, attr);
                 }
         }
         return rv;
@@ -916,17 +1005,17 @@ static State_Type _checkSystemFiledescriptors(Service_T s) {
                         if (o->limit_absolute > -1LL) {
                                 if (Util_evalQExpression(o->operator, System_Info.filedescriptors.allocated, o->limit_absolute)) {
                                         rv = State_Failed;
-                                        Event_post(s, Event_Resource, State_Failed, o->action, "filedescriptors usage of %lld matches limit [filedescriptors %s %lld]", System_Info.filedescriptors.allocated, OperatorShort_Names[o->operator], o->limit_absolute);
+                                        Event_post(s, Event_Filedescriptors, State_Failed, o->action, "filedescriptors usage of %lld matches limit [filedescriptors %s %lld]", System_Info.filedescriptors.allocated, OperatorShort_Names[o->operator], o->limit_absolute);
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, o->action, "filedescriptors test succeeded [current filedescriptors usage = %lld]", System_Info.filedescriptors.allocated);
+                                        Event_post(s, Event_Filedescriptors, State_Succeeded, o->action, "filedescriptors test succeeded [current filedescriptors usage = %lld]", System_Info.filedescriptors.allocated);
                                 }
                         } else {
                                 float usage = System_Info.filedescriptors.maximum > 0 ? ((float)100 * (float)System_Info.filedescriptors.allocated / (float)System_Info.filedescriptors.maximum) : 0;
                                 if (Util_evalDoubleQExpression(o->operator, usage, o->limit_percent)) {
                                         rv = State_Failed;
-                                        Event_post(s, Event_Resource, State_Failed, o->action, "filedescriptors usage of %.1f%% matches limit [filedescriptors %s %.1f%%]", usage, OperatorShort_Names[o->operator], o->limit_percent);
+                                        Event_post(s, Event_Filedescriptors, State_Failed, o->action, "filedescriptors usage of %.1f%% matches limit [filedescriptors %s %.1f%%]", usage, OperatorShort_Names[o->operator], o->limit_percent);
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, o->action, "filedescriptors usage test succeeded [current filedescriptors usage = %.1f%%]", usage);
+                                        Event_post(s, Event_Filedescriptors, State_Succeeded, o->action, "filedescriptors usage test succeeded [current filedescriptors usage = %.1f%%]", usage);
                                 }
                         }
                 }
@@ -944,17 +1033,17 @@ static State_Type _checkProcessFiledescriptors(Service_T s) {
                 if (o->total) {
                         if (Util_evalQExpression(o->operator, s->inf.process->filedescriptors.openTotal, o->limit_absolute)) {
                                 rv = State_Failed;
-                                Event_post(s, Event_Resource, State_Failed, o->action, "total  filedescriptors usage of %lld matches limit [filedescriptors %s %lld]", s->inf.process->filedescriptors.openTotal, OperatorShort_Names[o->operator], o->limit_absolute);
+                                Event_post(s, Event_FiledescriptorsTotal, State_Failed, o->action, "total  filedescriptors usage of %lld matches limit [filedescriptors %s %lld]", s->inf.process->filedescriptors.openTotal, OperatorShort_Names[o->operator], o->limit_absolute);
                         } else {
-                                Event_post(s, Event_Resource, State_Succeeded, o->action, "total filedescriptors usage test succeeded [current filedescriptors usage = %lld]", s->inf.process->filedescriptors.openTotal);
+                                Event_post(s, Event_FiledescriptorsTotal, State_Succeeded, o->action, "total filedescriptors usage test succeeded [current filedescriptors usage = %lld]", s->inf.process->filedescriptors.openTotal);
                         }
                 } else {
                         if (o->limit_absolute > -1LL) {
                                 if (Util_evalQExpression(o->operator, s->inf.process->filedescriptors.open, o->limit_absolute)) {
                                         rv = State_Failed;
-                                        Event_post(s, Event_Resource, State_Failed, o->action, "filedescriptors usage of %lld matches limit [filedescriptors %s %lld]", s->inf.process->filedescriptors.open, OperatorShort_Names[o->operator], o->limit_absolute);
+                                        Event_post(s, Event_Filedescriptors, State_Failed, o->action, "filedescriptors usage of %lld matches limit [filedescriptors %s %lld]", s->inf.process->filedescriptors.open, OperatorShort_Names[o->operator], o->limit_absolute);
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, o->action, "filedescriptors test succeeded [current filedescriptors usage = %lld]", s->inf.process->filedescriptors.open);
+                                        Event_post(s, Event_Filedescriptors, State_Succeeded, o->action, "filedescriptors test succeeded [current filedescriptors usage = %lld]", s->inf.process->filedescriptors.open);
                                 }
                         } else {
                                 if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerProcessMax) {
@@ -962,9 +1051,9 @@ static State_Type _checkProcessFiledescriptors(Service_T s) {
                                         float usage = limit > 0 ? (float)100 * (float)s->inf.process->filedescriptors.open / (float)limit : 0;
                                         if (Util_evalDoubleQExpression(o->operator, usage, o->limit_percent)) {
                                                 rv = State_Failed;
-                                                Event_post(s, Event_Resource, State_Failed, o->action, "filedescriptors usage of %.1f%% matches limit [filedescriptors %s %.1f%%]", usage, OperatorShort_Names[o->operator], o->limit_percent);
+                                                Event_post(s, Event_Filedescriptors, State_Failed, o->action, "filedescriptors usage of %.1f%% matches limit [filedescriptors %s %.1f%%]", usage, OperatorShort_Names[o->operator], o->limit_percent);
                                         } else {
-                                                Event_post(s, Event_Resource, State_Succeeded, o->action, "filedescriptors usage test succeeded [current filedescriptors usage = %.1f%%]", usage);
+                                                Event_post(s, Event_Filedescriptors, State_Succeeded, o->action, "filedescriptors usage test succeeded [current filedescriptors usage = %.1f%%]", usage);
                                         }
                                 } else {
                                         Log_warning("Cannot compute filesdescriptors usage %% as per-process maximum is not exposed on this system -- filesdecriptors usage test skipped, please switch to testing absolute value\n");
@@ -1006,19 +1095,19 @@ static State_Type _checkTimestamp(Service_T s, Timestamp_T t, time_t timestamp) 
                 } else {
                         if (t->lastTimestamp != timestamp) {
                                 rv = State_Changed;
-                                Event_post(s, Event_Timestamp, State_Changed, t->action, "%s for %s changed from %s to %s", Timestamp_Names[t->type], s->path, t->lastTimestamp ? Time_localStr(t->lastTimestamp, (char[26]){}) : "N/A", Time_localStr(timestamp, (char[26]){}));
+                                Event_post(s, _timestampEvent(t->type), State_Changed, t->action, "%s for %s changed from %s to %s", Timestamp_Names[t->type], s->path, t->lastTimestamp ? Time_localStr(t->lastTimestamp, (char[26]){}) : "N/A", Time_localStr(timestamp, (char[26]){}));
                                 t->lastTimestamp = timestamp; // reset expected value for next cycle
                         } else {
-                                Event_post(s, Event_Timestamp, State_ChangedNot, t->action, "%s was not changed for %s", Timestamp_Names[t->type], s->path);
+                                Event_post(s, _timestampEvent(t->type), State_ChangedNot, t->action, "%s was not changed for %s", Timestamp_Names[t->type], s->path);
                         }
                 }
         } else {
                 /* we are testing constant value for failed or succeeded state */
                 if (Util_evalQExpression(t->operator, Time_now() - timestamp, t->time)) {
                         rv = State_Failed;
-                        Event_post(s, Event_Timestamp, State_Failed, t->action, "%s for %s failed -- current %s is %s", Timestamp_Names[t->type], s->path, Timestamp_Names[t->type], Time_localStr(timestamp, (char[26]){}));
+                        Event_post(s, _timestampEvent(t->type), State_Failed, t->action, "%s for %s failed -- current %s is %s", Timestamp_Names[t->type], s->path, Timestamp_Names[t->type], Time_localStr(timestamp, (char[26]){}));
                 } else {
-                        Event_post(s, Event_Timestamp, State_Succeeded, t->action, "%s test succeeded for %s [current %s is %s]", Timestamp_Names[t->type], s->path, Timestamp_Names[t->type], Time_localStr(timestamp, (char[26]){}));
+                        Event_post(s, _timestampEvent(t->type), State_Succeeded, t->action, "%s test succeeded for %s [current %s is %s]", Timestamp_Names[t->type], s->path, Timestamp_Names[t->type], Time_localStr(timestamp, (char[26]){}));
                 }
         }
         return rv;
@@ -1125,20 +1214,20 @@ static State_Type _checkHardlink(Service_T s, long long nlink) {
                                         } else {
                                                 if ((long long)sl->nlink != nlink) {
                                                         rv = State_Changed;
-                                                        Event_post(s, Event_Resource, State_Changed, sl->action, "hardlink for %s changed to %llu", s->path, (unsigned long long)nlink);
+                                                        Event_post(s, Event_Hardlink, State_Changed, sl->action, "hardlink for %s changed to %llu", s->path, (unsigned long long)nlink);
                                                         /* reset expected value for next cycle */
                                                         sl->nlink = nlink;
                                                 } else {
-                                                        Event_post(s, Event_Resource, State_ChangedNot, sl->action, "hardlink has not changed [current hardlink = %llu]", (unsigned long long)nlink);
+                                                        Event_post(s, Event_Hardlink, State_ChangedNot, sl->action, "hardlink has not changed [current hardlink = %llu]", (unsigned long long)nlink);
                                                 }
                                         }
                                 } else {
                                         /* we are testing constant value for failed or succeeded state */
                                         if (Util_evalQExpression(sl->operator, nlink, sl->nlink)) {
                                                 rv = State_Failed;
-                                                Event_post(s, Event_Resource, State_Failed, sl->action, "hardlink test failed for %s -- current hardlink is %llu", s->path, (unsigned long long)nlink);
+                                                Event_post(s, Event_Hardlink, State_Failed, sl->action, "hardlink test failed for %s -- current hardlink is %llu", s->path, (unsigned long long)nlink);
                                         } else {
-                                                Event_post(s, Event_Resource, State_Succeeded, sl->action, "hardlink check succeeded [current hardlink = %llu]", (unsigned long long)nlink);
+                                                Event_post(s, Event_Hardlink, State_Succeeded, sl->action, "hardlink check succeeded [current hardlink = %llu]", (unsigned long long)nlink);
                                         }
                                 }
                         }
@@ -1344,17 +1433,17 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                         }
                         if (td->limit_percent >= 0.) {
                                 if (Util_evalDoubleQExpression(td->operator, s->inf.filesystem->inode_percent, td->limit_percent)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "inode usage %.1f%% matches resource limit [inode usage %s %.1f%%]", s->inf.filesystem->inode_percent, OperatorShort_Names[td->operator], td->limit_percent);
+                                        Event_post(s, Event_Inode, State_Failed, td->action, "inode usage %.1f%% matches resource limit [inode usage %s %.1f%%]", s->inf.filesystem->inode_percent, OperatorShort_Names[td->operator], td->limit_percent);
                                         return State_Failed;
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, td->action, "inode usage test succeeded [current inode usage = %.1f%%]", s->inf.filesystem->inode_percent);
+                                        Event_post(s, Event_Inode, State_Succeeded, td->action, "inode usage test succeeded [current inode usage = %.1f%%]", s->inf.filesystem->inode_percent);
                                 }
                         } else {
                                 if (Util_evalQExpression(td->operator, s->inf.filesystem->f_filesused, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "inode usage %lld matches resource limit [inode usage %s %lld]", s->inf.filesystem->f_filesused, OperatorShort_Names[td->operator], td->limit_absolute);
+                                        Event_post(s, Event_Inode, State_Failed, td->action, "inode usage %lld matches resource limit [inode usage %s %lld]", s->inf.filesystem->f_filesused, OperatorShort_Names[td->operator], td->limit_absolute);
                                         return State_Failed;
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, td->action, "inode usage test succeeded [current inode usage = %lld]", s->inf.filesystem->f_filesused);
+                                        Event_post(s, Event_Inode, State_Succeeded, td->action, "inode usage test succeeded [current inode usage = %lld]", s->inf.filesystem->f_filesused);
                                 }
                         }
                         return State_Succeeded;
@@ -1366,17 +1455,17 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                         }
                         if (td->limit_percent >= 0.) {
                                 if (Util_evalDoubleQExpression(td->operator, 100. - s->inf.filesystem->inode_percent, td->limit_percent)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "inode free %.1f%% matches resource limit [inode free %s %.1f%%]", 100. - s->inf.filesystem->inode_percent, OperatorShort_Names[td->operator], td->limit_percent);
+                                        Event_post(s, Event_Inode, State_Failed, td->action, "inode free %.1f%% matches resource limit [inode free %s %.1f%%]", 100. - s->inf.filesystem->inode_percent, OperatorShort_Names[td->operator], td->limit_percent);
                                         return State_Failed;
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, td->action, "inode free test succeeded [current inode free = %.1f%%]", 100. - s->inf.filesystem->inode_percent);
+                                        Event_post(s, Event_Inode, State_Succeeded, td->action, "inode free test succeeded [current inode free = %.1f%%]", 100. - s->inf.filesystem->inode_percent);
                                 }
                         } else {
                                 if (Util_evalQExpression(td->operator, s->inf.filesystem->f_filesfree, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "inode free %lld matches resource limit [inode free %s %lld]", s->inf.filesystem->f_filesfree, OperatorShort_Names[td->operator], td->limit_absolute);
+                                        Event_post(s, Event_Inode, State_Failed, td->action, "inode free %lld matches resource limit [inode free %s %lld]", s->inf.filesystem->f_filesfree, OperatorShort_Names[td->operator], td->limit_absolute);
                                         return State_Failed;
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, td->action, "inode free test succeeded [current inode free = %lld]", s->inf.filesystem->f_filesfree);
+                                        Event_post(s, Event_Inode, State_Succeeded, td->action, "inode free test succeeded [current inode free = %lld]", s->inf.filesystem->f_filesfree);
                                 }
                         }
                         return State_Succeeded;
@@ -1384,10 +1473,10 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                 case Resource_Space:
                         if (td->limit_percent >= 0.) {
                                 if (Util_evalDoubleQExpression(td->operator, s->inf.filesystem->space_percent, td->limit_percent)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "space usage %.1f%% matches resource limit [space usage %s %.1f%%]", s->inf.filesystem->space_percent, OperatorShort_Names[td->operator], td->limit_percent);
+                                        Event_post(s, Event_Space, State_Failed, td->action, "space usage %.1f%% matches resource limit [space usage %s %.1f%%]", s->inf.filesystem->space_percent, OperatorShort_Names[td->operator], td->limit_percent);
                                         return State_Failed;
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, td->action, "space usage test succeeded [current space usage = %.1f%%]", s->inf.filesystem->space_percent);
+                                        Event_post(s, Event_Space, State_Succeeded, td->action, "space usage test succeeded [current space usage = %.1f%%]", s->inf.filesystem->space_percent);
                                 }
                         } else {
                                 long long bytesUsed = s->inf.filesystem->f_blocksused * (s->inf.filesystem->f_bsize > 0 ? s->inf.filesystem->f_bsize : 1);
@@ -1396,10 +1485,10 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 if (Util_evalQExpression(td->operator, bytesUsed, td->limit_absolute)) {
                                         char buf2[10];
                                         Fmt_bytes2str(td->limit_absolute, buf2);
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "space usage %s matches resource limit [space usage %s %s]", buf1, OperatorShort_Names[td->operator], buf2);
+                                        Event_post(s, Event_Space, State_Failed, td->action, "space usage %s matches resource limit [space usage %s %s]", buf1, OperatorShort_Names[td->operator], buf2);
                                         return State_Failed;
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, td->action, "space usage test succeeded [current space usage = %s]", buf1);
+                                        Event_post(s, Event_Space, State_Succeeded, td->action, "space usage test succeeded [current space usage = %s]", buf1);
                                 }
                         }
                         return State_Succeeded;
@@ -1407,10 +1496,10 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                 case Resource_SpaceFree:
                         if (td->limit_percent >= 0.) {
                                 if (Util_evalDoubleQExpression(td->operator, 100. - s->inf.filesystem->space_percent, td->limit_percent)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "space free %.1f%% matches resource limit [space free %s %.1f%%]", 100. - s->inf.filesystem->space_percent, OperatorShort_Names[td->operator], td->limit_percent);
+                                        Event_post(s, Event_Space, State_Failed, td->action, "space free %.1f%% matches resource limit [space free %s %.1f%%]", 100. - s->inf.filesystem->space_percent, OperatorShort_Names[td->operator], td->limit_percent);
                                         return State_Failed;
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, td->action, "space free test succeeded [current space free = %.1f%%]", 100. - s->inf.filesystem->space_percent);
+                                        Event_post(s, Event_Space, State_Succeeded, td->action, "space free test succeeded [current space free = %.1f%%]", 100. - s->inf.filesystem->space_percent);
                                 }
                         } else {
                                 char buf1[10];
@@ -1419,10 +1508,10 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                                 if (Util_evalQExpression(td->operator, bytesFreeTotal, td->limit_absolute)) {
                                         char buf2[10];
                                         Fmt_bytes2str(td->limit_absolute, buf2);
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "space free %s matches resource limit [space free %s %s]", buf1, OperatorShort_Names[td->operator], buf2);
+                                        Event_post(s, Event_Space, State_Failed, td->action, "space free %s matches resource limit [space free %s %s]", buf1, OperatorShort_Names[td->operator], buf2);
                                         return State_Failed;
                                 } else {
-                                        Event_post(s, Event_Resource, State_Succeeded, td->action, "space free test succeeded [current space free = %s]", buf1);
+                                        Event_post(s, Event_Space, State_Succeeded, td->action, "space free test succeeded [current space free = %s]", buf1);
                                 }
                         }
                         return State_Succeeded;
@@ -1431,10 +1520,10 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                         if (Statistics_initialized(&(s->inf.filesystem->read.bytes))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.filesystem->read.bytes));
                                 if (Util_evalDoubleQExpression(td->operator, value, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "read rate %s/s matches resource limit [read %s %s/s]", Fmt_bytes2str(value, (char[10]){}), OperatorShort_Names[td->operator], Fmt_bytes2str(td->limit_absolute, (char[10]){}));
+                                        Event_post(s, Event_ReadBytes, State_Failed, td->action, "read rate %s/s matches resource limit [read %s %s/s]", Fmt_bytes2str(value, (char[10]){}), OperatorShort_Names[td->operator], Fmt_bytes2str(td->limit_absolute, (char[10]){}));
                                         return State_Failed;
                                 }
-                                Event_post(s, Event_Resource, State_Succeeded, td->action, "read rate test succeeded [current read = %s/s]", Fmt_bytes2str(value, (char[10]){}));
+                                Event_post(s, Event_ReadBytes, State_Succeeded, td->action, "read rate test succeeded [current read = %s/s]", Fmt_bytes2str(value, (char[10]){}));
                         } else {
                                 DEBUG("'%s' warning -- no data are available for bytes read rate test\n", s->name);
                         }
@@ -1444,10 +1533,10 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                         if (Statistics_initialized(&(s->inf.filesystem->read.operations))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.filesystem->read.operations));
                                 if (Util_evalDoubleQExpression(td->operator, value, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "read rate %.1f operations/s matches resource limit [read %s %llu operations/s]", value, OperatorShort_Names[td->operator], td->limit_absolute);
+                                        Event_post(s, Event_ReadOperations, State_Failed, td->action, "read rate %.1f operations/s matches resource limit [read %s %llu operations/s]", value, OperatorShort_Names[td->operator], td->limit_absolute);
                                         return State_Failed;
                                 }
-                                Event_post(s, Event_Resource, State_Succeeded, td->action, "read rate test succeeded [current read = %.1f operations/s]", value);
+                                Event_post(s, Event_ReadOperations, State_Succeeded, td->action, "read rate test succeeded [current read = %.1f operations/s]", value);
                         } else {
                                 DEBUG("'%s' warning -- no data are available for read rate test\n", s->name);
                         }
@@ -1457,10 +1546,10 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                         if (Statistics_initialized(&(s->inf.filesystem->write.bytes))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.filesystem->write.bytes));
                                 if (Util_evalDoubleQExpression(td->operator, value, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "write rate %s/s matches resource limit [write %s %s/s]", Fmt_bytes2str(value, (char[10]){}), OperatorShort_Names[td->operator], Fmt_bytes2str(td->limit_absolute, (char[10]){}));
+                                        Event_post(s, Event_WriteBytes, State_Failed, td->action, "write rate %s/s matches resource limit [write %s %s/s]", Fmt_bytes2str(value, (char[10]){}), OperatorShort_Names[td->operator], Fmt_bytes2str(td->limit_absolute, (char[10]){}));
                                         return State_Failed;
                                 }
-                                Event_post(s, Event_Resource, State_Succeeded, td->action, "write rate test succeeded [current write = %s/s]", Fmt_bytes2str(value, (char[10]){}));
+                                Event_post(s, Event_WriteBytes, State_Succeeded, td->action, "write rate test succeeded [current write = %s/s]", Fmt_bytes2str(value, (char[10]){}));
                         } else {
                                 DEBUG("'%s' warning -- no data are available for bytes write rate test\n", s->name);
                         }
@@ -1470,10 +1559,10 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                         if (Statistics_initialized(&(s->inf.filesystem->write.operations))) {
                                 double value = Statistics_deltaNormalize(&(s->inf.filesystem->write.operations));
                                 if (Util_evalDoubleQExpression(td->operator, value, td->limit_absolute)) {
-                                        Event_post(s, Event_Resource, State_Failed, td->action, "write rate %.1f operations/s matches resource limit [write %s %llu operations/s]", value, OperatorShort_Names[td->operator], td->limit_absolute);
+                                        Event_post(s, Event_WriteOperations, State_Failed, td->action, "write rate %.1f operations/s matches resource limit [write %s %llu operations/s]", value, OperatorShort_Names[td->operator], td->limit_absolute);
                                         return State_Failed;
                                 }
-                                Event_post(s, Event_Resource, State_Succeeded, td->action, "write rate test succeeded [current write = %.1f operations/s]", value);
+                                Event_post(s, Event_WriteOperations, State_Succeeded, td->action, "write rate test succeeded [current write = %.1f operations/s]", value);
                         } else {
                                 DEBUG("'%s' warning -- no data are available for write rate test\n", s->name);
                         }
@@ -1514,10 +1603,10 @@ static State_Type _checkFilesystemResources(Service_T s, FileSystem_T td) {
                         double deltaOperations = Statistics_delta(&(s->inf.filesystem->read.operations)) + Statistics_delta(&(s->inf.filesystem->write.operations));
                         double serviceTime = deltaOperations > 0. ? deltaTime / deltaOperations : 0.;
                         if (Util_evalDoubleQExpression(td->operator, serviceTime, td->limit_absolute)) {
-                                Event_post(s, Event_Resource, State_Failed, td->action, "service time %s/operation matches resource limit [service time %s %s/operation]", Fmt_time2str(serviceTime, (char[11]){}), OperatorShort_Names[td->operator], Fmt_time2str(td->limit_absolute, (char[11]){}));
+                                Event_post(s, Event_ServiceTime, State_Failed, td->action, "service time %s/operation matches resource limit [service time %s %s/operation]", Fmt_time2str(serviceTime, (char[11]){}), OperatorShort_Names[td->operator], Fmt_time2str(td->limit_absolute, (char[11]){}));
                                 return State_Failed;
                         }
-                        Event_post(s, Event_Resource, State_Succeeded, td->action, "service time test succeeded [current service time = %s/operation]", Fmt_time2str(serviceTime, (char[11]){}));
+                        Event_post(s, Event_ServiceTime, State_Succeeded, td->action, "service time test succeeded [current service time = %s/operation]", Fmt_time2str(serviceTime, (char[11]){}));
                 }
                         return State_Succeeded;
 
@@ -1579,12 +1668,12 @@ static bool _checkSkip(Service_T s) {
         s->monitor &= ~Monitor_Waiting;
         // Skip if parent is not initialized
         for (Dependant_T d = s->dependantlist; d; d = d->next) {
-                Service_T parent = Util_getService(d->dependant);
+                Service_T parent = Service_get(d->dependant);
                 if (parent) {
                         if (! (parent->monitor & Monitor_Yes)) {
                                 DEBUG("'%s' test skipped as required service '%s' is %s\n", s->name, parent->name, parent->monitor == Monitor_Init ? "initializing" : "not monitored");
                                 return true;
-                        } else if (parent->error) {
+                        } else if (Service_hasErrors(parent)) {
                                 DEBUG("'%s' test skipped as required service '%s' has errors\n", s->name, parent->name);
                                 return true;
                         }
@@ -1622,7 +1711,7 @@ static bool _doScheduledAction(Service_T s) {
  */
 int validate(void) {
         Run.handler_flag = Handler_Succeeded;
-        Event_queue_process();
+        EventQueue_process();
 
         SystemInfo_update();
         ProcessTree_init(ProcessEngine_None);
@@ -1692,9 +1781,9 @@ State_Type check_process(Service_T s) {
         if (s->monitor == Monitor_Not)
                 return rv;
         /* Reset the exec and timeout errors if active ... the process is running (most probably after manual intervention) */
-        if (IS_EVENT_SET(s->error, Event_Exec))
+        if (s->status[Event_Exec] != State_Succeeded)
                 Event_post(s, Event_Exec, State_Succeeded, s->action_EXEC, "process is running after previous exec error (slow starting or manually recovered?)");
-        if (IS_EVENT_SET(s->error, Event_Timeout))
+        if (s->status[Event_Timeout] != State_Succeeded)
                 for (ActionRate_T ar = s->actionratelist; ar; ar = ar->next)
                         Event_post(s, Event_Timeout, State_Succeeded, ar->action, "process is running after previous restart timeout (manually recovered?)");
         if (checkResources) {
@@ -2058,9 +2147,9 @@ static State_Type _checkProgram(Service_T s) {
                 // Check the program content (we check the whole program output at once, not line-by-line)
                 for (Match_T ml = s->matchlist; ml; ml = ml->next) {
                         if ((_checkPattern(ml, lastOutput) == 0) ^ (ml->not))
-                                Event_post(s, Event_Content, State_Changed, ml->action, "content match on program output:\n%s\n", lastOutput);
+                                Event_post(s, Event_ProgramOutput, State_Changed, ml->action, "content match on program output:\n%s\n", lastOutput);
                         else
-                                Event_post(s, Event_Content, State_ChangedNot, ml->action,  "content doesn't match on program output:\n%s", lastOutput);
+                                Event_post(s, Event_ProgramOutput, State_ChangedNot, ml->action,  "content doesn't match on program output:\n%s", lastOutput);
                 }
 
                 // Check if the program output content changed
@@ -2068,10 +2157,10 @@ static State_Type _checkProgram(Service_T s) {
                         if (! oc->previous) {
                                 oc->previous = Str_dup(lastOutput);
                         } else if (strcmp(oc->previous, lastOutput) == 0) {
-                                Event_post(s, Event_Content, oc->check_invers ? State_Changed : State_ChangedNot, oc->action,
+                                Event_post(s, Event_ProgramOutput, oc->check_invers ? State_Changed : State_ChangedNot, oc->action,
                                            "content remained the same:\n<<<<<<< Begin\n%s\n>>>>>>> End", lastOutput);
                         } else {
-                                Event_post(s, Event_Content, oc->check_invers ? State_ChangedNot : State_Changed, oc->action,
+                                Event_post(s, Event_ProgramOutput, oc->check_invers ? State_ChangedNot : State_Changed, oc->action,
                                            "content changed:\n<<<<<<< Begin previous\n%s\n======= End previous - Begin current\n%s\n>>>>>>> End current", oc->previous, lastOutput);
                                 FREE(oc->previous);
                                 oc->previous = Str_dup(lastOutput);
@@ -2092,9 +2181,9 @@ static State_Type _checkProgram(Service_T s) {
                 s->program->P = Command_execute(s->program->C);
                 if (! s->program->P) {
                         rv = State_Failed;
-                        Event_post(s, Event_Status, State_Failed, s->action_EXEC, "failed to execute '%s' -- %s", s->path, STRERROR);
+                        Event_post(s, Event_Spawn, State_Failed, s->action_EXEC, "failed to execute '%s' -- %s", s->path, STRERROR);
                 } else {
-                        Event_post(s, Event_Status, State_Succeeded, s->action_EXEC, "program started");
+                        Event_post(s, Event_Spawn, State_Succeeded, s->action_EXEC, "program started");
                         s->program->started = now;
                         // Set await_program_exit so the next poll cycle continues checking until we get exit status
                         if (s->every.type == Every_Cron || s->every.type == Every_SkipCycles) {
@@ -2115,7 +2204,7 @@ State_Type check_program(Service_T s) {
          */
         if (s->program->checking) {
                 DEBUG("'%s' program check skipped -- a check is already in progress for this service\n", s->name);
-                return s->error ? State_Failed : State_Succeeded;
+                return Service_hasErrors(s) ? State_Failed : State_Succeeded;
         }
         s->program->checking = true;
         volatile State_Type rv = State_Succeeded;
@@ -2168,10 +2257,10 @@ State_Type check_remote_host(Service_T s) {
                                         // Check response time
                                         if (icmp->responsetime.limit > -1.) {
                                                 if (Util_evalDoubleQExpression(icmp->responsetime.operator, icmp->responsetime.current, icmp->responsetime.limit)) {
-                                                        Event_post(s, Event_Speed, State_Succeeded, icmp->action, "response time %s succeeded [time %s %s]", Fmt_time2str(icmp->responsetime.current, (char[11]){}), OperatorShort_Names[icmp->responsetime.operator], Fmt_time2str(icmp->responsetime.limit, (char[11]){}));
+                                                        Event_post(s, Event_ResponseTime, State_Succeeded, icmp->action, "response time %s succeeded [time %s %s]", Fmt_time2str(icmp->responsetime.current, (char[11]){}), OperatorShort_Names[icmp->responsetime.operator], Fmt_time2str(icmp->responsetime.limit, (char[11]){}));
                                                 } else {
                                                         rv = State_Failed;
-                                                        Event_post(s, Event_Speed, State_Failed, icmp->action, "response time %s doesn't match limit [time %s %s]", Fmt_time2str(icmp->responsetime.current, (char[11]){}), OperatorShort_Names[icmp->responsetime.operator], Fmt_time2str(icmp->responsetime.limit, (char[11]){}));
+                                                        Event_post(s, Event_ResponseTime, State_Failed, icmp->action, "response time %s doesn't match limit [time %s %s]", Fmt_time2str(icmp->responsetime.current, (char[11]){}), OperatorShort_Names[icmp->responsetime.operator], Fmt_time2str(icmp->responsetime.limit, (char[11]){}));
                                                 }
                                         }
                                 }
@@ -2230,7 +2319,7 @@ State_Type check_net(Service_T s) {
                 havedata = false;
                 for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
                         rv = link->check_invers ? State_Succeeded : State_Failed;
-                        Event_post(s, Event_Link, link->check_invers ? State_Succeeded : State_Failed, link->action, "link data collection failed -- %s", Exception_frame.message);
+                        Event_post(s, Event_LinkStatus, link->check_invers ? State_Succeeded : State_Failed, link->action, "link data collection failed -- %s", Exception_frame.message);
                 }
         }
         END_TRY;
@@ -2239,38 +2328,33 @@ State_Type check_net(Service_T s) {
                 return s->inverseStatus ? State_Succeeded : State_Failed; // No data, event handled in the TRY-ELSE loop already, terminate remaining tests
         } else if (! Link_getState(s->inf.net->stats)) {
                 for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
-                        Event_post(s, Event_Link, link->check_invers ? State_Succeeded : State_Failed, link->action, "link down");
+                        Event_post(s, Event_LinkStatus, link->check_invers ? State_Succeeded : State_Failed, link->action, "link down");
                 }
                 return s->inverseStatus ? State_Succeeded : State_Failed; // Link is down, terminate remaining tests
         } else {
                 for (LinkStatus_T link = s->linkstatuslist; link; link = link->next)
-                        Event_post(s, Event_Link, link->check_invers ? State_Failed : State_Succeeded, link->action, "link up");
+                        Event_post(s, Event_LinkStatus, link->check_invers ? State_Failed : State_Succeeded, link->action, "link up");
         }
-        if (! s->inverseStatus) {
-                //FIXME: these tests share the same class (Event_Link), so if "link up" test is set, it would set the state to failure, but these tests will reset it back to success. When we'll add more event types,
-                //       we shoud assign a new type for link in/out errors and then we can perform these tests even if "link up" is set
-
-                // Link errors
-                long long oerrors = Link_getErrorsOutPerSecond(s->inf.net->stats);
-                if (oerrors >= 0) {
-                        for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
-                                if (oerrors > 0) {
-                                        rv = State_Failed;
-                                        Event_post(s, Event_Link, State_Failed, link->action, "%lld upload errors detected", oerrors);
-                                } else {
-                                        Event_post(s, Event_Link, State_Succeeded, link->action, "upload errors check succeeded");
-                                }
+        // Link errors
+        long long oerrors = Link_getErrorsOutPerSecond(s->inf.net->stats);
+        if (oerrors >= 0) {
+                for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
+                        if (oerrors > 0) {
+                                rv = State_Failed;
+                                Event_post(s, Event_LinkErrorsOut, State_Failed, link->action, "%lld upload errors detected", oerrors);
+                        } else {
+                                Event_post(s, Event_LinkErrorsOut, State_Succeeded, link->action, "upload errors check succeeded");
                         }
                 }
-                long long ierrors = Link_getErrorsInPerSecond(s->inf.net->stats);
-                if (ierrors >= 0) {
-                        for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
-                                if (ierrors > 0) {
-                                        rv = State_Failed;
-                                        Event_post(s, Event_Link, State_Failed, link->action, "%lld download errors detected", ierrors);
-                                } else {
-                                        Event_post(s, Event_Link, State_Succeeded, link->action, "download errors check succeeded");
-                                }
+        }
+        long long ierrors = Link_getErrorsInPerSecond(s->inf.net->stats);
+        if (ierrors >= 0) {
+                for (LinkStatus_T link = s->linkstatuslist; link; link = link->next) {
+                        if (ierrors > 0) {
+                                rv = State_Failed;
+                                Event_post(s, Event_LinkErrorsIn, State_Failed, link->action, "%lld download errors detected", ierrors);
+                        } else {
+                                Event_post(s, Event_LinkErrorsIn, State_Succeeded, link->action, "download errors check succeeded");
                         }
                 }
         }
@@ -2280,13 +2364,13 @@ State_Type check_net(Service_T s) {
         for (LinkSpeed_T link = s->linkspeedlist; link; link = link->next) {
                 if (speed > 0 && link->speed) {
                         if (duplex > -1 && duplex != link->duplex)
-                                Event_post(s, Event_Speed, State_Changed, link->action, "link mode is now %s-duplex", duplex ? "full" : "half");
+                                Event_post(s, Event_LinkDuplex, State_Changed, link->action, "link mode is now %s-duplex", duplex ? "full" : "half");
                         else
-                                Event_post(s, Event_Speed, State_ChangedNot, link->action, "link mode has not changed since last cycle [current mode is %s-duplex]", duplex ? "full" : "half");
+                                Event_post(s, Event_LinkDuplex, State_ChangedNot, link->action, "link mode has not changed since last cycle [current mode is %s-duplex]", duplex ? "full" : "half");
                         if (speed != link->speed)
-                                Event_post(s, Event_Speed, State_Changed, link->action, "link speed changed to %.0lf Mb/s", (double)speed / 1000000.);
+                                Event_post(s, Event_LinkSpeed, State_Changed, link->action, "link speed changed to %.0lf Mb/s", (double)speed / 1000000.);
                         else
-                                Event_post(s, Event_Speed, State_ChangedNot, link->action, "link speed has not changed since last cycle [current speed = %.0lf Mb/s]", (double)speed / 1000000.);
+                                Event_post(s, Event_LinkSpeed, State_ChangedNot, link->action, "link speed has not changed since last cycle [current speed = %.0lf Mb/s]", (double)speed / 1000000.);
                 }
                 link->duplex = duplex;
                 link->speed = speed;
@@ -2298,19 +2382,19 @@ State_Type check_net(Service_T s) {
                 for (LinkSaturation_T link = s->linksaturationlist; link; link = link->next) {
                         if (duplex) {
                                 if (Util_evalDoubleQExpression(link->operator, osaturation, link->limit))
-                                        Event_post(s, Event_Saturation, State_Failed, link->action, "link upload saturation of %.1f%% matches limit [saturation %s %.1f%%]", osaturation, OperatorShort_Names[link->operator], link->limit);
+                                        Event_post(s, Event_LinkSaturationOut, State_Failed, link->action, "link upload saturation of %.1f%% matches limit [saturation %s %.1f%%]", osaturation, OperatorShort_Names[link->operator], link->limit);
                                 else
-                                        Event_post(s, Event_Saturation, State_Succeeded, link->action, "link upload saturation check succeeded [current upload saturation %.1f%%]", osaturation);
+                                        Event_post(s, Event_LinkSaturationOut, State_Succeeded, link->action, "link upload saturation check succeeded [current upload saturation %.1f%%]", osaturation);
                                 if (Util_evalDoubleQExpression(link->operator, isaturation, link->limit))
-                                        Event_post(s, Event_Saturation, State_Failed, link->action, "link download saturation of %.1f%% matches limit [saturation %s %.1f%%]", isaturation, OperatorShort_Names[link->operator], link->limit);
+                                        Event_post(s, Event_LinkSaturationIn, State_Failed, link->action, "link download saturation of %.1f%% matches limit [saturation %s %.1f%%]", isaturation, OperatorShort_Names[link->operator], link->limit);
                                 else
-                                        Event_post(s, Event_Saturation, State_Succeeded, link->action, "link download saturation check succeeded [current download saturation %.1f%%]", isaturation);
+                                        Event_post(s, Event_LinkSaturationIn, State_Succeeded, link->action, "link download saturation check succeeded [current download saturation %.1f%%]", isaturation);
                         } else {
                                 double iosaturation = osaturation + isaturation;
                                 if (Util_evalDoubleQExpression(link->operator, iosaturation, link->limit))
-                                        Event_post(s, Event_Saturation, State_Failed, link->action, "link saturation of %.1f%% matches limit [saturation %s %.1f%%]", iosaturation, OperatorShort_Names[link->operator], link->limit);
+                                        Event_post(s, Event_LinkSaturation, State_Failed, link->action, "link saturation of %.1f%% matches limit [saturation %s %.1f%%]", iosaturation, OperatorShort_Names[link->operator], link->limit);
                                 else
-                                        Event_post(s, Event_Saturation, State_Succeeded, link->action, "link saturation check succeeded [current saturation %.1f%%]", iosaturation);
+                                        Event_post(s, Event_LinkSaturation, State_Succeeded, link->action, "link saturation check succeeded [current saturation %.1f%%]", iosaturation);
                         }
                 }
         }

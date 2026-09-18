@@ -374,6 +374,9 @@ typedef enum {
 } Handler_Type;
 
 
+#include "event.h" // Event types (EventClass_T, Event_Type, EventSet_T, Event_T) needed by Mail_T and Service_T below. The event object needs the State_Type, Monitor_Mode, Service_Type and Handler_Type enums defined above
+
+
 typedef enum {
         MmonitCompress_Init = 0,
         MmonitCompress_No,
@@ -541,7 +544,7 @@ typedef struct Mail_T {
         char *subject;                                       /**< The mail subject */
         char *message;                                       /**< The mail message */
         char *host;                                             /**< FQDN hostname */
-        unsigned int events;  /*< Events for which this mail object should be sent */
+        EventSet_T events;    /*< Events for which this mail object should be sent */
         unsigned int reminder;              /*< Send error reminder each Xth cycle */
 
         /** For internal use */
@@ -1316,29 +1319,12 @@ typedef struct Service_T {
         EventAction_T action_ACTION;           /**< Action requested by CLI or GUI */
 
         /** Runtime parameters */
-        int                error;                          /**< Error flags bitmap */
-        int                error_hint;   /**< Failed/Changed hint for error bitmap */
+        unsigned char      status[Event_Last + 1]; /**< Per event type error state (State_Succeeded/State_Failed/State_Changed) */
         union Info_T       inf;                          /**< Service check result */
         struct timeval     collected;                /**< When were data collected */ //FIXME: replace with unsigned long long? (all places where timeval is used) ... Time_milli()?
 
         /** Events */
-        struct myevent {
-                #define           EVENT_VERSION  4      /**< The event structure version */
-                long              id;                      /**< The event identification */
-                struct timeval    collected;                /**< When the event occurred */
-                struct Service_T *source;                              /**< Event source */
-                Monitor_Mode      mode;             /**< Monitoring mode for the service */
-                Service_Type      type;                      /**< Monitored service type */
-                State_Type        state;                                 /**< Test state */
-                bool              state_changed;              /**< true if state changed */
-                Handler_Type      flag;                     /**< The handlers state flag */
-                unsigned long long state_map;          /**< Event bitmap for last cycles */
-                unsigned int      count;                             /**< The event rate */
-                char             *message;    /**< Optional message describing the event */
-                EventAction_T     action;           /**< Description of the event action */
-                /** For internal use */
-                struct myevent   *next;                         /**< next event in chain */
-        } *eventlist;                                     /**< Pending events list */
+        Event_T            eventlist;                     /**< Pending events list (see event.h) */
 
         /** Context specific parameters */
         char *path;  /**< Path to the filesys, file, directory or process pid file */
@@ -1351,7 +1337,6 @@ typedef struct Service_T {
 } *Service_T;
 
 
-typedef struct myevent *Event_T;
 
 
 typedef struct ServiceGroup_T {

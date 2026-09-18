@@ -59,6 +59,7 @@
 
 #include "monit.h"
 #include "event.h"
+#include "service.h"
 #include "protocol.h"
 
 
@@ -200,6 +201,11 @@ static void _ioStatisticsFilesystem(StringBuffer_T B, const char *name, IOStatis
  * @param V Format version
  */
 static void status_service(Service_T S, StringBuffer_T B, int V) {
+        // Legacy status bitmaps for backward compatibility (frozen)
+        EventClass_T status;
+        EventClass_T status_hint;
+        Service_legacyStatus(S, &status, &status_hint);
+
         if (V == 2)
                 StringBuffer_append(B, "<service name=\"%s\"><type>%d</type>", S->name ? S->name : "", S->type);
         else
@@ -215,8 +221,8 @@ static void status_service(Service_T S, StringBuffer_T B, int V) {
                             "<pendingaction>%d</pendingaction>",
                             (long long)S->collected.tv_sec,
                             (long)S->collected.tv_usec,
-                            S->error,
-                            S->error_hint,
+                            status,
+                            status_hint,
                             S->monitor,
                             S->mode,
                             S->onreboot,
@@ -229,7 +235,13 @@ static void status_service(Service_T S, StringBuffer_T B, int V) {
                         StringBuffer_append(B, "<cron>%s</cron>", S->every.spec.cron);
                 StringBuffer_append(B, "</every>");
         }
-        if (Util_hasServiceStatus(S)) {
+        StringBuffer_append(B, "<errors>");
+        for (int i = 1; i <= Event_Last; i++) {
+                if (S->status[i] != State_Succeeded)
+                        StringBuffer_append(B, "<event id=\"%d\" state=\"%d\"></event>", i, S->status[i]);
+        }
+        StringBuffer_append(B, "</errors>");
+        if (Service_hasStatus(S)) {
                 switch (S->type) {
                         case Service_System:
                                 StringBuffer_append(B,
@@ -610,18 +622,23 @@ static void status_event(Event_T E, StringBuffer_T B) {
                             "<collected_sec>%lld</collected_sec>"
                             "<collected_usec>%ld</collected_usec>"
                             "<service><![CDATA[%s]]></service>"
-                            "<type>%d</type>"
-                            "<id>%ld</id>"
-                            "<state>%d</state>"
-                            "<action>%d</action>"
-                            "<message><![CDATA[",
+                            "<type>%d</type>",
                             (long long)E->collected.tv_sec,
                             (long)E->collected.tv_usec,
                             E->id == Event_Instance ? "Monit" : E->source->name,
-                            E->type,
-                            E->id,
+                            E->type);
+        // The event id: the legacy event class (frozen, understood by every M/Monit version) with the specific event type in the "type" attribute,
+        // which older M/Monit versions ignore. The specific type is not known for events converted from the version 4 queue files
+        if (E->legacy)
+                StringBuffer_append(B, "<id>%d</id>", Event_Table[E->id].class);
+        else
+                StringBuffer_append(B, "<id type=\"%d\">%d</id>", E->id, Event_Table[E->id].class);
+        StringBuffer_append(B,
+                            "<state>%d</state>"
+                            "<action>%d</action>"
+                            "<message><![CDATA[",
                             E->state,
-                            Event_get_action(E));
+                            Event_action(E));
         if (E->message)
                 _escapeCDATA(B, E->message);
         StringBuffer_append(B, "]]></message>");

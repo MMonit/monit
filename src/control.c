@@ -55,6 +55,7 @@
 #include "monit.h"
 #include "ProcessTree.h"
 #include "event.h"
+#include "service.h"
 #include "util.h"
 #include "system/Time.h"
 
@@ -227,9 +228,9 @@ static bool _doStart(Service_T s) {
         bool rv = true;
         StringBuffer_T sb = StringBuffer_create(64);
         for (Dependant_T d = s->dependantlist; d; d = d->next ) {
-                Service_T parent = Util_getService(d->dependant);
+                Service_T parent = Service_get(d->dependant);
                 assert(parent);
-                if (! (parent->monitor & Monitor_Yes) || parent->error) {
+                if (! (parent->monitor & Monitor_Yes) || Service_hasErrors(parent)) {
                         if (_doStart(parent)) {
                                 State_Type state = _check(parent);
                                 if (state != State_Failed && state != State_Init)
@@ -261,7 +262,7 @@ static bool _doStart(Service_T s) {
                 Event_post(s, Event_Exec, State_Failed, s->action_EXEC, "failed to start -- could not start required services: '%s'", StringBuffer_toString(sb));
                 s->doaction = Action_Start; // Retry the start next cycle
         }
-        Util_monitorSet(s);
+        Service_monitorSet(s);
         StringBuffer_free(&sb);
         return rv;
 }
@@ -312,9 +313,9 @@ static bool _doStop(Service_T s, bool unmonitor) {
                 Log_debug("'%s' stop skipped -- method not defined\n", s->name);
         }
         if (unmonitor) {
-                Util_monitorUnset(s);
+                Service_monitorUnset(s);
         } else {
-                Util_resetInfo(s);
+                Service_resetInfo(s);
                 s->monitor = Monitor_Init;
         }
         return rv;
@@ -330,7 +331,7 @@ static bool _doRestart(Service_T s) {
         bool rv = true;
         if (s->restart) {
                 Log_info("'%s' restart: '%s'\n", s->name, Util_commandDescription(s->restart, (char[STRLEN]){}));
-                Util_resetInfo(s);
+                Service_resetInfo(s);
                 char msg[1024];
                 long long usec_timeout = s->restart->timeout * USEC_PER_MSEC;
                 int status = _commandExecute(s, s->restart, msg, sizeof(msg), &usec_timeout);
@@ -343,7 +344,7 @@ static bool _doRestart(Service_T s) {
         } else {
                 Log_debug("'%s' restart skipped -- method not defined\n", s->name);
         }
-        Util_monitorSet(s);
+        Service_monitorSet(s);
         return rv;
 }
 
@@ -356,11 +357,11 @@ static bool _doRestart(Service_T s) {
 static void _doMonitor(Service_T s) {
         assert(s);
         for (Dependant_T d = s->dependantlist; d; d = d->next ) {
-                Service_T parent = Util_getService(d->dependant);
+                Service_T parent = Service_get(d->dependant);
                 assert(parent);
                 _doMonitor(parent);
         }
-        Util_monitorSet(s);
+        Service_monitorSet(s);
 }
 
 
@@ -370,7 +371,7 @@ static void _doMonitor(Service_T s) {
  */
 static void _doUnmonitor(Service_T s) {
         assert(s);
-        Util_monitorUnset(s);
+        Service_monitorUnset(s);
 }
 
 
@@ -456,7 +457,7 @@ bool control_service(const char *S, Action_Type A) {
         Service_T s = NULL;
         bool rv = true;
         assert(S);
-        if (! (s = Util_getService(S))) {
+        if (! (s = Service_get(S))) {
                 Log_error("Service '%s' -- doesn't exist\n", S);
                 return false;
         }
@@ -486,7 +487,7 @@ bool control_service(const char *S, Action_Type A) {
                                                         _doDepend(s, Action_Start, false); // Start children only if we successfully started
                                         } else {
                                                 /* enable monitoring of this service again to allow the restart retry in the next cycle up to timeout limit */
-                                                Util_monitorSet(s);
+                                                Service_monitorSet(s);
                                                 rv = false; // We could not stop the service, so it was not restarted
                                         }
                                 }

@@ -12,6 +12,21 @@ INCOMPATIBLE CHANGE: SSL/TLS server certificate verification is now ENABLED BY D
            with ssl options {selfsigned: allow}     # accept a self-signed certificate
        The same options can be set globally with 'set ssl options { ... }'.
 
+New: Event types enhancement: The original events were limited to 31 types. Many tests shared the same event type
+     (e.g. the "Resource" was used for CPU, memory, load average, thread, read/write operations, swap, etc.)
+     As a consequence a failure of one test marked all tests of the same class as failed in "monit status" and in the
+     web UI. Each test now has its own event type with a specific description, so the alert, log and status messages
+     say which test failed, only the failed test is highlighted.
+     The event description in mail alerts ($EVENT), in the exec action environment (MONIT_EVENT), in the log and in
+     "monit status" is now specific for the test, e.g. "Space usage matched limit" instead of "Resource limit matched".
+     The alert event filter ("set alert ... only on { ... }") accepts the fine-grained event types in addition to the
+     original keywords, for example "set alert foo@bar but not on { cpu, loadavg1m, atime }". The original keywords are
+     unchanged and cover the whole group as before ("resource" covers cpu, memory, space, inode, ...). See the
+     "Setting an event filter" section in the manual for the list of event types.
+
+New: The link errors tests are now performed regardless of the "if link up" test presence (it was mutually exclusive before due to
+     limited event types).
+
 New: A Debug mode On/Off button has been added to the Monit HTTP GUI. This simplifies runtime debugging when Monit is running
      as PID 1, such as in a Docker container. Thanks to Lutz Mader.
 

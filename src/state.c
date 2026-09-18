@@ -51,6 +51,7 @@
 
 
 #include "monit.h"
+#include "service.h"
 #include "state.h"
 
 // libmonit
@@ -334,7 +335,7 @@ static void _restoreV4(void) {
         State4_T state;
         while (read(file, &state, sizeof(state)) == sizeof(state)) {
                 state.name[sizeof(state.name) - 1] = 0;
-                Service_T service = Util_getService(state.name);
+                Service_T service = Service_get(state.name);
                 if (service && service->type == state.type) {
                         _updateStart(service, state.nstart, state.ncycle);
                         _updateMonitor(service, state.monitor);
@@ -383,7 +384,7 @@ static void _restoreV3(void) {
         State3_T state;
         while (read(file, &state, sizeof(state)) == sizeof(state)) {
                 state.name[sizeof(state.name) - 1] = 0;
-                Service_T service = Util_getService(state.name);
+                Service_T service = Service_get(state.name);
                 if (service && service->type == state.type) {
                         _updateStart(service, state.nstart, state.ncycle);
                         _updateMonitor(service, state.monitor);
@@ -427,7 +428,7 @@ static void _restoreV2(void) {
         State2_T state;
         while (read(file, &state, sizeof(state)) == sizeof(state)) {
                 state.name[sizeof(state.name) - 1] = 0;
-                Service_T service = Util_getService(state.name);
+                Service_T service = Service_get(state.name);
                 if (service && service->type == state.type) {
                         _updateStart(service, state.nstart, state.ncycle);
                         _updateMonitor(service, state.monitor);
@@ -471,7 +472,7 @@ static void _restoreV1(void) {
         State1_T state;
         while (read(file, &state, sizeof(state)) == sizeof(state)) {
                 state.name[sizeof(state.name) - 1] = 0;
-                Service_T service = Util_getService(state.name);
+                Service_T service = Service_get(state.name);
                 if (service && service->type == state.type) {
                         _updateStart(service, state.nstart, state.ncycle);
                         _updateMonitor(service, state.monitor);
@@ -492,7 +493,7 @@ static void _restoreV0(int services) {
                 if (read(file, &state, sizeof(state)) != sizeof(state))
                         THROW(IOException, "Unable to read service state");
                 state.name[sizeof(state.name) - 1] = 0;
-                Service_T service = Util_getService(state.name);
+                Service_T service = Service_get(state.name);
                 if (service) {
                         _updateStart(service, state.nstart, state.ncycle);
                         _updateMonitor(service, state.monitor);

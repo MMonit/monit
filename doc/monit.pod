@@ -1209,7 +1209,7 @@ above:
  permission | "Permission failed"         | "Permission succeeded"
  pid        | "PID failed"                | "PID succeeded"
  ppid       | "PPID failed"               | "PPID succeeded"
- resource   | "Resource limit matched"    | "Resource limit succeeded"
+ resource   | "<Resource> matched limit"  | "<Resource> ok"
  saturation | "Saturation exceeded"       | "Saturation ok"
  size       | "Size failed"               | "Size succeeded"
  speed      | "Speed failed"              | "Speed ok"
@@ -1218,6 +1218,73 @@ above:
  timestamp  | "Timestamp failed"          | "Timestamp succeeded"
  uid        | "UID failed"                | "UID succeeded"
  uptime     | "Uptime failed"             | "Uptime succeeded"
+
+Some of these keywords cover a group of related event types, each with
+its own specific description in alerts, in the log and in C<monit status>.
+The individual event types can be used in the filter list as well, so the
+filter can be as specific as needed, e.g.:
+
+ set alert foo@bar but not on { cpu, loadavg1m, atime }
+
+ Keyword:    | Covers the event types:
+ ---------------------------------------------------------------------
+ content     | content, programoutput
+ data        | data, zombie
+ invalid     | invalid, securityattribute
+ link        | link, linkerrorsin, linkerrorsout
+ resource    | cpu, totalcpu, memory, totalmemory, swap, loadavg1m,
+             | loadavg5m, loadavg15m, threads, children, filedescriptors,
+             | totalfiledescriptors, readbytes, readoperations,
+             | writebytes, writeoperations, servicetime, space, inode,
+             | hardlink, pagein, pageout
+ saturation  | saturation, saturationin, saturationout
+ speed       | responsetime, linkspeed, linkduplex
+ status      | status, spawn
+ timestamp   | timestamp, atime, ctime, mtime, certificate
+ uid         | uid, euid
+
+The event types listed in the right column:
+
+ Event type:           | Failure state:
+ ---------------------------------------------------------------------
+ atime                 | "Access timestamp failed"
+ certificate           | "Certificate validity failed"
+ children              | "Children count matched limit"
+ cpu                   | "CPU usage matched limit"
+ ctime                 | "Change timestamp failed"
+ euid                  | "EUID failed"
+ filedescriptors       | "Filedescriptors usage matched limit"
+ hardlink              | "Hardlink failed"
+ inode                 | "Inode usage matched limit"
+ linkduplex            | "Link duplex failed"
+ linkerrorsin          | "Download errors detected"
+ linkerrorsout         | "Upload errors detected"
+ linkspeed             | "Link speed failed"
+ loadavg1m             | "Load average (1min) matched limit"
+ loadavg5m             | "Load average (5min) matched limit"
+ loadavg15m            | "Load average (15min) matched limit"
+ memory                | "Memory usage matched limit"
+ mtime                 | "Modify timestamp failed"
+ pagein                | "Swap pagein matched limit"
+ pageout               | "Swap pageout matched limit"
+ programoutput         | "Program output failed"
+ readbytes             | "Read rate matched limit"
+ readoperations        | "Read operations rate matched limit"
+ responsetime          | "Response time failed"
+ saturationin          | "Download saturation exceeded"
+ saturationout         | "Upload saturation exceeded"
+ securityattribute     | "Security attribute failed"
+ servicetime           | "Service time matched limit"
+ space                 | "Space usage matched limit"
+ spawn                 | "Program start failed"
+ swap                  | "Swap usage matched limit"
+ threads               | "Threads count matched limit"
+ totalcpu              | "Total CPU usage matched limit"
+ totalfiledescriptors  | "Total filedescriptors usage matched limit"
+ totalmemory           | "Total memory usage matched limit"
+ writebytes            | "Write rate matched limit"
+ writeoperations       | "Write operations rate matched limit"
+ zombie                | "Process is a zombie"
 
 
 Each alert recipient can have it's own filter, for example:

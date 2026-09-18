@@ -81,7 +81,6 @@ pid_t file_getPid(const char *pidfile);
 char *file_monitId(char *idfile);
 
 
-
 /**
  * Security check for files. The files must have the same uid as the
  * REAL uid of this process, it must have permissions no greater than
@@ -93,44 +92,6 @@ char *file_monitId(char *idfile);
  * @return true if the test succeeded otherwise false
  */
 bool file_checkStat(const char *filename, const char *description, mode_t permmask);
-
-
-/**
- * Check whether the specified directory exist or create it using
- * specified mode.
- * @param path The fully qualified path to the directory
- * @return true if the succeeded otherwise false
- */
-bool file_checkQueueDirectory(const char *path);
-
-
-/**
- * Check the queue size limit.
- * @param path The fully qualified path to the directory
- * @param mode The queue limit
- * @return true if the succeeded otherwise false
- */
-bool file_checkQueueLimit(const char *path, int limit);
-
-
-/**
- * Write data to the queue file
- * @param file Filedescriptor to write to
- * @param data Data to be written
- * @param size Size of the data to be written
- * @return true if the succeeded otherwise false
- */
-bool file_writeQueue(FILE *file, const void *data, size_t size);
-
-
-/**
- * Read the data from the queue file's actual position
- * @param file Filedescriptor to read from
- * @param size Size of the data read
- * @return The data read if any or NULL. The size parameter is set
- * appropriately.
- */
-void *file_readQueue(FILE *file, size_t *size);
 
 
 /**

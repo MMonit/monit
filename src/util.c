@@ -247,75 +247,8 @@ static char _x2c(char *hex) {
 /**
  * Print registered events list
  */
-static void printevents(unsigned int events) {
-        if (events == Event_Null) {
-                printf("No events");
-        } else if (events == Event_All) {
-                printf("All events");
-        } else {
-                if (IS_EVENT_SET(events, Event_Action))
-                        printf("Action ");
-                if (IS_EVENT_SET(events, Event_ByteIn))
-                        printf("ByteIn ");
-                if (IS_EVENT_SET(events, Event_ByteOut))
-                        printf("ByteOut ");
-                if (IS_EVENT_SET(events, Event_Checksum))
-                        printf("Checksum ");
-                if (IS_EVENT_SET(events, Event_Connection))
-                        printf("Connection ");
-                if (IS_EVENT_SET(events, Event_Content))
-                        printf("Content ");
-                if (IS_EVENT_SET(events, Event_Data))
-                        printf("Data ");
-                if (IS_EVENT_SET(events, Event_Exec))
-                        printf("Exec ");
-                if (IS_EVENT_SET(events, Event_Exist))
-                        printf("Exist ");
-                if (IS_EVENT_SET(events, Event_FsFlag))
-                        printf("Fsflags ");
-                if (IS_EVENT_SET(events, Event_Gid))
-                        printf("Gid ");
-                if (IS_EVENT_SET(events, Event_Icmp))
-                        printf("Icmp ");
-                if (IS_EVENT_SET(events, Event_Instance))
-                        printf("Instance ");
-                if (IS_EVENT_SET(events, Event_Invalid))
-                        printf("Invalid ");
-                if (IS_EVENT_SET(events, Event_Link))
-                        printf("Link ");
-                if (IS_EVENT_SET(events, Event_NonExist))
-                        printf("Nonexist ");
-                if (IS_EVENT_SET(events, Event_PacketIn))
-                        printf("PacketIn ");
-                if (IS_EVENT_SET(events, Event_PacketOut))
-                        printf("PacketOut ");
-                if (IS_EVENT_SET(events, Event_Permission))
-                        printf("Permission ");
-                if (IS_EVENT_SET(events, Event_Pid))
-                        printf("PID ");
-                if (IS_EVENT_SET(events, Event_PPid))
-                        printf("PPID ");
-                if (IS_EVENT_SET(events, Event_Resource))
-                        printf("Resource ");
-                if (IS_EVENT_SET(events, Event_Saturation))
-                        printf("Saturation ");
-                if (IS_EVENT_SET(events, Event_Size))
-                        printf("Size ");
-                if (IS_EVENT_SET(events, Event_Speed))
-                        printf("Speed ");
-                if (IS_EVENT_SET(events, Event_Status))
-                        printf("Status ");
-                if (IS_EVENT_SET(events, Event_Timeout))
-                        printf("Timeout ");
-                if (IS_EVENT_SET(events, Event_Timestamp))
-                        printf("Timestamp ");
-                if (IS_EVENT_SET(events, Event_Uid))
-                        printf("Uid ");
-                if (IS_EVENT_SET(events, Event_Uptime))
-                        printf("Uptime ");
-
-        }
-        printf("\n");
+static void printevents(const EventSet_T *events) {
+        printf("%s\n", EventSet_describe(events, (char[EventSet_DescribeLength]){}, EventSet_DescribeLength));
 }
 
 
@@ -607,30 +540,6 @@ int Util_handle0Escapes(char *buf) {
 }
 
 
-Service_T Util_getService(const char *name) {
-        assert(name);
-        for (Service_T s = Service_List; s; s = s->next)
-                if (IS(s->name, name))
-                        return s;
-        return NULL;
-}
-
-
-int Util_getNumberOfServices(void) {
-        int i = 0;
-        Service_T s;
-        for (s = Service_List; s; s = s->next)
-                i += 1;
-        return i;
-}
-
-
-bool Util_existService(const char *name) {
-        assert(name);
-        return Util_getService(name) ? true : false;
-}
-
-
 void Util_printRunList(void) {
         char buf[10];
         printf("Runtime constants:\n");
@@ -777,7 +686,7 @@ void Util_printRunList(void) {
                 for (Mail_T list = Run.maillist; list; list = list->next) {
                         printf(" %-18s = %s\n", "Alert mail to", is_str_defined(list->to));
                         printf("   %-16s = ", "Alert on");
-                        printevents(list->events);
+                        printevents(&list->events);
                         if (list->reminder)
                                 printf("   %-16s = %u cycles\n", "Alert reminder", list->reminder);
                 }
@@ -1372,7 +1281,7 @@ void Util_printService(Service_T s) {
         for (Mail_T o = s->maillist; o; o = o->next) {
                 printf(" %-20s = %s\n", "Alert mail to", is_str_defined(o->to));
                 printf("   %-18s = ", "Alert on");
-                printevents(o->events);
+                printevents(&o->events);
                 if (o->reminder)
                         printf("   %-18s = %u cycles\n", "Alert reminder", o->reminder);
         }
@@ -1606,114 +1515,6 @@ void Util_swapFilesystemFlags(FilesystemFlags_T flags) {
 }
 
 
-static void _resetFilesystemFlags(FilesystemFlags_T flags) {
-        flags->previous = flags->value[0];
-        flags->current = flags->value[1];
-        *(flags->current) = 0;
-        *(flags->previous) = 0;
-}
-
-static void _resetIOStatistics(IOStatistics_T S) {
-        Statistics_reset(&(S->operations));
-        Statistics_reset(&(S->bytes));
-}
-
-
-void Util_resetInfo(Service_T s) {
-        switch (s->type) {
-                case Service_Filesystem:
-                        s->inf.filesystem->f_bsize = 0LL;
-                        s->inf.filesystem->f_blocks = 0LL;
-                        s->inf.filesystem->f_blocksfree = 0LL;
-                        s->inf.filesystem->f_blocksfreetotal = 0LL;
-                        s->inf.filesystem->f_blocksused = 0LL;
-                        s->inf.filesystem->f_files = 0LL;
-                        s->inf.filesystem->f_filesfree = 0LL;
-                        s->inf.filesystem->f_filesused = 0LL;
-                        s->inf.filesystem->inode_percent = 0.;
-                        s->inf.filesystem->space_percent = 0.;
-                        s->inf.filesystem->mode = -1;
-                        s->inf.filesystem->uid = -1;
-                        s->inf.filesystem->gid = -1;
-                        _resetFilesystemFlags(&(s->inf.filesystem->flags));
-                        _resetIOStatistics(&(s->inf.filesystem->read));
-                        _resetIOStatistics(&(s->inf.filesystem->write));
-                        Statistics_reset(&(s->inf.filesystem->time.read));
-                        Statistics_reset(&(s->inf.filesystem->time.write));
-                        Statistics_reset(&(s->inf.filesystem->time.wait));
-                        Statistics_reset(&(s->inf.filesystem->time.run));
-                        break;
-                case Service_File:
-                        s->inf.file->size  = -1;
-                        s->inf.file->readpos = 0;
-                        s->inf.file->inode = 0;
-                        s->inf.file->inode_prev = 0;
-                        s->inf.file->mode = -1;
-                        s->inf.file->uid = -1;
-                        s->inf.file->gid = -1;
-                        s->inf.file->nlink = -1;
-                        s->inf.file->timestamp.access = 0;
-                        s->inf.file->timestamp.change = 0;
-                        s->inf.file->timestamp.modify = 0;
-                        *s->inf.file->cs_sum = 0;
-                        break;
-                case Service_Directory:
-                        s->inf.directory->mode = -1;
-                        s->inf.directory->uid = -1;
-                        s->inf.directory->gid = -1;
-                        s->inf.directory->nlink = -1;
-                        s->inf.directory->timestamp.access = 0;
-                        s->inf.directory->timestamp.change = 0;
-                        s->inf.directory->timestamp.modify = 0;
-                        break;
-                case Service_Fifo:
-                        s->inf.fifo->mode = -1;
-                        s->inf.fifo->uid = -1;
-                        s->inf.fifo->gid = -1;
-                        s->inf.fifo->nlink = -1;
-                        s->inf.fifo->timestamp.access = 0;
-                        s->inf.fifo->timestamp.change = 0;
-                        s->inf.fifo->timestamp.modify = 0;
-                        break;
-                case Service_Process:
-                        s->inf.process->_pid = -1;
-                        s->inf.process->_ppid = -1;
-                        s->inf.process->pid = -1;
-                        s->inf.process->ppid = -1;
-                        s->inf.process->uid = -1;
-                        s->inf.process->euid = -1;
-                        s->inf.process->gid = -1;
-                        s->inf.process->zombie = false;
-                        s->inf.process->threads = -1;
-                        s->inf.process->children = -1;
-                        s->inf.process->mem = 0ULL;
-                        s->inf.process->total_mem = 0ULL;
-                        s->inf.process->mem_percent = -1.;
-                        s->inf.process->total_mem_percent = -1.;
-                        s->inf.process->cpu_percent = -1.;
-                        s->inf.process->total_cpu_percent = -1.;
-                        s->inf.process->uptime = -1;
-                        s->inf.process->filedescriptors.open = -1LL;
-                        s->inf.process->filedescriptors.openTotal = -1LL;
-                        *(s->inf.process->secattr) = 0;
-                        _resetIOStatistics(&(s->inf.process->read));
-                        _resetIOStatistics(&(s->inf.process->write));
-                        break;
-                case Service_Net:
-                        if (s->inf.net->stats)
-                                Link_reset(s->inf.net->stats);
-                        break;
-                default:
-                        break;
-        }
-}
-
-
-bool Util_hasServiceStatus(Service_T s) {
-        return((s->monitor & Monitor_Yes) && ! (s->error & Event_NonExist) && ! (s->error & Event_Data));
-}
-
-
 char *Util_getHTTPHostHeader(Socket_T s, char *hostBuf, int len) {
         int port = Socket_getRemotePort(s);
         const char *host = Socket_getRemoteHost(s);
@@ -1793,34 +1594,6 @@ bool Util_evalDoubleQExpression(Operator_Type operator, double left, double righ
                         return false;
         }
         return false;
-}
-
-
-void Util_monitorSet(Service_T s) {
-        assert(s);
-        if (s->monitor == Monitor_Not) {
-                s->monitor = Monitor_Init;
-                DEBUG("'%s' monitoring enabled\n", s->name);
-                State_dirty();
-        }
-}
-
-
-void Util_monitorUnset(Service_T s) {
-        assert(s);
-        if (s->monitor != Monitor_Not) {
-                s->monitor = Monitor_Not;
-                DEBUG("'%s' monitoring disabled\n", s->name);
-        }
-        s->nstart = 0;
-        s->ncycle = 0;
-        if (s->every.type == Every_SkipCycles)
-                s->every.spec.cycle.counter = 0;
-        s->error = Event_Null;
-        if (s->eventlist)
-                gc_event(&s->eventlist);
-        Util_resetInfo(s);
-        State_dirty();
 }
 
 

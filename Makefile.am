@@ -27,6 +27,8 @@ monit_SOURCES	= src/y.tab.c \
 		  src/daemonize.c \
 		  src/env.c \
 		  src/event.c \
+		  src/eventqueue.c \
+		  src/service.c \
 		  src/file.c \
 		  src/gc.c \
 		  src/http.c \

@@ -79,6 +79,7 @@
 #include "ProcessTree.h"
 #include "state.h"
 #include "event.h"
+#include "service.h"
 #include "engine.h"
 #include "client.h"
 #include "MMonit.h"
@@ -415,7 +416,7 @@ static bool _isMemberOfGroup(Service_T s, ServiceGroup_T g) {
 
 static bool _hasParentInTheSameGroup(Service_T s, ServiceGroup_T g) {
         for (Dependant_T d = s->dependantlist; d; d = d->next ) {
-                Service_T parent = Util_getService(d->dependant);
+                Service_T parent = Service_get(d->dependant);
                 if (parent && _isMemberOfGroup(parent, g))
                         return true;
         }

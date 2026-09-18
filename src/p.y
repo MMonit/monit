@@ -131,6 +131,8 @@
 #endif
 
 #include "monit.h"
+#include "event.h"
+#include "service.h"
 #include "protocol.h"
 #include "engine.h"
 #include "alert.h"
@@ -647,14 +649,14 @@ optprogram      : start
                 ;
 
 setalert        : SET alertmail formatlist reminder {
-                        mailset.events = Event_All;
+                        EventSet_setAll(&mailset.events);
                         addmail($<string>2, &mailset, &Run.maillist);
                   }
                 | SET alertmail '{' eventoptionlist '}' formatlist reminder {
                         addmail($<string>2, &mailset, &Run.maillist);
                   }
                 | SET alertmail NOT '{' eventoptionlist '}' formatlist reminder {
-                        mailset.events = ~mailset.events;
+                        EventSet_negate(&mailset.events);
                         addmail($<string>2, &mailset, &Run.maillist);
                   }
                 ;
@@ -2393,14 +2395,14 @@ urloperator     : EQUAL    { $<number>$ = Operator_Equal; }
                 ;
 
 alert           : alertmail formatlist reminder {
-                        mailset.events = Event_All;
+                        EventSet_setAll(&mailset.events);
                         addmail($<string>1, &mailset, &current->maillist);
                   }
                 | alertmail '{' eventoptionlist '}' formatlist reminder {
                         addmail($<string>1, &mailset, &current->maillist);
                   }
                 | alertmail NOT '{' eventoptionlist '}' formatlist reminder {
-                        mailset.events = ~mailset.events;
+                        EventSet_negate(&mailset.events);
                         addmail($<string>1, &mailset, &current->maillist);
                   }
                 | noalertmail {
@@ -2418,36 +2420,68 @@ eventoptionlist : eventoption
                 | eventoptionlist eventoption
                 ;
 
-eventoption     : ACTION          { mailset.events |= Event_Action; }
-                | BYTEIN          { mailset.events |= Event_ByteIn; }
-                | BYTEOUT         { mailset.events |= Event_ByteOut; }
-                | CHECKSUM        { mailset.events |= Event_Checksum; }
-                | CONNECTION      { mailset.events |= Event_Connection; }
-                | CONTENT         { mailset.events |= Event_Content; }
-                | DATA            { mailset.events |= Event_Data; }
-                | EXEC            { mailset.events |= Event_Exec; }
-                | EXIST           { mailset.events |= Event_Exist; }
-                | FSFLAG          { mailset.events |= Event_FsFlag; }
-                | GID             { mailset.events |= Event_Gid; }
-                | ICMP            { mailset.events |= Event_Icmp; }
-                | INSTANCE        { mailset.events |= Event_Instance; }
-                | INVALID         { mailset.events |= Event_Invalid; }
-                | LINK            { mailset.events |= Event_Link; }
-                | NONEXIST        { mailset.events |= Event_NonExist; }
-                | PACKETIN        { mailset.events |= Event_PacketIn; }
-                | PACKETOUT       { mailset.events |= Event_PacketOut; }
-                | PERMISSION      { mailset.events |= Event_Permission; }
-                | PID             { mailset.events |= Event_Pid; }
-                | PPID            { mailset.events |= Event_PPid; }
-                | RESOURCE        { mailset.events |= Event_Resource; }
-                | SATURATION      { mailset.events |= Event_Saturation; }
-                | SIZE            { mailset.events |= Event_Size; }
-                | SPEED           { mailset.events |= Event_Speed; }
-                | STATUS          { mailset.events |= Event_Status; }
-                | TIMEOUT         { mailset.events |= Event_Timeout; }
-                | TIME            { mailset.events |= Event_Timestamp; }
-                | UID             { mailset.events |= Event_Uid; }
-                | UPTIME          { mailset.events |= Event_Uptime; }
+eventoption     : ACTION          { EventSet_setClass(&mailset.events, EventClass_Action); }
+                | BYTEIN          { EventSet_setClass(&mailset.events, EventClass_ByteIn); }
+                | BYTEOUT         { EventSet_setClass(&mailset.events, EventClass_ByteOut); }
+                | CHECKSUM        { EventSet_setClass(&mailset.events, EventClass_Checksum); }
+                | CONNECTION      { EventSet_setClass(&mailset.events, EventClass_Connection); }
+                | CONTENT         { EventSet_setClass(&mailset.events, EventClass_Content); }
+                | DATA            { EventSet_setClass(&mailset.events, EventClass_Data); }
+                | EXEC            { EventSet_setClass(&mailset.events, EventClass_Exec); }
+                | EXIST           { EventSet_setClass(&mailset.events, EventClass_Exist); }
+                | FSFLAG          { EventSet_setClass(&mailset.events, EventClass_FsFlag); }
+                | GID             { EventSet_setClass(&mailset.events, EventClass_Gid); }
+                | ICMP            { EventSet_setClass(&mailset.events, EventClass_Icmp); }
+                | INSTANCE        { EventSet_setClass(&mailset.events, EventClass_Instance); }
+                | INVALID         { EventSet_setClass(&mailset.events, EventClass_Invalid); }
+                | LINK            { EventSet_setClass(&mailset.events, EventClass_Link); }
+                | NONEXIST        { EventSet_setClass(&mailset.events, EventClass_NonExist); }
+                | PACKETIN        { EventSet_setClass(&mailset.events, EventClass_PacketIn); }
+                | PACKETOUT       { EventSet_setClass(&mailset.events, EventClass_PacketOut); }
+                | PERMISSION      { EventSet_setClass(&mailset.events, EventClass_Permission); }
+                | PID             { EventSet_setClass(&mailset.events, EventClass_Pid); }
+                | PPID            { EventSet_setClass(&mailset.events, EventClass_PPid); }
+                | RESOURCE        { EventSet_setClass(&mailset.events, EventClass_Resource); }
+                | SATURATION      { EventSet_setClass(&mailset.events, EventClass_Saturation); }
+                | SIZE            { EventSet_setClass(&mailset.events, EventClass_Size); }
+                | SPEED           { EventSet_setClass(&mailset.events, EventClass_Speed); }
+                | STATUS          { EventSet_setClass(&mailset.events, EventClass_Status); }
+                | TIMEOUT         { EventSet_setClass(&mailset.events, EventClass_Timeout); }
+                | TIME            { EventSet_setClass(&mailset.events, EventClass_Timestamp); }
+                | UID             { EventSet_setClass(&mailset.events, EventClass_Uid); }
+                | UPTIME          { EventSet_setClass(&mailset.events, EventClass_Uptime); }
+                /* Fine-grained event types (keywords which are also lexer tokens). The other event types are matched by name (see the STRING rule) */
+                | CPU             { EventSet_set(&mailset.events, Event_Cpu); }
+                | TOTALCPU        { EventSet_set(&mailset.events, Event_CpuTotal); }
+                | MEMORY          { EventSet_set(&mailset.events, Event_Memory); }
+                | TOTALMEMORY     { EventSet_set(&mailset.events, Event_MemoryTotal); }
+                | SWAP            { EventSet_set(&mailset.events, Event_Swap); }
+                | LOADAVG1        { EventSet_set(&mailset.events, Event_LoadAverage1m); }
+                | LOADAVG5        { EventSet_set(&mailset.events, Event_LoadAverage5m); }
+                | LOADAVG15       { EventSet_set(&mailset.events, Event_LoadAverage15m); }
+                | THREADS         { EventSet_set(&mailset.events, Event_Threads); }
+                | CHILDREN        { EventSet_set(&mailset.events, Event_Children); }
+                | FILEDESCRIPTORS { EventSet_set(&mailset.events, Event_Filedescriptors); }
+                | SERVICETIME     { EventSet_set(&mailset.events, Event_ServiceTime); }
+                | SPACE           { EventSet_set(&mailset.events, Event_Space); }
+                | INODE           { EventSet_set(&mailset.events, Event_Inode); }
+                | HARDLINK        { EventSet_set(&mailset.events, Event_Hardlink); }
+                | PAGEIN          { EventSet_set(&mailset.events, Event_Pagein); }
+                | PAGEOUT         { EventSet_set(&mailset.events, Event_Pageout); }
+                | ATIME           { EventSet_set(&mailset.events, Event_TimestampAccess); }
+                | CTIME           { EventSet_set(&mailset.events, Event_TimestampChange); }
+                | MTIME           { EventSet_set(&mailset.events, Event_TimestampModify); }
+                | CERTIFICATE     { EventSet_set(&mailset.events, Event_Certificate); }
+                | RESPONSETIME    { EventSet_set(&mailset.events, Event_ResponseTime); }
+                | EUID            { EventSet_set(&mailset.events, Event_Euid); }
+                | STRING          {
+                        Event_Type id = Event_byName($1);
+                        if (id == Event_Null)
+                                yyerror2("Unknown event type");
+                        else
+                                EventSet_set(&mailset.events, id);
+                        FREE($1);
+                  }
                 ;
 
 formatlist      : /* EMPTY */
@@ -3753,7 +3787,7 @@ static void postparse(void) {
                         Log_error("Cannot get system hostname -- please add 'check system <name>'\n");
                         cfg_errflag++;
                 }
-                if (Util_existService(hostname)) {
+                if (Service_exists(hostname)) {
                         Log_error("'check system' not defined in control file, failed to add automatic configuration (service name %s is used already) -- please add 'check system <name>' manually\n", hostname);
                         cfg_errflag++;
                 }
@@ -3849,7 +3883,7 @@ static Service_T createservice(Service_Type type, char *name, char *value, State
                 default:
                         break;
         }
-        Util_resetInfo(current);
+        Service_resetInfo(current);
 
         if (type == Service_Program) {
                 NEW(current->program);
@@ -5606,7 +5640,7 @@ static void reset_rateset(struct rate_t *r) {
 static void check_name(char *name) {
         assert(name);
 
-        if (Util_existService(name) || (current && IS(name, current->name)))
+        if (Service_exists(name) || (current && IS(name, current->name)))
                 yyerror2("Service name conflict, %s already defined", name);
         if (name && *name == '/')
                 yyerror2("Service name '%s' must not start with '/' -- ", name);
@@ -5654,7 +5688,7 @@ static void check_depend(void) {
                         done = false; // still unvisited nodes
                         depends_on = NULL;
                         for (d = s->dependantlist; d; d = d->next) {
-                                Service_T dp = Util_getService(d->dependant);
+                                Service_T dp = Service_get(d->dependant);
                                 if (! dp) {
                                         Log_error("Depending service '%s' is not defined in the control file\n", d->dependant);
                                         exit(1);

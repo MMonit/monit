@@ -120,7 +120,7 @@ static void _substitute(Mail_T m, Event_T e) {
         Util_replaceString(&m->subject, "$SERVICE", e->source->name);
         Util_replaceString(&m->message, "$SERVICE", e->source->name);
 
-        const char *description = Event_get_description(e);
+        const char *description = Event_description(e);
         Util_replaceString(&m->subject, "$EVENT", description);
         Util_replaceString(&m->message, "$EVENT", description);
 
@@ -128,7 +128,7 @@ static void _substitute(Mail_T m, Event_T e) {
         Util_replaceString(&m->subject, "$DESCRIPTION", message);
         Util_replaceString(&m->message, "$DESCRIPTION", message);
 
-        const char *action = Event_get_action_description(e);
+        const char *action = Event_actionDescription(e);
         Util_replaceString(&m->subject, "$ACTION", action);
         Util_replaceString(&m->message, "$ACTION", action);
 }
@@ -169,7 +169,7 @@ static void _copyMail(Mail_T n, Mail_T o) {
 // 2a) state change notifications is always delivered
 // 2b) failure notification is sent only of it matches reminder settings
 static void _appendMail(List_T list, Mail_T m, Event_T e, char *host) {
-        if (IS_EVENT_SET(m->events, e->id) && (e->state_changed || (e->state && m->reminder && e->count % m->reminder == 0))) {
+        if (EventSet_has(&m->events, e->id) && (e->state_changed || (e->state && m->reminder && e->count % m->reminder == 0))) {
                 Mail_T tmp = NULL;
                 NEW(tmp);
                 tmp->host = host;
@@ -177,7 +177,7 @@ static void _appendMail(List_T list, Mail_T m, Event_T e, char *host) {
                 _substitute(tmp, e);
                 _escape(tmp);
                 List_append(list, tmp);
-                DEBUG("Sending %s notification to %s\n", Event_get_description(e), m->to);
+                DEBUG("Sending %s notification to %s\n", Event_description(e), m->to);
         }
 }
 

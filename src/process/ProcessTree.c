@@ -62,6 +62,7 @@
 
 #include "monit.h"
 #include "event.h"
+#include "service.h"
 #include "file.h"
 #include "ProcessTree.h"
 #include "process_sysdep.h"
@@ -338,7 +339,7 @@ bool ProcessTree_updateProcess(Service_T s, pid_t pid) {
                         Statistics_update(&(s->inf.process->write.operations), ptree[leaf].write.time, ptree[leaf].write.operations);
                 return true;
         }
-        Util_resetInfo(s);
+        Service_resetInfo(s);
         return false;
 }
 
@@ -390,8 +391,9 @@ pid_t ProcessTree_findProcess(Service_T s) {
                                 return pid;
                 } else {
                         DEBUG("Process information not available -- skipping service %s process existence check for this cycle\n", s->name);
-                        // Return value is NOOP - it is based on existing errors bitmap so we don't generate false recovery/failures
-                        return ! (s->error & Event_NonExist);
+                        // The process existence is unknown: mirror the current state so the caller doesn't generate a false failure or recovery event
+                        // (a fake non-zero pid if no "does not exist" error is recorded for the service, 0 if the process is already reported as not running)
+                        return s->status[Event_NonExist] == State_Succeeded;
                 }
         } else {
                 // PIDFILE check
@@ -405,7 +407,7 @@ pid_t ProcessTree_findProcess(Service_T s) {
                                 return foundPid;
                 }
         }
-        Util_resetInfo(s);
+        Service_resetInfo(s);
         return 0;
 }
 
