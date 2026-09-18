@@ -480,6 +480,11 @@ static int Process_createPipes(Process_T P) {
 // Setup stdio pipes in subprocess. We need not close pipes as the child
 // process will exit if this fails
 static bool Process_setupChildPipes(Process_T P) {
+        // The pipes are created before fork(), the descriptors must be valid here
+        if (P->stdin_pipe[0] < 0 || P->stdin_pipe[1] < 0 || P->stdout_pipe[0] < 0 || P->stdout_pipe[1] < 0 || P->stderr_pipe[0] < 0 || P->stderr_pipe[1] < 0) {
+                errno = EBADF;
+                return false;
+        }
         close(P->stdin_pipe[1]);   // close write end
         if (P->stdin_pipe[0] != STDIN_FILENO) {
                 if (dup2(P->stdin_pipe[0],  STDIN_FILENO) != STDIN_FILENO)
