@@ -671,8 +671,8 @@ static bool create_parameters(HttpRequest req) {
                         }
                         req->params = parse_parameters(query_string);
                         // Reject control characters in the decoded parameters
-                        for (HttpParameter p = req->params; p; p = p->next) {
-                                for (const unsigned char *c = (const unsigned char *)p->value; c && *c; c++) {
+                        for (HttpParameter param = req->params; param; param = param->next) {
+                                for (const unsigned char *c = (const unsigned char *)param->value; c && *c; c++) {
                                         if (*c < 0x20 || *c == 0x7f) {
                                                 FREE(query_string);
                                                 return false;
