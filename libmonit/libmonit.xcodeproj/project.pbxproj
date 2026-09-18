@@ -48,7 +48,6 @@
 		52FDA9552EC6A76000971039 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A31C821A6531D8009D3D83 /* libmonit.a */; };
 		52FDA95B2EC6A77700971039 /* NumTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52FDA94E2EC6A67E00971039 /* NumTest.c */; };
 		52FDD6B1189C205E008E3D5E /* CommandTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 52936F7713A5212700FC4089 /* CommandTest.c */; };
-		93D5F8AA2EBB81CE009E458B /* Num.c in Sources */ = {isa = PBXBuildFile; fileRef = 93D5F8A92EBB81CE009E458B /* Num.c */; };
 		93D5F8AB2EBB81CE009E458B /* Num.h in Headers */ = {isa = PBXBuildFile; fileRef = 93D5F8A82EBB81CE009E458B /* Num.h */; };
 		93F6F8E52BF765B300BAFEC1 /* RandomTest.c in Sources */ = {isa = PBXBuildFile; fileRef = 93F6F8E42BF765B300BAFEC1 /* RandomTest.c */; };
 /* End PBXBuildFile section */
@@ -264,9 +263,8 @@
 		52F8BB441ECE55D70007DF91 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		52F8BB461ECE567A0007DF91 /* libz.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.dylib; path = ../../../../../usr/lib/libz.1.dylib; sourceTree = "<group>"; };
 		52FDA94E2EC6A67E00971039 /* NumTest.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = NumTest.c; sourceTree = "<group>"; };
-		52FDA95A2EC6A76000971039 /* NumTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = NumTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/NumTest"; sourceTree = "<absolute>"; };
+		52FDA95A2EC6A76000971039 /* NumTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = NumTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93D5F8A82EBB81CE009E458B /* Num.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Num.h; sourceTree = "<group>"; };
-		93D5F8A92EBB81CE009E458B /* Num.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = Num.c; sourceTree = "<group>"; };
 		93F6F8E02BF762D500BAFEC1 /* StringBufferTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StringBufferTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93F6F8E12BF762D500BAFEC1 /* InputstreamTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = InputstreamTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93F6F8E22BF765A500BAFEC1 /* Random.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Random.h; sourceTree = "<group>"; };
@@ -399,6 +397,7 @@
 				5274583A13A1009C00C422FE /* test */,
 				52A31C831A6531DF009D3D83 /* Products */,
 				52F8BB431ECE55D60007DF91 /* Frameworks */,
+				52FDA95A2EC6A76000971039 /* NumTest */,
 			);
 			sourceTree = "<group>";
 		};
@@ -496,7 +495,6 @@
 			isa = PBXGroup;
 			children = (
 				93D5F8A82EBB81CE009E458B /* Num.h */,
-				93D5F8A92EBB81CE009E458B /* Num.c */,
 				520CA0492D56520E00D851CD /* Array.h */,
 				520CA04A2D56520E00D851CD /* Array.c */,
 				52D7967613A6CE560014CED2 /* List.c */,
@@ -790,7 +788,6 @@
 				5256BCA22D5EA75B005FC07A /* Random.c in Sources */,
 				52D7968F13A6CE560014CED2 /* OutputStream.c in Sources */,
 				52D7969113A6CE560014CED2 /* Command.c in Sources */,
-				93D5F8AA2EBB81CE009E458B /* Num.c in Sources */,
 				521ECE3C21D85EC100F8045E /* FmtTest.c in Sources */,
 				52D7969313A6CE560014CED2 /* Mem.c in Sources */,
 				52D7969513A6CE560014CED2 /* Net.c in Sources */,
