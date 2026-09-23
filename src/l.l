@@ -100,6 +100,7 @@ extern void yywarning(const char *,...);
 extern void yywarning2(const char *,...);
 static void steplinenobycr(char *);
 static void save_arg(void);
+static void begin_argument(void);
 static void include_file(char *);
 static char *handle_quoted_string(char *);
 static void push_buffer_state(YY_BUFFER_STATE, const char*);
@@ -141,11 +142,11 @@ cpusoftirq     cpu[ ]*(usage)*[ ]*\([ ]*softirq[ ]*\)
 cpusteal       cpu[ ]*(usage)*[ ]*\([ ]*steal[ ]*\)
 cpuguest       cpu[ ]*(usage)*[ ]*\([ ]*guest[ ]*\)
 cpuguestnice   cpu[ ]*(usage)*[ ]*\([ ]*guestnice[ ]*\)
-startarg       start{ws}?(program)?{ws}?([=]{ws}?)?["]
-stoparg        stop{ws}?(program)?{ws}?([=]{ws}?)?["]
-restartarg     restart{ws}?(program)?{ws}?([=]{ws}?)?["]
-execarg        exec(ute)?{ws}?["]
-pathtokarg     path{ws}?["]
+startarg       start{ws}?(program)?{ws}?([=]{ws}?)?["']
+stoparg        stop{ws}?(program)?{ws}?([=]{ws}?)?["']
+restartarg     restart{ws}?(program)?{ws}?([=]{ws}?)?["']
+execarg        exec(ute)?{ws}?["']
+pathtokarg     path{ws}?["']
 percent        ("percent"|"%")
 byte           ("byte"|"bytes"|"b")("/s")?
 kilobyte       ("kilobyte"|"kilobytes"|"kb")("/s")?
@@ -161,7 +162,7 @@ atime          ("atime"|"access time"|"access timestamp")
 ctime          ("ctime"|"change time"|"change timestamp")
 mtime          ("mtime"|"modification time"|"modification timestamp"|"modify time"|"modify timestamp")
 
-%x ARGUMENT_COND DEPEND_COND SERVICE_COND URL_COND ADDRESS_COND STRING_COND HOSTGROUP_COND EVERY_COND HTTP_HEADER_COND INCLUDE
+%x ARGUMENT_COND ARGUMENT_SQ_COND DEPEND_COND SERVICE_COND URL_COND ADDRESS_COND STRING_COND HOSTGROUP_COND EVERY_COND HTTP_HEADER_COND INCLUDE
 
 %%
 
@@ -201,16 +202,19 @@ option(s)?        {/* EMPTY */}
 ssl[ \t]+disable  {/* EMPTY */}
 disable[ \t]+ssl  {/* EMPTY */}
 
-{startarg}        { BEGIN(ARGUMENT_COND); return START; }
-{stoparg}         { BEGIN(ARGUMENT_COND); return STOP; }
-{restartarg}      { BEGIN(ARGUMENT_COND); return RESTART; }
-{execarg}         { BEGIN(ARGUMENT_COND); return EXEC; }
+{startarg}        { begin_argument(); return START; }
+{stoparg}         { begin_argument(); return STOP; }
+{restartarg}      { begin_argument(); return RESTART; }
+start{ws}?(program)?{ws}?[=]   { return START; }
+stop{ws}?(program)?{ws}?[=]    { return STOP; }
+restart{ws}?(program)?{ws}?[=] { return RESTART; }
+{execarg}         { begin_argument(); return EXEC; }
 {pathtokarg}      {
                         if (check_state == Program_State) {
-                                BEGIN(ARGUMENT_COND); // Parse Path for program as arguments
+                                begin_argument(); // Parse Path for program as arguments
                                 return PATHTOK;
                         } else {
-                                unput('"');
+                                unput(yytext[yyleng - 1]);
                                 return PATHTOK;
                         }
                   }
@@ -816,9 +820,42 @@ group[ \t]+       {
 
 }
 
+<ARGUMENT_SQ_COND>{
+
+  {ws}            ;
+
+  [\n]            {
+                    lineno++;
+                  }
+
+  \'              {
+                      BEGIN(INITIAL);
+                      return ARGEND;
+                  }
+
+  \"[^\"]*\"      {
+                      steplinenobycr(yytext);
+                      yylval.string = handle_quoted_string(yytext);
+                      save_arg();
+                      return STRING;
+                  }
+
+  \"              {
+                      yyerror("unbalanced quotes");
+                  }
+
+  [^ \t\n\']+     {
+                      yylval.string = Str_dup(yytext);
+                      save_arg();
+                      return STRING;
+                  }
+
+}
+
 <URL_COND>{
 
   {ws}|[\n]       {
+                      yyless(0);
                       BEGIN(INITIAL);
                       if (! yylval.url->hostname)
                                 yyerror("missing hostname in URL");
@@ -877,8 +914,7 @@ group[ \t]+       {
 <ADDRESS_COND>{
 
    [}\n]        {
-                        if (yytext[0] == '}')
-                                yyless(0);
+                        yyless(0);
                         BEGIN(INITIAL);
                         if (! yylval.address->address)
                                 yyerror("missing address");
@@ -912,6 +948,12 @@ group[ \t]+       {
 }
 
 <STRING_COND>{
+
+  {ws}            ;
+
+  [\n]            {
+                    lineno++;
+                  }
 
   {str}           {
                     yylval.string = Str_dup(yytext);
@@ -979,6 +1021,10 @@ group[ \t]+       {
 
   {ws}            ;
 
+  [\n]            {
+                    lineno++;
+                  }
+
   {number}        {
                     yylval.number = atoi(yytext);
                     BEGIN(INITIAL);
@@ -1039,13 +1085,19 @@ group[ \t]+       {
 }
 
 
-<INITIAL,ARGUMENT_COND,SERVICE_COND,DEPEND_COND,URL_COND,ADDRESS_COND,STRING_COND,HOSTGROUP_COND,EVERY_COND,HTTP_HEADER_COND>. {
+<INITIAL,ARGUMENT_COND,ARGUMENT_SQ_COND,SERVICE_COND,DEPEND_COND,URL_COND,ADDRESS_COND,STRING_COND,HOSTGROUP_COND,EVERY_COND,HTTP_HEADER_COND>. {
                       check_state = None_State;
                       return yytext[0];
                   }
 
 
 <INCLUDE>[ \t]*      /* eat the whitespace */
+
+<INCLUDE>[\n]        {
+                     yyless(0);
+                     BEGIN(INITIAL);
+                     yyerror("missing include file name");
+                   }
 
 <INCLUDE>\"[^\"\r\n]+\" { /* got the include file name with double quotes */
                      char *temp = Str_dup(yytext);
@@ -1073,6 +1125,8 @@ group[ \t]+       {
 
 <<EOF>>           {
 
+                       if (YY_START == INCLUDE)
+                                yyerror("missing include file name");
                        BEGIN(INITIAL);
                        check_state = None_State;
                        if (! pop_buffer_state())
@@ -1192,6 +1246,11 @@ static int pop_buffer_state(void) {
 static void save_arg(void) {
         FREE(argyytext);
         argyytext = Str_dup(yytext);
+}
+
+
+static void begin_argument(void) {
+        BEGIN(yytext[yyleng - 1] == '\'' ? ARGUMENT_SQ_COND : ARGUMENT_COND);
 }
 
 

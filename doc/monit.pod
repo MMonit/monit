@@ -3243,8 +3243,12 @@ You can also send parameters with the program:
 Arguments to the program or script is a sequence of whitespace
 separated strings. In the above example the strings '-lrt' and '/tmp/'
 are arguments to the program '/bin/ls'. If arguments are used, the
-program and its arguments must be enclosed in quotes B<">, otherwise, if
-no arguments are used, quotes are not needed.
+program and its arguments must be enclosed in double quotes B<"> or
+single quotes B<'>, otherwise, if no arguments are used, quotes are not
+needed. An argument which contains whitespace can be enclosed in the
+other type of quotes, for example:
+
+ if status != 0 then exec '/usr/bin/say "Oh no!"'
 
 Notes: If the program is a script, the interpreter is required
 in the first line. The program or script must also be executable.

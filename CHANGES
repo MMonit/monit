@@ -35,6 +35,25 @@ Fixed: The parser silently appended any unquoted text that followed a start/stop
        written without the 'every' keyword on the line below 'stop program = "..."' became an argument of the stop
        program. Such text is now reported as a syntax error. An unquoted program is still accepted, but as documented
        it can only be the program name - if arguments are used, the program and its arguments must be quoted.
+       An unquoted program with arguments, such as 'exec /bin/foo bar', is reported as "A program with arguments must
+       be quoted" at the line of the argument, instead of as a syntax error at the next statement. This includes an
+       argument which is a Monit keyword, such as 'stop program = /etc/init.d/foo stop'.
+       An unquoted program is now also accepted in the 'start program = /path' form (likewise for stop and restart),
+       which previously gave a syntax error at '='.
+
+Fixed: A program and its arguments can be enclosed in single quotes as well as in double quotes, in the start, stop,
+       restart and exec statements and in 'check program ... path'. For example exec '/usr/bin/say "Oh no!"'. Before,
+       a single quoted program with arguments was taken as one program path that could not be executed (reported
+       only as a "Program does not exist" warning), and single quotes in start/stop/restart gave a syntax error.
+
+Fixed: Configuration errors could be reported with a wrong line number. The line break following a URL (for example
+       'set mmonit http://...'), a mail address in 'set mail-format { from: ... }', and a line break between the
+       'group' or 'every' keyword and its value were not counted, so every error further down in the file was reported
+       one or more lines above the actual line.
+
+Fixed: An 'include' statement without a file name took the first word of the next line as the file name, and since a
+       failed include is only a warning, that line was silently ignored. A missing include file name is now reported
+       as an error.
 
 Fixed: SSL/TLS: Make the certificate checksum comparison case-insensitive.
 

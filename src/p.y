@@ -185,6 +185,7 @@ extern int buffer_stack_ptr;
 
 /* Local variables */
 static int cfg_errflag = 0;
+static int argumentlineno = 0;
 static Service_T tail = NULL;
 static Service_T current = NULL;
 static Request_T urlrequest = NULL;
@@ -1550,11 +1551,25 @@ restart         : RESTART argumentlist restarttimeout {
  * accepted as well, but then it is limited to the program name alone.
  */
 argumentlist    : arguments ARGEND
-                | argument
+                | arguments {
+                        if ((yychar == START || yychar == STOP || yychar == RESTART) && lineno == argumentlineno && ! strpbrk(yytext, " \t=\"'")) {
+                                addargument(Str_dup(yytext));
+                                yyclearin;
+                        }
+                        if (command && command->length > 1) {
+                                Log_error("%s:%i: A program with arguments must be quoted -- unexpected argument '%s'\n", currentfile, argumentlineno, command->arg[1]);
+                                cfg_errflag++;
+                        }
+                  }
                 ;
 
-arguments       : argument
-                | arguments argument
+arguments       : argument {
+                        argumentlineno = lineno;
+                  }
+                | arguments argument {
+                        if (command && command->length == 2)
+                                argumentlineno = lineno;
+                  }
                 ;
 
 useroptionlist  : useroption
