@@ -230,7 +230,7 @@ static bool _doStart(Service_T s) {
         for (Dependant_T d = s->dependantlist; d; d = d->next ) {
                 Service_T parent = Service_get(d->dependant);
                 assert(parent);
-                if (! (parent->monitor & Monitor_Yes) || Service_hasErrors(parent)) {
+                if (! (parent->monitor & Monitor_Yes) || Service_hasConfirmedErrors(parent)) {
                         if (_doStart(parent)) {
                                 State_Type state = _check(parent);
                                 if (state != State_Failed && state != State_Init)

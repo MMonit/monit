@@ -74,6 +74,15 @@ bool Service_hasErrors(Service_T s);
 
 
 /**
+ * Does the service have confirmed errors? Unlike Service_hasErrors(), a failure
+ * which didn't reach the error threshold yet ("for X cycles") is not counted
+ * @param s The service to test
+ * @return true if any event of the service is in the failed or changed state, otherwise false
+ */
+bool Service_hasConfirmedErrors(Service_T s);
+
+
+/**
  * Reset the collected service data (the service specific information structure)
  * @param s A Service_T object
  */

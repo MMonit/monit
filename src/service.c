@@ -99,6 +99,15 @@ bool Service_hasErrors(Service_T s) {
 }
 
 
+bool Service_hasConfirmedErrors(Service_T s) {
+        assert(s);
+        for (Event_T e = s->eventlist; e; e = e->next)
+                if (e->id != Event_Instance && e->id != Event_Action && (e->state == State_Failed || e->state == State_Changed))
+                        return true;
+        return false;
+}
+
+
 void Service_resetInfo(Service_T s) {
         switch (s->type) {
                 case Service_Filesystem:

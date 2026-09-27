@@ -130,6 +130,10 @@ Fixed: MacOS: the command line of processes with many arguments was collected in
 Fixed: Linux: the disk I/O statistics were not collected for a filesystem whose block device is the first entry in /proc/diskstats. The read and write byte, operation and service
               time values stayed empty for such a filesystem, without reporting an error.
 
+Fixed: GitHub issue #1: A service which depends on another service ("depends on") was skipped immediately when the parent service test failed, even if the parent
+       test used the multiple-errors condition ("for X cycles") and the error threshold wasn't reached yet. The dependent service is now skipped only when the parent
+       failure is confirmed. Regression in Monit 6.0.0. Thanks to Lutz Mader.
+
 
 
 Version 6.0.0

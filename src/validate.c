@@ -1673,7 +1673,7 @@ static bool _checkSkip(Service_T s) {
                         if (! (parent->monitor & Monitor_Yes)) {
                                 DEBUG("'%s' test skipped as required service '%s' is %s\n", s->name, parent->name, parent->monitor == Monitor_Init ? "initializing" : "not monitored");
                                 return true;
-                        } else if (Service_hasErrors(parent)) {
+                        } else if (Service_hasConfirmedErrors(parent)) {
                                 DEBUG("'%s' test skipped as required service '%s' has errors\n", s->name, parent->name);
                                 return true;
                         }
