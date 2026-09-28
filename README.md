@@ -139,7 +139,7 @@ In order for the team to accept your change, you must complete the [Tildeslash C
 REPORTING A BUG
 ===============
 
-If you believe you have found a bug, please use the [issue tracker](https://github.com/tildeslash/monit/issues) to report the problem.
+If you believe you have found a bug, please use the [issue tracker](https://github.com/MMonit/monit/issues) to report the problem.
 Remember to include the necessary information that will enable us to understand and reproduce this problem.
 
 If you have found a security vulnerabilities we appreciate if you will send this information to [cve@tildeslash.com](mailto:cve@tildeslash.com).
@@ -148,7 +148,7 @@ If you have found a security vulnerabilities we appreciate if you will send this
 ACKNOWLEDGMENTS
 ===============
 
-Thanks to the [Free Software Foundation](http://www.fsf.org) for hosting the mailing list and to [Atlassian](https://www.atlassian.com) for hosting the code repository.
+Thanks to the [Free Software Foundation](http://www.fsf.org) for hosting the mailing list, to [GitHub](https://github.com) for hosting the code repository and to [Atlassian](https://www.atlassian.com) for hosting it on Bitbucket in the past.
 
 The design of libmonit was inspired by principles put forth by *David R. Hanson* in his excellent book ["C Interfaces and
 Implementations"](http://www.cs.princeton.edu/software/cii/ "CII").
