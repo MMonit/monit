@@ -56,6 +56,8 @@
 
 #include "system/Net.h"
 #include "system/System.h"
+#include "system/Time.h"
+#include "util/Num.h"
 
 
 /**
@@ -65,6 +67,26 @@
  * @see https://mmonit.com/
  * @file
  */
+
+
+/* --------------------------------------------------------------- Private */
+
+
+// poll() takes an int, and waits for ever on a negative timeout. A signal
+// does not restart the wait: poll() again for the time left
+static int _poll(struct pollfd *fd, time_t milliseconds) {
+        int r, error = errno;
+        int timeout = (int)Num_clamp(milliseconds, 0, INT_MAX);
+        long long deadline = Time_monotonic().milliseconds + timeout;
+        while ((r = poll(fd, 1, timeout)) == -1 && errno == EINTR) {
+                errno = error; // Callers read errno after a timeout
+                long long left = deadline - Time_monotonic().milliseconds;
+                if (left <= 0)
+                        return 0;
+                timeout = (int)left;
+        }
+        return r;
+}
 
 
 /* ---------------------------------------------------------------- Public */
@@ -81,26 +103,18 @@ bool Net_setBlocking(int socket) {
 
 
 bool Net_canRead(int socket, time_t milliseconds) {
-        int r = 0;
         struct pollfd fds[1];
         fds[0].fd = socket;
         fds[0].events = POLLIN;
-        do {
-                r = poll(fds, 1, (int)milliseconds);
-        } while (r == -1 && errno == EINTR);
-        return (r > 0);
+        return (_poll(fds, milliseconds) > 0);
 }
 
 
 bool Net_canWrite(int socket, time_t milliseconds) {
-        int r = 0;
         struct pollfd fds[1];
         fds[0].fd = socket;
         fds[0].events = POLLOUT;
-        do {
-                r = poll(fds, 1, (int)milliseconds);
-        } while (r == -1 && errno == EINTR);
-        return (r > 0);
+        return (_poll(fds, milliseconds) > 0);
 }
 
 

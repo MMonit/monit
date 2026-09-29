@@ -24,10 +24,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -198,30 +194,17 @@ static bool _doConnect(int s, const struct sockaddr *addr, socklen_t addrlen, in
                 snprintf(error, STRLEN, "%s", STRERROR);
                 return false;
         }
-        struct pollfd fds[1];
-        fds[0].fd = s;
-        fds[0].events = POLLIN | POLLOUT;
-        do {
-                rv = poll(fds, 1, timeout);
-        } while (rv == -1 && errno == EINTR);
-        if (rv == 0) {
+        // The socket becomes writable when the connect completes or fails
+        if (! Net_canWrite(s, timeout)) {
                 snprintf(error, STRLEN, "Connection timed out");
                 return false;
-        } else if (rv == -1) {
-                snprintf(error, STRLEN, "Poll failed: %s", STRERROR);
-                return false;
         }
-        if (fds[0].events & POLLIN || fds[0].events & POLLOUT) {
-                socklen_t rvlen = sizeof(rv);
-                if (getsockopt(s, SOL_SOCKET, SO_ERROR, &rv, &rvlen) < 0) {
-                        snprintf(error, STRLEN, "Read of error details failed: %s", STRERROR);
-                        return false;
-                } else if (rv) {
-                        snprintf(error, STRLEN, "%s", strerror(rv));
-                        return false;
-                }
-        } else {
-                snprintf(error, STRLEN, "Not ready for I/O");
+        socklen_t rvlen = sizeof(rv);
+        if (getsockopt(s, SOL_SOCKET, SO_ERROR, &rv, &rvlen) < 0) {
+                snprintf(error, STRLEN, "Read of error details failed: %s", STRERROR);
+                return false;
+        } else if (rv) {
+                snprintf(error, STRLEN, "%s", strerror(rv));
                 return false;
         }
         return true;
