@@ -12,6 +12,13 @@ INCOMPATIBLE CHANGE: SSL/TLS server certificate verification is now ENABLED BY D
            with ssl options {selfsigned: allow}     # accept a self-signed certificate
        The same options can be set globally with 'set ssl options { ... }'.
 
+Changed: The Monit source code repository and the issue tracker have moved from Bitbucket to GitHub:
+             https://github.com/MMonit/monit
+         The complete commit history and all release tags were preserved. Please use the GitHub issue tracker
+         (https://github.com/MMonit/monit/issues) to report problems and to submit pull requests. To update an existing
+         clone use: git remote set-url origin https://github.com/MMonit/monit.git
+         The old Bitbucket repository is frozen and is no longer updated.
+
 New: Event types enhancement: The original events were limited to 31 types. Many tests shared the same event type
      (e.g. the "Resource" was used for CPU, memory, load average, thread, read/write operations, swap, etc.)
      As a consequence a failure of one test marked all tests of the same class as failed in "monit status" and in the
