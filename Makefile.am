@@ -105,6 +105,10 @@ monit_LDFLAGS 	= -static $(EXTLDFLAGS)
 
 man_MANS 	= monit.1
 
+if INSTALL_BASHCOMPLETION
+bashcomp_DATA	= system/bash/monit.bash
+endif
+
 BUILT_SOURCES   = src/lex.yy.c src/y.tab.c src/y.tab.h
 
 CLEANFILES	= src/y.output

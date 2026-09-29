@@ -30,6 +30,15 @@ New: The link errors tests are now performed regardless of the "if link up" test
 New: A Debug mode On/Off button has been added to the Monit HTTP GUI. This simplifies runtime debugging when Monit is running
      as PID 1, such as in a Docker container. Thanks to Lutz Mader.
 
+New: The bash completion for the monit command line is now installed by "make install" to
+     <prefix>/share/bash-completion/completions/monit.bash, where the bash-completion package finds it and loads it on
+     demand. Use the configure option --with-bashcompletiondir=DIR to install it to a different directory, or
+     --with-bashcompletiondir=no to not install it.
+     Note: bash-completion 2.12 or later finds the script under any installation prefix. Older versions (2.11 and
+     earlier) search the /usr/share and /usr/local/share directories only, if Monit is installed with a different
+     prefix (for example /opt/monit), copy the script to ~/.local/share/bash-completion/completions/ or source it from
+     ~/.bashrc.
+
 Fixed: The parser silently appended any unquoted text that followed a start/stop/restart/exec program statement or a
        'check program ... path' statement to that program's argument list. For example an 'every' cron specification
        written without the 'every' keyword on the line below 'stop program = "..."' became an argument of the stop

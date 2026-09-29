@@ -504,6 +504,24 @@ AC_DEFINE_UNQUOTED([PIDDIR], "$piddir",
 	  [Define to the pid storage directory.])
 AC_MSG_RESULT([$piddir])
 
+# The directory to install the bash completion to. The default is relative to
+# the installation prefix, where the bash-completion package finds it
+AC_MSG_CHECKING([bash completion directory])
+AC_ARG_WITH([bashcompletiondir],
+	[AS_HELP_STRING([--with-bashcompletiondir=DIR], [Install the bash completion to DIR, use "no" to not install it (default: DATADIR/bash-completion/completions)])],
+	[
+		bashcompdir="$withval"
+	],
+	[
+		bashcompdir='${datadir}/bash-completion/completions'
+	])
+if test "x$bashcompdir" = "xyes"; then
+	bashcompdir='${datadir}/bash-completion/completions'
+fi
+AM_CONDITIONAL([INSTALL_BASHCOMPLETION], [test "x$bashcompdir" != "xno"])
+AC_SUBST([bashcompdir])
+AC_MSG_RESULT([$bashcompdir])
+
 # Test mounted filesystem description file
 if test -f "/etc/mtab"
 then

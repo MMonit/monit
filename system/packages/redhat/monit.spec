@@ -39,10 +39,12 @@ fi
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_mandir}/man1
 mkdir -p %{buildroot}/etc/init.d
+mkdir -p %{buildroot}%{_datadir}/bash-completion/completions
 install -m 755 monit %{buildroot}%{_bindir}/monit
 install -m 644 monit.1 %{buildroot}%{_mandir}/man1/monit.1
 install -m 600 monitrc %{buildroot}/etc/monitrc
 install -m 755 system/startup/rc.monit %{buildroot}/etc/init.d/%{name}
+install -m 644 system/bash/monit.bash %{buildroot}%{_datadir}/bash-completion/completions/%{name}.bash
 
 %post
 /sbin/chkconfig --add %{name}
@@ -65,6 +67,7 @@ fi
 %config /etc/init.d/%{name}
 %{_bindir}/%{name}
 %{_mandir}/man1/%{name}.1.gz
+%{_datadir}/bash-completion/completions/%{name}.bash
 
 %changelog
 * Thu Sep 3 2026 Monit team <support@mmonit.com>
