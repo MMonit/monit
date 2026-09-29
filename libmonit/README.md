@@ -4,3 +4,4 @@
 #Libmonit synthesis modules used by [Monit](http://mmonit.com/monit/) into a static library. Libmonit is built as part of Monit and is not meant to be installed nor distributed.
 
 ---
+PLEASE DO NOT DISTRIBUTE LIBMONIT AS A SEPARATE LIBRARY.
