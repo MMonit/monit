@@ -219,7 +219,7 @@ _monit()
     fi
 
     _monit_reply start stop restart monitor unmonitor reload status summary \
-        report inventory quit validate procmatch
+        report quit validate procmatch
     return 0
 }
 
