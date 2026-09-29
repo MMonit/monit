@@ -40,6 +40,7 @@ _monit_reply()
         [[ $name ]] || continue
         printf -v name %q "$name"
         [[ $name == "$cur"* ]] || continue
+        name=$prefix$name
         # Skip duplicates
         [[ $'\n'${COMPREPLY[*]-}$'\n' == *$'\n'$name$'\n'* ]] && continue
         COMPREPLY+=("$name")
@@ -52,7 +53,7 @@ _monit_files()
     local line
     compopt -o filenames 2>/dev/null
     while IFS= read -r line; do
-        [[ $line ]] && COMPREPLY+=("$line")
+        [[ $line ]] && COMPREPLY+=("$prefix$line")
     done <<<"$(compgen -f -- "$cur")"
 }
 
@@ -94,7 +95,7 @@ _monit()
 {
     local IFS=$' \t\n'
     local cur=${COMP_WORDS[COMP_CWORD]}
-    local monit conffile="" group="" command="" optarg="" split=""
+    local monit conffile="" group="" command="" optarg="" split="" prefix=""
     local REPLY word opts i n
     local -a words=()
 
@@ -103,15 +104,26 @@ _monit()
     _monit_dequote "$1"
     monit=$REPLY
 
-    # The words before the cursor, "--option=value" is split to "--option",
-    # "=" and "value" in COMP_WORDS
+    # The words before the cursor. "--option=value" is split to "--option",
+    # "=" and "value" in COMP_WORDS, unless "=" is not a word break (bash < 4)
     for ((i = 1; i < COMP_CWORD; i++)); do
-        [[ ${COMP_WORDS[i]} == = ]] || words+=("${COMP_WORDS[i]}")
+        word=${COMP_WORDS[i]}
+        if [[ $word == --*=* ]]; then
+            words+=("${word%%=*}" "${word#*=}")
+        elif [[ $word != = ]]; then
+            words+=("$word")
+        fi
     done
     if [[ $cur == = ]]; then
         cur=""
         split="set"
     elif ((COMP_CWORD > 1)) && [[ ${COMP_WORDS[COMP_CWORD - 1]} == = ]]; then
+        split="set"
+    elif [[ $cur == --*=* ]]; then
+        # The replies must contain the whole word then
+        words+=("${cur%%=*}")
+        prefix=${cur%%=*}=
+        cur=${cur#*=}
         split="set"
     fi
 
