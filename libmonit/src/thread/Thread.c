@@ -102,16 +102,11 @@ void AtomicThread_create(AtomicThread_T *thread, void *(*threadFunc)(void *threa
         thread->threadFunc = threadFunc;
         thread->threadArgs = threadArgs;
         atomic_store(&thread->active, true);
-        TRY
-        {
-                Thread_create(thread->value, _atomicWrapper, thread);
-        }
-        ELSE
-        {
+        int status = pthread_create(&thread->value, NULL, _atomicWrapper, thread);
+        if (status != 0) {
                 atomic_store(&thread->active, false);
-                RETHROW;
+                THROW(AssertException, "pthread_create -- %s", System_getError(status));
         }
-        END_TRY;
         atomic_store(&thread->joinable, true);
 }
 
@@ -123,16 +118,11 @@ void AtomicThread_createDetached(AtomicThread_T *thread, void *(*threadFunc)(voi
         thread->threadFunc = threadFunc;
         thread->threadArgs = threadArgs;
         atomic_store(&thread->active, true);
-        TRY
-        {
-                Thread_createDetached(&thread->value, _atomicWrapper, thread);
-        }
-        ELSE
-        {
+        int status = pthread_create(&thread->value, &myDetachStateAttribute, _atomicWrapper, thread);
+        if (status != 0) {
                 atomic_store(&thread->active, false);
-                RETHROW;
+                THROW(AssertException, "pthread_create -- %s", System_getError(status));
         }
-        END_TRY;
 }
 
 bool AtomicThread_isActive(AtomicThread_T *thread) {
