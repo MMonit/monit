@@ -134,7 +134,8 @@ struct Run_T Run = {
         .files.pidfile_lock = -1,
         .ssl.version = -1,
         .ssl.verify = -1,
-        .ssl.allowSelfSigned = -1
+        .ssl.allowSelfSigned = -1,
+        .mutex = PTHREAD_MUTEX_INITIALIZER
 };  /**< Struct holding runtime constants */
 Service_T Service_List;                 /**< The service list (created in p.y) */
 Service_T Service_List_Conf;    /**< The service list in conf file (c. in p.y) */
@@ -157,7 +158,7 @@ const char *Httpmethod_Names[] = {"", "HEAD", "GET"};
 
 /* -------------------------------------------------------------- File Private */
 
-static AtomicThread_T Heartbeat_Thread;
+static AtomicThread_T Heartbeat_Thread = ATOMICTHREAD_INITIALIZER;
 
 /* ------------------------------------------------------------------ Public */
 
@@ -239,7 +240,7 @@ static void _validateOnce(void) {
  */
 static void do_init(void) {
         /*
-         * Set if Monit is running as init (PID 1), which the stop handler reads
+         * Set if Monit is running as init (PID 1)
          */
         Run.isInit = (getpid() == 1);
 
@@ -282,18 +283,6 @@ static void do_init(void) {
          * network wait in progress when Monit stops the thread
          */
         signal(SIGURG, handle_urgent);
-
-        /*
-         * Initialize the Runtime mutex. This mutex
-         * is used to synchronize handling of global
-         * service data
-         */
-        Mutex_init(Run.mutex);
-
-        /*
-         * Initialize the Heartbeat Thread variable
-         */
-        AtomicThread_init(&Heartbeat_Thread);
 
         /*
          * Get the position of the control file
@@ -579,6 +568,7 @@ static void do_exit(bool saveState) {
         bool isDaemon = (Run.flags & Run_Daemon) && ! (Run.flags & Run_Once);
         if (isDaemon) {
                 monit_http(Httpd_Stop);
+                monit_http(Httpd_Destroy);
                 _stopHeartbeat();
                 AtomicThread_destroy(&Heartbeat_Thread);
         }

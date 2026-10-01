@@ -64,8 +64,8 @@
 #include "exceptions/AssertException.h"
 
 
-/* The HTTP Thread, initialized as AtomicThread_init() does */
-static AtomicThread_T thread = {.sem = PTHREAD_COND_INITIALIZER, .mutex = PTHREAD_MUTEX_INITIALIZER};
+/* The HTTP Thread */
+static AtomicThread_T thread = ATOMICTHREAD_INITIALIZER;
 
 
 /**
@@ -110,7 +110,8 @@ bool can_http(void) {
 
 
 /**
- * Start and stop the monit http server
+ * Start and stop the monit http server. Httpd_Destroy destroys the http
+ * thread at exit, after Httpd_Stop
  * @param action Httpd_Action
  */
 void monit_http(Httpd_Action action) {
@@ -139,6 +140,9 @@ void monit_http(Httpd_Action action) {
                         Engine_setStopped(false);
                         AtomicThread_create(&thread, _http_thread, NULL);
                         Log_debug("Monit HTTP server started\n");
+                        break;
+                case Httpd_Destroy:
+                        AtomicThread_destroy(&thread);
                         break;
                 default:
                         Log_error("Monit: Unknown http server action\n");

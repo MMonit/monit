@@ -141,6 +141,26 @@ int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char **argv
         }
         printf("=> Test3: OK\n\n");
 
+        printf("=> Test4: ATOMICTHREAD_INITIALIZER initializes an Atomic Thread as AtomicThread_init does\n");
+        {
+                static AtomicThread_T T = ATOMICTHREAD_INITIALIZER;
+                assert(! AtomicThread_isActive(&T));
+                assert(! AtomicThread_isJoinable(&T));
+                LOCK(T.mutex)
+                {
+                        Sem_signal(T.sem);
+                }
+                END_LOCK;
+                atomic_store(&done, false);
+                AtomicThread_create(&T, work, NULL);
+                AtomicThread_join(&T);
+                assert(atomic_load(&done));
+                AtomicThread_destroy(&T);
+                static AtomicThread_T Unused = ATOMICTHREAD_INITIALIZER;
+                AtomicThread_destroy(&Unused);
+        }
+        printf("=> Test4: OK\n\n");
+
         printf("============> Thread Tests: OK\n\n");
 
         return 0;

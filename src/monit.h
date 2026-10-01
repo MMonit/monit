@@ -163,7 +163,8 @@ typedef enum {
 
 typedef enum {
         Httpd_Start = 1,
-        Httpd_Stop
+        Httpd_Stop,
+        Httpd_Destroy
 } Httpd_Action;
 
 

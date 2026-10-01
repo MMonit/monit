@@ -303,8 +303,10 @@
  * creation, synchronization, and cleanup in a thread-safe manner.
  *
  * An Atomic Thread should be initialized using `AtomicThread_init`. This
- * ensure that the synchronization primitives `sem` and `mutex` are initialized
- * before the thread is created and that the threads active state is false.
+ * ensures that the synchronization primitives `sem` and `mutex` are initialized
+ * before the thread is created and that the thread's active state is false.
+ * A statically allocated Atomic Thread can be initialized with
+ * `ATOMICTHREAD_INITIALIZER` instead.
  *
  * Use `AtomicThread_createDetached` or `AtomicThread_create` to create the
  * thread. You can reuse the same AtomicThread_T variable to call these methods
@@ -325,6 +327,15 @@ typedef struct {
         void *threadArgs;
         void *(*threadFunc)(void *threadArgs);
 } AtomicThread_T;
+/**
+ * Static initializer for an Atomic Thread, with the same effect as
+ * `AtomicThread_init`. Example:
+ * <pre>
+ * static AtomicThread_T thread = ATOMICTHREAD_INITIALIZER;
+ * </pre>
+ * @hideinitializer
+ */
+#define ATOMICTHREAD_INITIALIZER {.sem = PTHREAD_COND_INITIALIZER, .mutex = PTHREAD_MUTEX_INITIALIZER}
 //@}
 
 // ------------------------------------------------------------- Public Methods
@@ -362,9 +373,8 @@ void AtomicThread_init(AtomicThread_T *thread);
  * @param thread The Atomic thread to create
  * @param threadFunc The thread routine to execute
  * @param threadArgs Arguments to <code>threadFunc</code>
- * @exception AssertException If thread creation failed, if the thread has
- * not been initialized using `AtomicThread_init` or if a previous thread has
- * not been joined
+ * @exception AssertException If thread creation failed, or if a previous
+ * thread is still running or has not been joined
  */
 void AtomicThread_create(AtomicThread_T *thread, void *(*threadFunc)(void *threadArgs), void *threadArgs);
 
@@ -373,9 +383,8 @@ void AtomicThread_create(AtomicThread_T *thread, void *(*threadFunc)(void *threa
  * @param thread The Atomic thread to create
  * @param threadFunc The thread routine to execute
  * @param threadArgs Arguments to <code>threadFunc</code>
- * @exception AssertException If thread creation failed, if the thread has
- * not been initialized using `AtomicThread_init` or if a previous thread has
- * not been joined
+ * @exception AssertException If thread creation failed, or if a previous
+ * thread is still running or has not been joined
  */
 void AtomicThread_createDetached(AtomicThread_T *thread, void *(*threadFunc)(void *threadArgs), void *threadArgs);
 
