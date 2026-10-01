@@ -579,13 +579,14 @@ the entrypoint of a Docker image:
 
 As PID 1, Monit also reaps orphaned processes and handles the shutdown
 of the container. When the container runtime sends SIGTERM, Monit first
-stops all services with their stop programs, in dependency order, but
-not later than two seconds before its C<shutdownTimeout> limit. Then it
-sends SIGTERM to all remaining processes, and one second before the
-limit it kills those still running and exits. Each process Monit has to
-kill is logged. During the shutdown, the "Monit stopped" notification
-goes to M/Monit only, not by mail, and the results of the service stops
-are only logged.
+stops the monitored services with their stop programs, in dependency
+order, but not later than two seconds before its C<shutdownTimeout>
+limit. A service that is not monitored or has no stop program is skipped
+in this step. Then it sends SIGTERM to all remaining processes, and one
+second before the limit it kills those still running and exits. Each
+process Monit has to kill is logged. During the shutdown, the "Monit
+stopped" notification goes to M/Monit only, not by mail, and the results
+of the service stops are only logged.
 
 The C<shutdownTimeout> limit counts from SIGTERM. Set it to the stop
 timeout of your container runtime, which kills the container if it has not
