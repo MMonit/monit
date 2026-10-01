@@ -212,11 +212,11 @@
 		521ECE3B21D85EC100F8045E /* FmtTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = FmtTest.c; sourceTree = "<group>"; };
 		522539AC18B91092003EB002 /* THIRDPARTY */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = THIRDPARTY; sourceTree = "<group>"; };
 		5267F1AE2DC010E300B9AA15 /* ArrayTest.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ArrayTest.c; sourceTree = "<group>"; };
-		5267F1BA2DC0115800B9AA15 /* ArrayTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = ArrayTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/ArrayTest"; sourceTree = "<absolute>"; };
+		5267F1BA2DC0115800B9AA15 /* ArrayTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ArrayTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5274580B13A1009C00C422FE /* bootstrap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = bootstrap; sourceTree = "<group>"; };
 		5274580C13A1009C00C422FE /* configure.ac */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = configure.ac; sourceTree = "<group>"; };
 		5274580D13A1009C00C422FE /* Makefile.am */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Makefile.am; sourceTree = "<group>"; };
-		529303E5306C7A1500FF94AD /* NetTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = NetTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/NetTest"; sourceTree = "<absolute>"; };
+		529303E5306C7A1500FF94AD /* NetTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = NetTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		529303F3306DCAD500FF94AD /* ThreadTest.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ThreadTest.c; sourceTree = "<group>"; };
 		52936F7713A5212700FC4089 /* CommandTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = CommandTest.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52936F7913A5212700FC4089 /* stream.data */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = stream.data; sourceTree = "<group>"; };
@@ -234,10 +234,10 @@
 		52936F8513A5212700FC4089 /* test.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = test.sh; sourceTree = "<group>"; };
 		52936F8613A5212700FC4089 /* TimeTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = TimeTest.c; sourceTree = "<group>"; };
 		52936F9913A5216B00FC4089 /* COPYING */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; lineEnding = 0; path = COPYING; sourceTree = "<group>"; };
-		529D79B51A59EBFA003C3931 /* CommandTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = CommandTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/CommandTest"; sourceTree = "<absolute>"; };
-		529D79B61A59EBFA003C3931 /* TimeTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = TimeTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/TimeTest"; sourceTree = "<absolute>"; };
-		529D79B71A59EBFA003C3931 /* StrTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = StrTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/StrTest"; sourceTree = "<absolute>"; };
-		529DBAB82EBD3CDD00BECF5F /* RandomTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = RandomTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/RandomTest"; sourceTree = "<absolute>"; };
+		529D79B51A59EBFA003C3931 /* CommandTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CommandTest; sourceTree = BUILT_PRODUCTS_DIR; };
+		529D79B61A59EBFA003C3931 /* TimeTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = TimeTest; sourceTree = BUILT_PRODUCTS_DIR; };
+		529D79B71A59EBFA003C3931 /* StrTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StrTest; sourceTree = BUILT_PRODUCTS_DIR; };
+		529DBAB82EBD3CDD00BECF5F /* RandomTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RandomTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		52A31C821A6531D8009D3D83 /* libmonit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libmonit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		52D7964A13A6CE560014CED2 /* Bootstrap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = Bootstrap.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52D7964B13A6CE560014CED2 /* Bootstrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Bootstrap.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -280,10 +280,10 @@
 		52E737DB1EE71099007BF939 /* ProtocolException.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProtocolException.h; sourceTree = "<group>"; };
 		52F8BB441ECE55D70007DF91 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		52FDA94E2EC6A67E00971039 /* NumTest.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = NumTest.c; sourceTree = "<group>"; };
-		52FDA95A2EC6A76000971039 /* NumTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = NumTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/NumTest"; sourceTree = "<absolute>"; };
+		52FDA95A2EC6A76000971039 /* NumTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = NumTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93D5F8A82EBB81CE009E458B /* Num.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Num.h; sourceTree = "<group>"; };
-		93F6F8E02BF762D500BAFEC1 /* StringBufferTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = StringBufferTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/StringBufferTest"; sourceTree = "<absolute>"; };
-		93F6F8E12BF762D500BAFEC1 /* InputstreamTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; name = InputstreamTest; path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/InputstreamTest"; sourceTree = "<absolute>"; };
+		93F6F8E02BF762D500BAFEC1 /* StringBufferTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StringBufferTest; sourceTree = BUILT_PRODUCTS_DIR; };
+		93F6F8E12BF762D500BAFEC1 /* InputstreamTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = InputstreamTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		93F6F8E22BF765A500BAFEC1 /* Random.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Random.h; sourceTree = "<group>"; };
 		93F6F8E32BF765A600BAFEC1 /* Random.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = Random.c; sourceTree = "<group>"; };
 		93F6F8E42BF765B300BAFEC1 /* RandomTest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = RandomTest.c; sourceTree = "<group>"; };
@@ -427,7 +427,16 @@
 		52A31C831A6531DF009D3D83 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				529D79B71A59EBFA003C3931 /* StrTest */,
+				529D79B61A59EBFA003C3931 /* TimeTest */,
+				529D79B51A59EBFA003C3931 /* CommandTest */,
 				52A31C821A6531D8009D3D83 /* libmonit.a */,
+				93F6F8E02BF762D500BAFEC1 /* StringBufferTest */,
+				93F6F8E12BF762D500BAFEC1 /* InputstreamTest */,
+				5267F1BA2DC0115800B9AA15 /* ArrayTest */,
+				529DBAB82EBD3CDD00BECF5F /* RandomTest */,
+				52FDA95A2EC6A76000971039 /* NumTest */,
+				529303E5306C7A1500FF94AD /* NetTest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -564,7 +573,7 @@
 				520568A5249019A00091011E /* PBXTargetDependency */,
 			);
 			name = InputstreamTest;
-			productName = CommandTest;
+			productName = InputstreamTest;
 			productReference = 93F6F8E12BF762D500BAFEC1 /* InputstreamTest */;
 			productType = "com.apple.product-type.tool";
 		};
@@ -582,7 +591,7 @@
 				529D79BB1A59EE27003C3931 /* PBXTargetDependency */,
 			);
 			name = TimeTest;
-			productName = CommandTest;
+			productName = TimeTest;
 			productReference = 529D79B61A59EBFA003C3931 /* TimeTest */;
 			productType = "com.apple.product-type.tool";
 		};
@@ -600,7 +609,7 @@
 				529D79BD1A59EE30003C3931 /* PBXTargetDependency */,
 			);
 			name = StrTest;
-			productName = CommandTest;
+			productName = StrTest;
 			productReference = 529D79B71A59EBFA003C3931 /* StrTest */;
 			productType = "com.apple.product-type.tool";
 		};
@@ -618,7 +627,7 @@
 				5267F1B02DC0115800B9AA15 /* PBXTargetDependency */,
 			);
 			name = ArrayTest;
-			productName = CommandTest;
+			productName = ArrayTest;
 			productReference = 5267F1BA2DC0115800B9AA15 /* ArrayTest */;
 			productType = "com.apple.product-type.tool";
 		};
@@ -636,7 +645,7 @@
 				529303DB306C7A1500FF94AD /* PBXTargetDependency */,
 			);
 			name = NetTest;
-			productName = CommandTest;
+			productName = NetTest;
 			productReference = 529303E5306C7A1500FF94AD /* NetTest */;
 			productType = "com.apple.product-type.tool";
 		};
@@ -654,7 +663,7 @@
 				529DBAAE2EBD3CDD00BECF5F /* PBXTargetDependency */,
 			);
 			name = RandomTest;
-			productName = CommandTest;
+			productName = RandomTest;
 			productReference = 529DBAB82EBD3CDD00BECF5F /* RandomTest */;
 			productType = "com.apple.product-type.tool";
 		};
@@ -689,7 +698,7 @@
 				52F8BB371ECE55270007DF91 /* PBXTargetDependency */,
 			);
 			name = StringBufferTest;
-			productName = CommandTest;
+			productName = StringBufferTest;
 			productReference = 93F6F8E02BF762D500BAFEC1 /* StringBufferTest */;
 			productType = "com.apple.product-type.tool";
 		};
@@ -707,7 +716,7 @@
 				52FDA9502EC6A76000971039 /* PBXTargetDependency */,
 			);
 			name = NumTest;
-			productName = CommandTest;
+			productName = NumTest;
 			productReference = 52FDA95A2EC6A76000971039 /* NumTest */;
 			productType = "com.apple.product-type.tool";
 		};

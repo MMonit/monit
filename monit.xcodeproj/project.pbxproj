@@ -937,42 +937,37 @@
 		524981ED194B368C004A50DB /* TimeTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			name = TimeTest;
-			path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/TimeTest";
+			path = TimeTest;
 			remoteRef = 524981EC194B368C004A50DB /* PBXContainerItemProxy */;
-			sourceTree = "<absolute>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		525ADD7F2EBBAC290000850F /* ArrayTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			name = ArrayTest;
-			path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/ArrayTest";
+			path = ArrayTest;
 			remoteRef = 525ADD7E2EBBAC290000850F /* PBXContainerItemProxy */;
-			sourceTree = "<absolute>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		529303F1306C7ADA00FF94AD /* NetTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			name = NetTest;
-			path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/NetTest";
+			path = NetTest;
 			remoteRef = 529303F0306C7ADA00FF94AD /* PBXContainerItemProxy */;
-			sourceTree = "<absolute>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		52A20916299AD408004FFCB4 /* InputstreamTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			name = InputstreamTest;
-			path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/InputstreamTest";
+			path = InputstreamTest;
 			remoteRef = 52A20915299AD408004FFCB4 /* PBXContainerItemProxy */;
-			sourceTree = "<absolute>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		52AE7B981FEC8EBD00B838B3 /* StringBufferTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			name = StringBufferTest;
-			path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/StringBufferTest";
+			path = StringBufferTest;
 			remoteRef = 52AE7B971FEC8EBD00B838B3 /* PBXContainerItemProxy */;
-			sourceTree = "<absolute>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		52DDC12A13C59D46003AA75C /* libmonit.a */ = {
 			isa = PBXReferenceProxy;
@@ -984,34 +979,30 @@
 		52EBFD202ED7DED500732E12 /* RandomTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			name = RandomTest;
-			path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/RandomTest";
+			path = RandomTest;
 			remoteRef = 52EBFD1F2ED7DED500732E12 /* PBXContainerItemProxy */;
-			sourceTree = "<absolute>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		52F675FD19B873A100E1FF1E /* StrTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			name = StrTest;
-			path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/StrTest";
+			path = StrTest;
 			remoteRef = 52F675FC19B873A100E1FF1E /* PBXContainerItemProxy */;
-			sourceTree = "<absolute>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		52FDD6B6189C2762008E3D5E /* CommandTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			name = CommandTest;
-			path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/CommandTest";
+			path = CommandTest;
 			remoteRef = 52FDD6B5189C2762008E3D5E /* PBXContainerItemProxy */;
-			sourceTree = "<absolute>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		93DCFEE32F7A9F35005F2574 /* NumTest */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.executable";
-			name = NumTest;
-			path = "/Users/hauk/src/monit-branches/monit-master/libmonit/build/Debug/NumTest";
+			path = NumTest;
 			remoteRef = 93DCFEE22F7A9F35005F2574 /* PBXContainerItemProxy */;
-			sourceTree = "<absolute>";
+			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
 
