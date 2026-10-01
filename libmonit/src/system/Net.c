@@ -72,19 +72,27 @@
 /* --------------------------------------------------------------- Private */
 
 
+static _Atomic uint32_t _deadline; // A Time_stamp(), or 0. Set from signal handlers and read by every thread
+
+
+// Milliseconds left until the deadline, or until the one from
+// Net_setDeadline() if that is earlier
+static int _timeLeft(long long deadline) {
+        long long now = Time_monotonic().milliseconds;
+        uint32_t bound = _deadline;
+        if (bound)
+                deadline = Num_min(deadline, now + (int32_t)(bound - Time_stamp()));
+        return (int)Num_clamp(deadline - now, 0, INT_MAX);
+}
+
+
 // poll() takes an int, and waits for ever on a negative timeout. A signal
 // does not restart the wait: poll() again for the time left
 static int _poll(struct pollfd *fd, time_t milliseconds) {
         int r, error = errno;
-        int timeout = (int)Num_clamp(milliseconds, 0, INT_MAX);
-        long long deadline = Time_monotonic().milliseconds + timeout;
-        while ((r = poll(fd, 1, timeout)) == -1 && errno == EINTR) {
+        long long deadline = Time_monotonic().milliseconds + Num_clamp(milliseconds, 0, INT_MAX);
+        while ((r = poll(fd, 1, _timeLeft(deadline))) == -1 && errno == EINTR)
                 errno = error; // Callers read errno after a timeout
-                long long left = deadline - Time_monotonic().milliseconds;
-                if (left <= 0)
-                        return 0;
-                timeout = (int)left;
-        }
         return r;
 }
 
@@ -115,6 +123,11 @@ bool Net_canWrite(int socket, time_t milliseconds) {
         fds[0].fd = socket;
         fds[0].events = POLLOUT;
         return (_poll(fds, milliseconds) > 0);
+}
+
+
+void Net_setDeadline(uint32_t stamp) {
+        _deadline = stamp;
 }
 
 

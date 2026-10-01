@@ -405,7 +405,7 @@ static double _receivePing(const char *hostname, int socket, struct addrinfo *ad
                         break;
         }
         while (read_timeout > 0 && Net_canRead(socket, read_timeout)) {
-                if (Run.flags & Run_Stopped) {
+                if (Run.stopTime) {
                         return -1.;
                 }
                 long long stopped = Time_micro();
@@ -460,7 +460,9 @@ static double _receivePing(const char *hostname, int socket, struct addrinfo *ad
                         return response; // Wait for one response only
                 }
         }
-        _log_warningOrError(retry, maxretries, "Ping response for %s %d/%d timed out -- no response within %s\n", hostname, retry, maxretries, Fmt_time2str(timeout, (char[11]){}));
+        // As PID 1, a stop request ended the wait, which did not time out
+        if (! shutdown_pending())
+                _log_warningOrError(retry, maxretries, "Ping response for %s %d/%d timed out -- no response within %s\n", hostname, retry, maxretries, Fmt_time2str(timeout, (char[11]){}));
         return -1.;
 }
 
@@ -517,7 +519,7 @@ double icmp_echo(const char *hostname, Socket_Family family, Outgoing_T *outgoin
                                 } else {
                                         _setPingOptions(s, addr);
                                         uint16_t id = getpid() & 0xFFFF;
-                                        for (int retry = 1; retry <= maxretries && ! (Run.flags & Run_Stopped); retry++) {
+                                        for (int retry = 1; retry <= maxretries && ! Run.stopTime; retry++) {
                                                 long long started = Time_micro();
                                                 if (_sendPing(hostname, s, addr, size, retry, maxretries, id, started) && (response = _receivePing(hostname, s, addr, retry, maxretries, id, started, timeout)) >= 0.) {
                                                         // Success

@@ -195,7 +195,7 @@ static MailServer_T _connectMTA(void) {
                 if (mta->socket)
                         break;
                 else
-                        Log_error("Cannot open a connection to the mailserver %s:%i -- %s\n", mta->host, mta->port, STRERROR);
+                        Log_error("Cannot open a connection to the mailserver %s:%i\n", mta->host, mta->port);
         }
         if (! mta || ! mta->socket)
                 THROW(IOException, "Delivery failed -- no mail server is available");

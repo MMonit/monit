@@ -260,6 +260,12 @@ static void _handleAction(Event_T E, Action_T A) {
         E->flag = Handler_Succeeded;
 
         if (A->id != Action_Ignored) {
+                // As PID 1, once the shutdown has set the stop deadline, events are only logged, except that M/Monit gets "Monit stopped"
+                if (Run.stopDeadline) {
+                        if (E->id == Event_Instance)
+                                MMonit_send(E);
+                        return;
+                }
                 /* Alert and mmonit event notification are common actions */
                 E->flag |= MMonit_send(E);
                 E->flag |= handle_alert(E);
@@ -270,6 +276,9 @@ static void _handleAction(Event_T E, Action_T A) {
                         else
                                 Log_error("Aborting event\n");
                 }
+                // Once a stop is pending as PID 1, the services are only stopped, in order, by do_exit()
+                if (shutdown_pending())
+                        return;
                 /* Action event is handled already. For Instance events we don't want actions like stop to be executed to prevent the disabling of system service monitoring */
                 if (A->id == Action_Alert || E->id == Event_Instance) {
                         return;
@@ -414,6 +423,10 @@ void Event_post(Service_T service, Event_Type id, State_Type state, EventAction_
         assert(s);
         assert(id > Event_Null && id <= Event_Last);
         assert(state == State_Failed || state == State_Succeeded || state == State_Changed || state == State_ChangedNot);
+
+        // A check that a stop request cut short has no result to report or act on
+        if (shutdown_pending())
+                return;
 
         _saveState(id, state);
 

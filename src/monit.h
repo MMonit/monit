@@ -136,23 +136,19 @@
 #define PORT_HTTP          80
 #define PORT_HTTPS         443
 
-#define SSL_TIMEOUT        15000
-#define SMTP_TIMEOUT       30000
-
 
 //FIXME: refactor Run_Flags to bit field
 typedef enum {
         Run_Once                 = 0x1,                   /**< Run Monit only once */
-        Run_Foreground           = 0x2,                 /**< Don't daemonize Monit */ //FIXME: cleanup: Run_Foreground and Run_Daemon are mutually exclusive => no need for 2 flags
-        Run_Daemon               = 0x4,                       /**< Daemonize Monit */ //FIXME: cleanup: Run_Foreground and Run_Daemon are mutually exclusive => no need for 2 flags
+        Run_Foreground           = 0x2,                 /**< Don't daemonize Monit */
+        Run_Daemon               = 0x4,                       /**< Daemonize Monit */
         Run_Log                  = 0x8,                           /**< Log enabled */
-        Run_UseSyslog            = 0x10,                           /**< Use syslog */ //FIXME: cleanup: no need for standalone flag ... if syslog is enabled, don't set Run.files.log, then (Run.flags&Run_Log && ! Run.files.log => syslog)
+        Run_UseSyslog            = 0x10,                           /**< Use syslog */
         Run_FipsEnabled          = 0x20,                 /** FIPS-140 mode enabled */
         Run_HandlerInit          = 0x40,    /**< The handlers queue initialization */
         Run_ProcessEngineEnabled = 0x80,    /**< Process monitoring engine enabled */
         Run_ActionPending        = 0x100,              /**< Service action pending */
         Run_MmonitCredentials    = 0x200,      /**< Should set M/Monit credentials */
-        Run_Stopped              = 0x400,                          /**< Stop Monit */
         Run_DoReload             = 0x800,                        /**< Reload Monit */
         Run_DoWakeup             = 0x1000,                       /**< Wakeup Monit */
         Run_Batch                = 0x2000                      /**< CLI batch mode */
@@ -420,6 +416,9 @@ typedef enum {
 #define LIMIT_STARTTIMEOUT      30000
 #define LIMIT_RESTARTTIMEOUT    30000
 #define LIMIT_EXECTIMEOUT       0           /* Unlimited timeout */
+#define LIMIT_SHUTDOWNTIMEOUT   10000
+#define LIMIT_SHUTDOWNTIMEOUT_MIN 5000
+#define LIMIT_SHUTDOWNTIMEOUT_MAX 300000
 
 
 /** ------------------------------------------------- Special purpose macros */
@@ -462,6 +461,7 @@ typedef struct Limits_T {
         int startTimeout;                        /**< Default start timeout [ms] */
         int restartTimeout;                    /**< Default restart timeout [ms] */
         int execTimeout;              /**< Default test action exec timeout [ms] */
+        int shutdownTimeout;                    /**< PID 1 shutdown timeout [ms] */
 } Limits_T;
 
 
@@ -476,11 +476,11 @@ typedef struct Limits_T {
 typedef struct command_t {
         char *arg[ARGMAX];                             /**< Program with arguments */
         short length;                       /**< The length of the arguments array */
-        bool has_uid;      /**< true if a new uid is defined for this Command */
-        bool has_gid;      /**< true if a new gid is defined for this Command */
+        bool has_uid;           /**< true if a new uid is defined for this Command */
+        bool has_gid;           /**< true if a new gid is defined for this Command */
         uid_t uid;         /**< The user id to switch to when running this Command */
         gid_t gid;        /**< The group id to switch to when running this Command */
-        unsigned int timeout;     /**< Max seconds which we wait for method to execute */
+        unsigned int timeout; /**< Max seconds which we wait for method to execute */
 } *command_t;
 
 
@@ -497,7 +497,7 @@ typedef struct Action_T {
 /** Defines event's up and down actions */
 typedef struct EventAction_T {
         Action_T  failed;                  /**< Action in the case of failure down */
-        Action_T  succeeded;                    /**< Action in the case of failure up */
+        Action_T  succeeded;                 /**< Action in the case of failure up */
 } *EventAction_T;
 
 
@@ -571,7 +571,7 @@ typedef struct Auth_T {
         char *passwd;                                /**< The users password data */
         char *groupname;                                      /**< PAM group name */
         Digest_Type digesttype;                /**< How did we store the password */
-        bool is_readonly; /**< true if this is a read-only authenticated user*/
+        bool is_readonly;     /**< true if this is a read-only authenticated user */
         struct Auth_T *next;                 /**< Next credential or NULL if last */
 } *Auth_T;
 
@@ -591,7 +591,7 @@ typedef struct Paging_T {
 typedef struct SystemInfo_T {
         Statistics_Flags statisticsAvailable; /**< List of statistics that are available on this system */
         struct {
-                int count;                                      /**< Number of CPUs */
+                int count;                /**< Number of CPUs */
                 struct {
                         float user;       /**< Time in user space [%] */
                         float nice;       /**< Time in user space with low priority [%] */
@@ -608,7 +608,7 @@ typedef struct SystemInfo_T {
         struct {
                 unsigned long long size;                      /**< Maximal system real memory */
                 struct {
-                        float percent;  /**< Total real memory in use in the system */
+                        float percent;            /**< Total real memory in use in the system */
                         unsigned long long bytes; /**< Total real memory in use in the system */
                 } usage;
         } memory;
@@ -622,10 +622,10 @@ typedef struct SystemInfo_T {
                 } average;
         } paging;
         struct {
-                unsigned long long size;                                       /**< Swap size */
+                unsigned long long size;                                 /**< Swap size */
                 struct {
-                        float percent;         /**< Total swap in use in the system */
-                        unsigned long long bytes;        /**< Total swap in use in the system */
+                        float percent;             /**< Total swap in use in the system */
+                        unsigned long long bytes;  /**< Total swap in use in the system */
                 } usage;
         } swap;
         struct {
@@ -633,20 +633,20 @@ typedef struct SystemInfo_T {
                 long long unused;              /**< Number of unused filedescriptors */
                 long long maximum;                        /**< Filedescriptors limit */
         } filedescriptors;
-        size_t argmax;                                                   /**< Program arguments maximum [B] */
-        double loadavg[3];                                                         /**< Load average triple */
-        struct utsname uname;                                 /**< Platform information provided by uname() */
-        struct timeval collected;                                             /**< When were data collected */
+        size_t argmax;                             /**< Program arguments maximum [B] */
+        double loadavg[3];                                   /**< Load average triple */
+        struct utsname uname;           /**< Platform information provided by uname() */
+        struct timeval collected;                       /**< When were data collected */
         unsigned long long booted; /**< System boot time (seconds since UNIX epoch, using platform-agnostic unsigned long long) */
-        double time;                                                                      /**< 1/10 seconds */
-        double time_prev;                                                                 /**< 1/10 seconds */
+        double time;                                                /**< 1/10 seconds */
+        double time_prev;                                           /**< 1/10 seconds */
 } SystemInfo_T;
 
 
 /** Defines a protocol object with protocol functions */
 typedef struct Protocol_T {
         const char *name;                                       /**< Protocol name */
-        void (*check)(Socket_T);          /**< Protocol verification function */
+        void (*check)(Socket_T);               /**< Protocol verification function */
 } *Protocol_T;
 
 
@@ -858,10 +858,10 @@ typedef struct Every_T {
         bool await_program_exit;  // Only written by main thread
         union {
                 struct {
-                        int number; /**< Check this program at a given cycles */
+                        int number;      /**< Check this program at a given cycles */
                         int counter; /**< Counter for number. When counter == number, check */
-                } cycle; /**< Old cycle based every check */
-                char *cron; /* A crontab format string */
+                } cycle;                          /**< Old cycle based every check */
+                char *cron;                             /* A crontab format string */
         } spec;
 } Every_T;
 
@@ -886,14 +886,14 @@ typedef struct Program_T {
         int exitStatus;                 /**< Sub-process exit status for reporting */
         StringBuffer_T lastOutput;                        /**< Last program output */
         StringBuffer_T inprogressOutput; /**< Output of the pending program instance */
-        bool checking;    /**< true while check_program() is running for this service */
+        bool checking;   /**< true while check_program() is running for this service */
 } *Program_T;
 
 
 /** Defines size object */
 typedef struct Size_T {
-        bool initialized;                   /**< true if size was initialized */
-        bool test_changes;       /**< true if we only should test for changes */
+        bool initialized;                        /**< true if size was initialized */
+        bool test_changes;            /**< true if we only should test for changes */
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long size;                               /**< Size watermark */
         EventAction_T action; /**< Description of the action upon event occurrence */
@@ -905,8 +905,8 @@ typedef struct Size_T {
 
 /** Defines nlink object */
 typedef struct NLink_T {
-        bool initialized;                   /**< true if size was initialized */
-        bool test_changes;       /**< true if we only should test for changes */
+        bool initialized;                        /**< true if size was initialized */
+        bool test_changes;            /**< true if we only should test for changes */
         Operator_Type operator;                           /**< Comparison operator */
         unsigned long long nlink;                        /**< Hard links watermark */
         EventAction_T action; /**< Description of the action upon event occurrence */
@@ -932,7 +932,7 @@ typedef struct LinkStatus_T {
         EventAction_T action; /**< Description of the action upon event occurrence */
 
         /** For internal use */
-        struct LinkStatus_T *next;                      /**< next link in chain */
+        struct LinkStatus_T *next;                         /**< next link in chain */
 } *LinkStatus_T;
 
 
@@ -942,7 +942,7 @@ typedef struct LinkSpeed_T {
         EventAction_T action; /**< Description of the action upon event occurrence */
 
         /** For internal use */
-        struct LinkSpeed_T *next;                       /**< next link in chain */
+        struct LinkSpeed_T *next;                          /**< next link in chain */
 } *LinkSpeed_T;
 
 
@@ -952,7 +952,7 @@ typedef struct LinkSaturation_T {
         EventAction_T action; /**< Description of the action upon event occurrence */
 
         /** For internal use */
-        struct LinkSaturation_T *next;                  /**< next link in chain */
+        struct LinkSaturation_T *next;                     /**< next link in chain */
 } *LinkSaturation_T;
 
 
@@ -981,7 +981,7 @@ typedef struct Checksum_T {
 
 /** Defines permission object */
 typedef struct Perm_T {
-        bool test_changes;       /**< true if we only should test for changes */
+        bool test_changes;            /**< true if we only should test for changes */
         int perm;                                           /**< Access permission */
         EventAction_T action; /**< Description of the action upon event occurrence */
 } *Perm_T;
@@ -989,10 +989,10 @@ typedef struct Perm_T {
 
 /** Defines match object */
 typedef struct Match_T {
-        bool ignore;                                        /**< Ignore match */
-        bool not;                                           /**< Invert match */
-        char    *match_string;                                   /**< Match string */ //FIXME: union?
-        char    *match_path;                         /**< File with matching rules */ //FIXME: union?
+        bool ignore;                                             /**< Ignore match */
+        bool not;                                                /**< Invert match */
+        char    *match_string;                                   /**< Match string */
+        char    *match_path;                         /**< File with matching rules */
         regex_t *regex_comp;                                    /**< Match compile */
         StringBuffer_T log;   /**< The temporary buffer used to record the matches */
         EventAction_T action; /**< Description of the action upon event occurrence */
@@ -1097,9 +1097,9 @@ typedef struct FileSystem_T {
 
 
 typedef struct IOStatistics_T {
-        struct Statistics_T operations;                                         /**< Number of operations completed */
-        struct Statistics_T bytes;          /**< Number of bytes handled by operations (total including cached I/O) */
-        struct Statistics_T bytesPhysical;           /**< Number of bytes handled by operations (physical I/O only) */
+        struct Statistics_T operations;        /**< Number of operations completed */
+        struct Statistics_T bytes;   /**< Number of bytes handled by operations (total including cached I/O) */
+        struct Statistics_T bytesPhysical;    /**< Number of bytes handled by operations (physical I/O only) */
 } *IOStatistics_T;
 
 
@@ -1174,7 +1174,7 @@ typedef struct FileInfo_T {
         off_t readpos;                        /**< Position for regex matching */
         ino_t inode;                                                /**< Inode */
         ino_t inode_prev;               /**< Previous inode for regex matching */
-        MD_T  cs_sum;                                            /**< Checksum */ //FIXME: allocate dynamically only when necessary
+        MD_T  cs_sum;                                            /**< Checksum */
 } *FileInfo_T;
 
 
@@ -1218,11 +1218,11 @@ typedef struct ProcessInfo_T {
         struct IOStatistics_T write;                     /**< Write statistics */
         char secattr[STRLEN];                         /**< Security attributes */
         struct {
-                long long open;                        /**< number of opened files */
-                long long openTotal;             /**< number of total opened files */
+                long long open;                    /**< number of opened files */
+                long long openTotal;         /**< number of total opened files */
                 struct {
-                        long long soft;                 /**< Filedescriptors soft limit */
-                        long long hard;                 /**< Filedescriptors hard limit */
+                        long long soft;        /**< Filedescriptors soft limit */
+                        long long hard;        /**< Filedescriptors hard limit */
                 } limit;
         } filedescriptors;
 } *ProcessInfo_T;
@@ -1321,7 +1321,7 @@ typedef struct Service_T {
         /** Runtime parameters */
         unsigned char      status[Event_Last + 1]; /**< Per event type error state (State_Succeeded/State_Failed/State_Changed) */
         union Info_T       inf;                          /**< Service check result */
-        struct timeval     collected;                /**< When were data collected */ //FIXME: replace with unsigned long long? (all places where timeval is used) ... Time_milli()?
+        struct timeval     collected;                /**< When were data collected */ 
 
         /** Events */
         Event_T            eventlist;                     /**< Pending events list (see event.h) */
@@ -1355,6 +1355,8 @@ struct Run_T {
         Handler_Type handler_flag;                    /**< The handlers state flag */
         Onreboot_Type onreboot;
         bool isInit;                 /**< True if Monit is running as init (PID 1) */
+        _Atomic uint32_t stopTime;   /**< Time_stamp() of the stop request, or 0. Set in a signal handler */
+        long long stopDeadline; /**< As PID 1, the service stop deadline, Time_monotonic() [ms], or 0. Set by the main thread once the shutdown has stopped the other threads */
         bool needHeartBeat; /**< Set in p.y. True if Monit needs a hearbeat thread */
         struct {
                 char *control;            /**< The file to read configuration from */
@@ -1507,5 +1509,6 @@ int  check_URL(Service_T s);
 void status_xml(StringBuffer_T, Event_T, int, const char *, Mmonit_T);
 bool  do_wakeupcall(void);
 bool interrupt(void);
+bool shutdown_pending(void);
 
 #endif

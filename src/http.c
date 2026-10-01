@@ -60,13 +60,12 @@
 #include "engine.h"
 
 // libmonit
+#include "system/Time.h"
 #include "exceptions/AssertException.h"
 
 
-/* The HTTP Thread */
-static Thread_T thread;
-
-static volatile bool running = false;
+/* The HTTP Thread, initialized as AtomicThread_init() does */
+static AtomicThread_T thread = {.sem = PTHREAD_COND_INITIALIZER, .mutex = PTHREAD_MUTEX_INITIALIZER};
 
 
 /**
@@ -117,23 +116,29 @@ bool can_http(void) {
 void monit_http(Httpd_Action action) {
         switch (action) {
                 case Httpd_Stop:
-                        if (! running)
+                        if (! AtomicThread_isJoinable(&thread))
                                 break;
                         Log_debug("Shutting down Monit HTTP server\n");
                         Engine_stop();
-                        Thread_join(thread);
+                        // Woken every 100 ms until it has ended: a signal ends the accept wait, and as PID 1, once a stop request has set the deadline, a request's network wait
+                        for (int ms = 0; AtomicThread_isActive(&thread); ms++) {
+                                if (ms % 100 == 0)
+                                        pthread_kill(thread.value, SIGURG);
+                                Time_usleep(USEC_PER_MSEC);
+                        }
+                        AtomicThread_join(&thread);
                         Log_debug("Monit HTTP server stopped\n");
-                        running = false;
                         break;
                 case Httpd_Start:
+                        if (! can_http())
+                                break;
                         if (Run.httpd.flags & Httpd_Net)
                                 Log_debug("Starting Monit HTTP server at [%s]:%d\n", Run.httpd.socket.net.address ? Run.httpd.socket.net.address : "*", Run.httpd.socket.net.port);
                         if (Run.httpd.flags & Httpd_Unix)
                                 Log_debug("Starting Monit HTTP server at %s\n", Run.httpd.socket.unix.path);
                         Engine_setStopped(false);
-                        Thread_create(thread, _http_thread, NULL);
+                        AtomicThread_create(&thread, _http_thread, NULL);
                         Log_debug("Monit HTTP server started\n");
-                        running = true;
                         break;
                 default:
                         Log_error("Monit: Unknown http server action\n");

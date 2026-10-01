@@ -25,6 +25,7 @@
 
 #ifndef TIME_INCLUDED
 #define TIME_INCLUDED
+#include <stdint.h>
 
 
 /// <b>Time</b> is an abstraction of date and time. Time is stored internally
@@ -133,6 +134,22 @@ struct time_monotonic_t {
     long long microseconds;
     long long nanoseconds;
 } Time_monotonic(void);
+
+
+/// Returns Time_monotonic() milliseconds as a 32-bit stamp: the low 32 bits,
+/// or 1 if they are 0, so that 0 can mean "not set". An atomic 32-bit value
+/// is lock-free on every platform, so a signal handler can store a stamp and
+/// any thread can read it. A 64-bit atomic takes a lock on 32-bit ARM, MIPS
+/// and PowerPC, and a handler must not take a lock. The stamp wraps every
+/// 49.7 days, so two stamps can only be compared by their difference,
+/// <code>(int32_t)(a - b)</code> in milliseconds, which is exact while they
+/// are less than 24.8 days apart. Do not order stamps with <code>&lt;</code>,
+/// and do not mix a stamp with a 64-bit time. A stamp plus milliseconds is
+/// the stamp of that later time, but it can be 0. This function only reads
+/// clock_gettime(), which is async-signal-safe.
+/// @return The stamp, never 0
+/// @exception AssertException If time could not be obtained
+uint32_t Time_stamp(void);
 
 
 /// Returns the second of the minute for time.

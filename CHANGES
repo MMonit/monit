@@ -46,6 +46,16 @@ New: The bash completion for the monit command line is now installed by "make in
      prefix (for example /opt/monit), copy the script to ~/.local/share/bash-completion/completions/ or source it from
      ~/.bashrc.
 
+New: Monit running as PID 1 (e.g. in a Docker container) finishes its shutdown within a time limit, set with
+     'set limits { shutdownTimeout: 30 s }'. The default is 10 seconds, Docker's default. Set it to the container's stop timeout
+     (docker stop -t, Docker Compose stop_grace_period, Kubernetes terminationGracePeriodSeconds). On SIGTERM, Monit interrupts a
+     network test in progress and stops the services with their stop programs in dependency order, waiting for each until its stop
+     timeout, but not later than two seconds before the limit. Then it sends SIGTERM to all remaining processes at once, and one
+     second before the limit it kills and logs those still running. During the shutdown, the "Monit stopped" notification goes to
+     M/Monit only, not by mail, and the results of the service stops are only logged. Previously Monit did not wait for the stop
+     programs to finish, and it waited up to 10 seconds for each remaining process in turn, so a single process ignoring SIGTERM,
+     such as an interactive shell opened in the container, made Docker kill the container before Monit had finished.
+
 Fixed: The parser silently appended any unquoted text that followed a start/stop/restart/exec program statement or a
        'check program ... path' statement to that program's argument list. For example an 'every' cron specification
        written without the 'every' keyword on the line below 'stop program = "..."' became an argument of the stop
@@ -98,6 +108,19 @@ Fixed: RADIUS protocol test: only the first response attribute has been inspecte
 Fixed: RDATE protocol test: the test may fail with false-positive error on 64-bit platforms.
 
 Fixed: DNS protocol test: validate the transaction ID and query count.
+
+Fixed: Network tests: each signal Monit received while it waited for a connection or for data started the test's
+       timeout over. Monit gets signals in normal operation, for example SIGCHLD when a program it started exits and
+       SIGTERM when it is stopped, so a test of a host that did not answer could take far longer than its timeout (an
+       8 second connect took 18 seconds), and a stop request had to wait for it. The timeout now limits the whole wait.
+
+Fixed: If M/Monit or a cron-style 'every' schedule was configured, a stop request that arrived while Monit was starting
+       could make Monit crash, and when Monit ran as PID 1 in a container, the services were then not stopped. A reload
+       request at that time could make Monit exit. A reload that arrived while Monit was busy with a slow service test
+       could also leak memory.
+
+Fixed: A stop or reload request that arrived while Monit was sending its status to M/Monit could be delayed by up to
+       17 seconds.
 
 Fixed: Do not follow symlinks when writing Monit pidfile, preventing a symlink attack.
 

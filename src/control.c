@@ -61,6 +61,7 @@
 
 // libmonit
 #include "util/Fmt.h"
+#include "util/Num.h"
 #include "exceptions/AssertException.h"
 
 
@@ -89,6 +90,12 @@ typedef enum {
 static int _getOutput(InputStream_T in, char *buf, int buflen) {
         InputStream_setTimeout(in, 0);
         return InputStream_readBytes(in, buf, buflen - 1);
+}
+
+
+// Waits end early when Monit is stopping, except when Monit is PID 1 and stops the services, where the stop deadline limits them
+static bool _stopping(void) {
+        return Run.stopTime && ! Run.stopDeadline;
 }
 
 
@@ -137,10 +144,11 @@ static int _commandExecute(Service_T S, command_t c, char *msg, int msglen, long
                 }
                 Process_T P = Command_execute(C);
                 if (P) {
+                        long long end = Time_monotonic().microseconds + *usec_timeout;
                         do {
-                                Time_usleep(RETRY_INTERVAL);
-                                *usec_timeout -= RETRY_INTERVAL;
-                        } while ((status = Process_exitStatus(P)) < 0 && *usec_timeout > 0 && ! (Run.flags & Run_Stopped));
+                                Time_usleep(Num_clamp(*usec_timeout, 0LL, RETRY_INTERVAL));
+                                *usec_timeout = end - Time_monotonic().microseconds;
+                        } while ((status = Process_exitStatus(P)) < 0 && *usec_timeout > 0 && ! _stopping());
                         if (*usec_timeout <= 0)
                                 snprintf(msg, msglen, "Program '%s' timed out after %s", Util_commandDescription(c, (char[STRLEN]){}), Fmt_time2str(_timeoutMilli, (char[11]){}));
                         int n, total = 0;
@@ -180,18 +188,19 @@ static Process_Status _waitProcessStart(Service_T s, long long *usec_timeout) {
                 }
                 *usec_timeout -= usec_wait;
                 usec_wait = usec_wait < 1000000 ? usec_wait * 2 : 1000000; // double the wait during each cycle until 1s is reached (ProcessTree_findProcess can be heavy and we don't want to drain power every 100ms on mobile devices)
-        } while (*usec_timeout > 0 && ! (Run.flags & Run_Stopped));
+        } while (*usec_timeout > 0 && ! Run.stopTime);
         return Process_Stopped;
 }
 
 
 static Process_Status _waitProcessStop(int pid, long long *usec_timeout) {
+        long long end = Time_monotonic().microseconds + *usec_timeout;
         do {
-                Time_usleep(RETRY_INTERVAL);
+                Time_usleep(Num_clamp(*usec_timeout, 0LL, RETRY_INTERVAL));
                 if (! pid || (getpgid(pid) == -1 && errno != EPERM))
                         return Process_Stopped;
-                *usec_timeout -= RETRY_INTERVAL;
-        } while (*usec_timeout > 0 && ! (Run.flags & Run_Stopped));
+                *usec_timeout = end - Time_monotonic().microseconds;
+        } while (*usec_timeout > 0 && ! _stopping());
         return Process_Started;
 }
 
@@ -209,7 +218,7 @@ static State_Type _check(Service_T s) {
                 do {
                         Time_usleep(RETRY_INTERVAL);
                         usec_timeout -= RETRY_INTERVAL;
-                } while (Process_exitStatus(s->program->P) < 0 && usec_timeout > 0LL && ! (Run.flags & Run_Stopped));
+                } while (Process_exitStatus(s->program->P) < 0 && usec_timeout > 0LL && ! Run.stopTime);
                 rv = s->check(s);
         }
         s->mode = original;
@@ -239,6 +248,11 @@ static bool _doStart(Service_T s) {
                         rv = false;
                         StringBuffer_append(sb, "%s%s", StringBuffer_length(sb) ? ", " : "", parent->name);
                 }
+        }
+        // After the required services: the stop request can come while they start
+        if (shutdown_pending()) {
+                StringBuffer_free(&sb);
+                return false;
         }
         if (rv) {
                 if (s->start) {
@@ -282,6 +296,18 @@ static void _evaluateStop(Service_T s, bool succeeded, int exitStatus, char *msg
 }
 
 
+// The stop timeout [us], cut to the time left before the stop deadline when Monit is PID 1 and stops the services
+static long long _stopTimeout(Service_T s) {
+        long long timeout = s->stop->timeout * USEC_PER_MSEC;
+        if (Run.stopDeadline) {
+                long long left = (Run.stopDeadline - Time_monotonic().milliseconds) * USEC_PER_MSEC;
+                if (left < timeout)
+                        return left;
+        }
+        return timeout;
+}
+
+
 /*
  * This function simply stops the service s.
  * @param s A Service_T object
@@ -290,13 +316,19 @@ static void _evaluateStop(Service_T s, bool succeeded, int exitStatus, char *msg
  */
 static bool _doStop(Service_T s, bool unmonitor) {
         assert(s);
+        // Once a stop is pending as PID 1, the services are only stopped, in order, by do_exit()
+        if (shutdown_pending())
+                return false;
         bool rv = true;
         if (s->stop) {
                 if (s->monitor != Monitor_Not) {
                         int exitStatus;
                         char msg[1024];
-                        long long usec_timeout = s->stop->timeout * USEC_PER_MSEC;
-                        if (s->type == Service_Process) {
+                        long long usec_timeout = _stopTimeout(s);
+                        if (usec_timeout <= 0) {
+                                Log_warning("'%s' stop skipped -- the shutdown timeout was reached\n", s->name);
+                                rv = false;
+                        } else if (s->type == Service_Process) {
                                 int pid = ProcessTree_findProcess(s);
                                 if (pid) {
                                         exitStatus = _executeStop(s, msg, sizeof(msg), &usec_timeout);
@@ -328,6 +360,8 @@ static bool _doStop(Service_T s, bool unmonitor) {
  */
 static bool _doRestart(Service_T s) {
         assert(s);
+        if (shutdown_pending())
+                return false;
         bool rv = true;
         if (s->restart) {
                 Log_info("'%s' restart: '%s'\n", s->name, Util_commandDescription(s->restart, (char[STRLEN]){}));

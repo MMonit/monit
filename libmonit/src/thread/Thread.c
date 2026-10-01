@@ -66,7 +66,6 @@ static void _once(void) {
 // Automatically set active state to false on thread exit
 static void *_atomicWrapper(void *arg) {
         AtomicThread_T *thread = (AtomicThread_T *)arg;
-        atomic_store(&thread->active, true);
         thread->threadFunc(thread->threadArgs);
         atomic_store(&thread->active, false);
         return NULL;
@@ -92,24 +91,48 @@ void AtomicThread_init(AtomicThread_T *thread) {
         Sem_init(thread->sem);
         Mutex_init(thread->mutex);
         atomic_store(&thread->active, false);
+        atomic_store(&thread->joinable, false);
 }
 
 void AtomicThread_create(AtomicThread_T *thread, void *(*threadFunc)(void *threadArgs), void *threadArgs) {
         assert(thread);
         assert(threadFunc);
         assert(atomic_load(&thread->active) == false);
+        assert(atomic_load(&thread->joinable) == false);
         thread->threadFunc = threadFunc;
         thread->threadArgs = threadArgs;
-        Thread_create(thread->value, _atomicWrapper, thread);
+        atomic_store(&thread->active, true);
+        TRY
+        {
+                Thread_create(thread->value, _atomicWrapper, thread);
+        }
+        ELSE
+        {
+                atomic_store(&thread->active, false);
+                RETHROW;
+        }
+        END_TRY;
+        atomic_store(&thread->joinable, true);
 }
 
 void AtomicThread_createDetached(AtomicThread_T *thread, void *(*threadFunc)(void *threadArgs), void *threadArgs) {
         assert(thread);
         assert(threadFunc);
         assert(atomic_load(&thread->active) == false);
+        assert(atomic_load(&thread->joinable) == false);
         thread->threadFunc = threadFunc;
         thread->threadArgs = threadArgs;
-        Thread_createDetached(&thread->value, _atomicWrapper, thread);
+        atomic_store(&thread->active, true);
+        TRY
+        {
+                Thread_createDetached(&thread->value, _atomicWrapper, thread);
+        }
+        ELSE
+        {
+                atomic_store(&thread->active, false);
+                RETHROW;
+        }
+        END_TRY;
 }
 
 bool AtomicThread_isActive(AtomicThread_T *thread) {
@@ -117,8 +140,22 @@ bool AtomicThread_isActive(AtomicThread_T *thread) {
         return atomic_load(&thread->active);
 }
 
+bool AtomicThread_isJoinable(AtomicThread_T *thread) {
+        assert(thread);
+        return atomic_load(&thread->joinable);
+}
+
+void AtomicThread_join(AtomicThread_T *thread) {
+        assert(thread);
+        if (atomic_load(&thread->joinable)) {
+                Thread_join(thread->value);
+                atomic_store(&thread->joinable, false);
+        }
+}
+
 void AtomicThread_destroy(AtomicThread_T *thread) {
         assert(thread);
+        assert(atomic_load(&thread->joinable) == false);
         Sem_destroy(thread->sem);
         Mutex_destroy(thread->mutex);
         atomic_store(&thread->active, false);

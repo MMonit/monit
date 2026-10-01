@@ -564,6 +564,7 @@ void Util_printRunList(void) {
         printf(" %-18s =   startTimeout:      %s\n", " ", Fmt_time2str(Run.limits.startTimeout, (char[11]){}));
         printf(" %-18s =   restartTimeout:    %s\n", " ", Fmt_time2str(Run.limits.restartTimeout, (char[11]){}));
         printf(" %-18s =   execTimeout:       %s\n", " ", Fmt_time2str(Run.limits.execTimeout, (char[11]){}));
+        printf(" %-18s =   shutdownTimeout:   %s\n", " ", Fmt_time2str(Run.limits.shutdownTimeout, (char[11]){}));
         printf(" %-18s = }\n", " ");
         printf(" %-18s = %s\n", "On reboot", onReboot_Names[Run.onreboot]);
         printf(" %-18s = %d seconds with start delay %d seconds\n", "Poll time", Run.polltime, Run.startdelay);

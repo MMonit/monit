@@ -366,7 +366,7 @@ int yydebug = 1;
 %token PEMFILE PEMKEY PEMCHAIN ENABLE DISABLE SSLTOKEN CIPHER CLIENTPEMFILE ALLOWSELFCERTIFICATION SELFSIGNED VERIFY CERTIFICATE CACERTIFICATEFILE CACERTIFICATEPATH VALID
 %token INTERFACE LINK PACKET BYTEIN BYTEOUT PACKETIN PACKETOUT SPEED SATURATION UPLOAD DOWNLOAD TOTAL UP DOWN
 %token IDFILE STATEFILE SEND EXPECT CYCLE COUNT REMINDER REPEAT
-%token LIMITS SENDEXPECTBUFFER EXPECTBUFFER FILECONTENTBUFFER HTTPCONTENTBUFFER PROGRAMOUTPUT NETWORKTIMEOUT PROGRAMTIMEOUT STARTTIMEOUT STOPTIMEOUT RESTARTTIMEOUT EXECTIMEOUT
+%token LIMITS SENDEXPECTBUFFER EXPECTBUFFER FILECONTENTBUFFER HTTPCONTENTBUFFER PROGRAMOUTPUT NETWORKTIMEOUT PROGRAMTIMEOUT STARTTIMEOUT STOPTIMEOUT RESTARTTIMEOUT EXECTIMEOUT SHUTDOWNTIMEOUT
 %token PIDFILE START STOP PATHTOK RSAKEY
 %token ARGEND
 %token HOST HOSTNAME PORT IPV4 IPV6 TYPE UDP TCP TCPSSL PROTOCOL CONNECTION
@@ -833,6 +833,19 @@ limit           : SENDEXPECTBUFFER ':' NUMBER unit {
                                 yyerror2("The execTimeout value must be > 0");
                         else
                                 Run.limits.execTimeout = $3 * 1000;
+                  }
+                | SHUTDOWNTIMEOUT ':' NUMBER MILLISECOND {
+                        if ($3 < LIMIT_SHUTDOWNTIMEOUT_MIN || $3 > LIMIT_SHUTDOWNTIMEOUT_MAX)
+                                yyerror2("The shutdownTimeout value must be between %d and %d seconds", LIMIT_SHUTDOWNTIMEOUT_MIN / 1000, LIMIT_SHUTDOWNTIMEOUT_MAX / 1000);
+                        else
+                                Run.limits.shutdownTimeout = $3;
+                  }
+                | SHUTDOWNTIMEOUT ':' NUMBER SECOND {
+                        long long value = $3 * 1000LL;
+                        if (value < LIMIT_SHUTDOWNTIMEOUT_MIN || value > LIMIT_SHUTDOWNTIMEOUT_MAX)
+                                yyerror2("The shutdownTimeout value must be between %d and %d seconds", LIMIT_SHUTDOWNTIMEOUT_MIN / 1000, LIMIT_SHUTDOWNTIMEOUT_MAX / 1000);
+                        else
+                                Run.limits.shutdownTimeout = (int)value;
                   }
                 ;
 
@@ -3720,12 +3733,13 @@ static void preparse(void) {
         Run.limits.startTimeout      = LIMIT_STARTTIMEOUT;
         Run.limits.restartTimeout    = LIMIT_RESTARTTIMEOUT;
         Run.limits.execTimeout       = LIMIT_EXECTIMEOUT;
+        Run.limits.shutdownTimeout   = LIMIT_SHUTDOWNTIMEOUT;
         Run.onreboot                 = Onreboot_Start;
         Run.mmonitcredentials        = NULL;
         Run.httpd.flags              = Httpd_Disabled | Httpd_Signature;
         Run.httpd.credentials        = NULL;
         memset(&(Run.httpd.socket), 0, sizeof(Run.httpd.socket));
-        Run.mailserver_timeout       = SMTP_TIMEOUT;
+        Run.mailserver_timeout       = LIMIT_NETWORKTIMEOUT;
         Run.eventlist_dir            = NULL;
         Run.eventlist_slots          = -1;
         Run.system                   = NULL;

@@ -570,6 +570,35 @@ is already about to start or already in its startup sequence. Please
 see the FAQ for a solution to this problem. The short version is to
 start Monit on a higher run-level after system processes.
 
+=head2 Monit as PID 1 in a container
+
+Monit can run as the init process (PID 1) of a container, for example as
+the entrypoint of a Docker image:
+
+  ENTRYPOINT ["/usr/local/bin/monit", "-I", "-c", "/etc/monitrc"]
+
+As PID 1, Monit also reaps orphaned processes and handles the shutdown
+of the container. When the container runtime sends SIGTERM, Monit first
+stops all services with their stop programs, in dependency order, but
+not later than two seconds before its C<shutdownTimeout> limit. Then it
+sends SIGTERM to all remaining processes, and one second before the
+limit it kills those still running and exits. Each process Monit has to
+kill is logged. During the shutdown, the "Monit stopped" notification
+goes to M/Monit only, not by mail, and the results of the service stops
+are only logged.
+
+The C<shutdownTimeout> limit counts from SIGTERM. Set it to the stop
+timeout of your container runtime, which kills the container if it has not
+stopped in time:
+
+  set limits { shutdownTimeout: 30 s }
+
+The default is 10 seconds, the same as Docker's, and it can be set from
+5 seconds to 5 minutes. To give the services more time to stop, raise
+both, for example with C<docker stop -t 30>,
+C<docker run --stop-timeout 30>, C<stop_grace_period: 30s> in Docker
+Compose or C<terminationGracePeriodSeconds: 30> in Kubernetes.
+
 
 =head1 INCLUDE FILES
 
@@ -1432,7 +1461,7 @@ PASSWORD options.
 You can set SSL/TLS L<options|"SSL OPTIONS"> for the connection and
 also check a SSL certificate checksum.
 
-The default connection timeout is 30 seconds. You can change this
+The default connection timeout is 5 seconds. You can change this
 limit using the TIMEOUT option.
 
 Example (setting two mail servers for failover):
@@ -1922,6 +1951,7 @@ Syntax:
    STARTTIMEOUT:      <number> <timeunit>
    RESTARTTIMEOUT:    <number> <timeunit>
    EXECTIMEOUT:       <number> <timeunit>
+   SHUTDOWNTIMEOUT:   <number> <timeunit>
  }
 
 Where:
@@ -1943,7 +1973,11 @@ Options legend:
  | startTimeout      | service start timeout                | 30 s    |
  | restartTimeout    | service restart timeout              | 30 s    |
  | execTimeout       | test action exec timeout             | nolimit |
+ | shutdownTimeout   | shutdown timeout when Monit is PID 1 | 10 s    |
  ----------------------------------------------------------------------
+
+The I<shutdownTimeout> limit can be set from 5 seconds to 5 minutes, see
+L</"Monit as PID 1 in a container">.
 
 Note, the previous I<set expectbuffer> statement is deprecated, but can
 alternatively be used. Use I<set limits { sendExpectBuffer: ... }>

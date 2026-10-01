@@ -309,8 +309,11 @@
  * Use `AtomicThread_createDetached` or `AtomicThread_create` to create the
  * thread. You can reuse the same AtomicThread_T variable to call these methods
  * to restart the thread if needed. Use `AtomicThread_isActive` to test
- * if the thread is active/running. Finally, use `AtomicThread_destroy`
- * to destroy the semaphore and mutex in a deterministic manner.
+ * if the thread is active/running. A thread created with `AtomicThread_create`
+ * must be joined with `AtomicThread_join`, also after it has ended, before the
+ * Atomic Thread is created again or destroyed. Finally, use
+ * `AtomicThread_destroy` to destroy the semaphore and mutex in a deterministic
+ * manner.
  * @hideinitializer
  */
 typedef struct {
@@ -318,6 +321,7 @@ typedef struct {
         Mutex_T mutex;
         Thread_T value;
         _Atomic(bool) active;
+        _Atomic(bool) joinable;
         void *threadArgs;
         void *(*threadFunc)(void *threadArgs);
 } AtomicThread_T;
@@ -344,20 +348,23 @@ void Thread_createDetached(Thread_T *thread, void *(*threadFunc)(void *threadArg
 /**
  * Initialize an Atomic Thread object.
  * This function initializes the synchronization primitives (`sem` and `mutex`)
- * and sets the `active` flag to false. It must be called before creating the
- * thread using `Thread_createAtomic` or `Thread_createAtomicDetached`.
+ * and sets the `active` and `joinable` flags to false. It must be called before
+ * creating the thread using `AtomicThread_create` or
+ * `AtomicThread_createDetached`.
  * @param thread A pointer to the Atomic Thread object to initialize
  * @exception AssertException If `thread` is NULL
  */
 void AtomicThread_init(AtomicThread_T *thread);
 
 /**
- * Create a new Atomic Thread
+ * Create a new Atomic Thread. The thread stays joinable, also after it has
+ * ended, until it is joined with `AtomicThread_join`
  * @param thread The Atomic thread to create
  * @param threadFunc The thread routine to execute
  * @param threadArgs Arguments to <code>threadFunc</code>
- * @exception AssertException If thread creation failed or if the thread has
- * not been initialized using `AtomicThread_init`
+ * @exception AssertException If thread creation failed, if the thread has
+ * not been initialized using `AtomicThread_init` or if a previous thread has
+ * not been joined
  */
 void AtomicThread_create(AtomicThread_T *thread, void *(*threadFunc)(void *threadArgs), void *threadArgs);
 
@@ -366,8 +373,9 @@ void AtomicThread_create(AtomicThread_T *thread, void *(*threadFunc)(void *threa
  * @param thread The Atomic thread to create
  * @param threadFunc The thread routine to execute
  * @param threadArgs Arguments to <code>threadFunc</code>
- * @exception AssertException If thread creation failed or if the thread has
- * not been initialized using` AtomicThread_init`
+ * @exception AssertException If thread creation failed, if the thread has
+ * not been initialized using `AtomicThread_init` or if a previous thread has
+ * not been joined
  */
 void AtomicThread_createDetached(AtomicThread_T *thread, void *(*threadFunc)(void *threadArgs), void *threadArgs);
 
@@ -379,8 +387,27 @@ void AtomicThread_createDetached(AtomicThread_T *thread, void *(*threadFunc)(voi
 bool AtomicThread_isActive(AtomicThread_T *thread);
 
 /**
+ * Returns true if the Atomic Thread was created with `AtomicThread_create`
+ * and has not been joined yet. Unlike `AtomicThread_isActive`, it stays true
+ * after the thread has ended, so use it to decide whether to join
+ * @param thread An Atomic thread
+ * @return True if the thread must be joined, otherwise false
+ */
+bool AtomicThread_isJoinable(AtomicThread_T *thread);
+
+/**
+ * Wait for a thread created with `AtomicThread_create` to end and release its
+ * resources. Does nothing if the thread is not joinable
+ * @param thread An Atomic thread
+ * @exception AssertException If thread join failed
+ */
+void AtomicThread_join(AtomicThread_T *thread);
+
+/**
  * Destroy the synchronization primitives in the Atomic Thread
  * @param thread An Atomic thread
+ * @exception AssertException If a thread created with `AtomicThread_create`
+ * has not been joined
  */
 void AtomicThread_destroy(AtomicThread_T *thread);
 

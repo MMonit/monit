@@ -399,7 +399,7 @@ static Socket_T _socketProducer(void) {
         int r = 0;
         do {
                 r = poll(myServerSockets, myServerSocketsCount, 1000);
-        } while (r == -1 && errno == EINTR);
+        } while (r == -1 && errno == EINTR && ! stopped); // monit_http() sends SIGURG after Engine_stop()
         if (r > 0) {
                 for (int i = 0; i < myServerSocketsCount; i++) {
                         if (myServerSockets[i].revents & POLLIN) {
@@ -483,7 +483,7 @@ error:
 
 
 void Engine_start(void) {
-        if (Run.flags & Run_Stopped) {
+        if (Run.stopTime) {
                 return;
         }
         Engine_cleanup();

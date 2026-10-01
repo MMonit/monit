@@ -674,8 +674,8 @@ static bool _handshake(T C, int timeout, char *error, int length) {
                                         return false;
                                 }
                 }
-        } while (retry && ! (Run.flags & Run_Stopped));
-        snprintf(error, length, "%s: %s", operation, (Run.flags & Run_Stopped) ? "Monit is stopping" : "TLS handshake timed out");
+        } while (retry);
+        snprintf(error, length, "%s: %s", operation, shutdown_pending() ? "Monit is stopping" : "TLS handshake timed out");
         return false;
 }
 
@@ -833,7 +833,7 @@ void Ssl_close(T C) {
                                         break;
                         }
                 }
-        } while (retry && ! (Run.flags & Run_Stopped));
+        } while (retry);
         Net_shutdown(C->socket, SHUT_RDWR);
         Net_close(C->socket);
 }
@@ -890,7 +890,7 @@ int Ssl_write(T C, const void *b, int size, int timeout) {
                                         Log_error("SSL: write error -- %s\n", SSLERROR);
                                         return -1;
                         }
-                } while (retry && ! (Run.flags & Run_Stopped));
+                } while (retry);
         }
         return n;
 }
@@ -932,7 +932,7 @@ int Ssl_read(T C, void *b, int size, int timeout) {
                                         Log_error("SSL: read error -- %s\n", SSLERROR);
                                         return -1;
                         }
-                } while (retry && ! (Run.flags & Run_Stopped));
+                } while (retry);
         }
         return n;
 }

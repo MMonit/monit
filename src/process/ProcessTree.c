@@ -475,7 +475,7 @@ void ProcessTree_testMatch(char *pattern) {
 
 
 void ProcessTree_visit(void visitor(ProcessTree_T *p, void *ap), void *ap) {
-        ProcessTree_init(ProcessEngine_None);
+        ProcessTree_init(ProcessEngine_CollectCommandLine);
         for (int i = 0; i < ptreesize; i++) {
                 visitor(&ptree[i], ap);
         }

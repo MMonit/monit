@@ -46,6 +46,7 @@ libmonit/test/StrTest
 libmonit/test/StringBufferTest
 libmonit/test/SystemTest
 libmonit/test/TimeTest
+libmonit/test/ThreadTest
 libmonit/test/ArrayTest
 libmonit/test/FmtTest
 libmonit/test/RandomTest

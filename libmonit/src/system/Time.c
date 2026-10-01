@@ -1182,6 +1182,12 @@ struct time_monotonic_t Time_monotonic(void) {
 }
 
 
+uint32_t Time_stamp(void) {
+        uint32_t stamp = (uint32_t)Time_monotonic().milliseconds;
+        return stamp ? stamp : 1;
+}
+
+
 static struct tm *_localtime(time_t time, struct tm *tm) {
         if (! localtime_r(&time, tm)) {
                 // The localtime_r() failure sets errno and leaves the 'tm' struct in unspecified state

@@ -237,6 +237,9 @@ static void _programOutput(InputStream_T I, StringBuffer_T S) {
 static State_Type _checkConnection(Service_T s, Port_T p) {
         assert(s);
         assert(p);
+        // As PID 1, a stop request ends the test: no new connection and no retry
+        if (shutdown_pending())
+                return State_Init;
         volatile int retry_count = p->retry;
         volatile State_Type rv = State_Succeeded;
         char buf[STRLEN];
@@ -255,7 +258,7 @@ retry:
         }
         END_TRY;
         if ((rv == State_Failed && ! p->check_invers) || (rv == State_Succeeded && p->check_invers)) {
-                if (retry_count-- > 1) {
+                if (retry_count-- > 1 && ! shutdown_pending()) {
                         Log_warning("'%s' %s (attempt %d/%d)\n", s->name, report, p->retry - retry_count, p->retry);
                         goto retry;
                 }
@@ -1693,7 +1696,7 @@ static bool _checkSkip(Service_T s) {
 static bool _doScheduledAction(Service_T s) {
         int rv = false;
         Action_Type action = s->doaction;
-        if (action != Action_Ignored) {
+        if (action != Action_Ignored && ! shutdown_pending()) {
                 rv = control_service(s->name, action);
                 Event_post(s, Event_Action, State_Changed, s->action_ACTION, "%s action %s", Action_Names[action], rv ? "done" : "failed");
         }

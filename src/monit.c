@@ -91,6 +91,7 @@
 #include "Bootstrap.h"
 #include "io/Dir.h"
 #include "io/File.h"
+#include "system/Net.h"
 #include "system/Time.h"
 #include "util/Num.h"
 #include "util/List.h"
@@ -123,6 +124,7 @@ static void version(void);                      /* Print version information */
 static void handle_reload(int);         /* Signalhandler for a daemon reload */
 static void handle_stop(int);        /* Signalhandler for monit finalization */
 static void handle_wakeup(int);    /* Signalhandler for a daemon wakeup call */
+static void handle_urgent(int);            /* Signalhandler used at shutdown */
 
 
 /* ------------------------------------------------------------------ Global */
@@ -207,7 +209,13 @@ bool do_wakeupcall(void) {
 
 
 bool interrupt(void) {
-        return Run.flags & Run_Stopped || Run.flags & Run_DoReload || Run.flags & Run_DoWakeup || Run.flags & Run_ActionPending;
+        return Run.stopTime || Run.flags & Run_DoReload || Run.flags & Run_DoWakeup || Run.flags & Run_ActionPending;
+}
+
+
+// As PID 1, from the stop request until do_exit() has stopped the other threads and set the stop deadline: events are dropped and no action is taken
+bool shutdown_pending(void) {
+        return Run.isInit && Run.stopTime && ! Run.stopDeadline;
 }
 
 
@@ -230,6 +238,11 @@ static void _validateOnce(void) {
  * datastructures and the log system.
  */
 static void do_init(void) {
+        /*
+         * Set if Monit is running as init (PID 1), which the stop handler reads
+         */
+        Run.isInit = (getpid() == 1);
+
         /*
          * Register interest for the SIGTERM signal,
          * in case we run in daemon mode this signal
@@ -263,6 +276,12 @@ static void do_init(void) {
          * Register no interest for the SIGPIPE signal
          */
         signal(SIGPIPE, SIG_IGN);
+
+        /*
+         * Register interest for the SIGURG signal, which ends a thread's
+         * network wait in progress when Monit stops the thread
+         */
+        signal(SIGURG, handle_urgent);
 
         /*
          * Initialize the Runtime mutex. This mutex
@@ -324,11 +343,24 @@ static void do_init(void) {
                 Util_printRunList();
                 Util_printServiceList();
         }
-        
-        /*
-         * Set if Monit is running as init (PID 1)
-         */
-        Run.isInit = (getpid() == 1);
+}
+
+
+// SIGURG ends the heartbeat's network wait in progress (as PID 1 at shutdown).
+// The thread checks the stop condition under its mutex before each sleep, so the
+// semaphore signaled with the mutex held cannot be missed
+static void _stopHeartbeat(void) {
+        if (AtomicThread_isJoinable(&Heartbeat_Thread)) {
+                // Woken every 100 ms until it lets go of the mutex: a stop request during a reload sets a deadline its wait reads only after a signal
+                for (int ms = 0; pthread_mutex_trylock(&Heartbeat_Thread.mutex) != 0; ms++) {
+                        if (ms % 100 == 0)
+                                pthread_kill(Heartbeat_Thread.value, SIGURG);
+                        Time_usleep(USEC_PER_MSEC);
+                }
+                Sem_signal(Heartbeat_Thread.sem);
+                Mutex_unlock(Heartbeat_Thread.mutex);
+                AtomicThread_join(&Heartbeat_Thread);
+        }
 }
 
 
@@ -339,16 +371,12 @@ static void do_init(void) {
 static void do_reinit(bool full) {
         Log_info("Reinitializing Monit -- control file '%s'\n", Run.files.control);
 
-        if (AtomicThread_isActive(&Heartbeat_Thread)) {
-                Sem_signal(Heartbeat_Thread.sem);
-                Thread_join(Heartbeat_Thread.value);
-        }
+        _stopHeartbeat();
 
         Run.flags &= ~Run_DoReload;
 
         /* Stop http interface */
-        if (Run.httpd.flags & Httpd_Net || Run.httpd.flags & Httpd_Unix)
-                monit_http(Httpd_Stop);
+        monit_http(Httpd_Stop);
 
         /* Save the current state (no changes are possible now since the http thread is stopped) */
         if (full)
@@ -390,9 +418,8 @@ static void do_reinit(bool full) {
         State_restore();
 
         if (full) {
-                /* Start http interface */
-                if (can_http())
-                        monit_http(Httpd_Start);
+                // Start Http if we can
+                monit_http(Httpd_Start);
 
                 /* send the monit startup notification */
                 Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_START, "Monit reloaded");
@@ -515,75 +542,68 @@ static void do_action(List_T arguments) {
 }
 
 
-/**
- * Finalize monit
- */
-
-/// Returns true if process 'pid' has terminated within the 10 seconds
-/// grace period otherwise false
-static bool _wait_for_termination(pid_t pid) {
-        long long elapsed = 0LL;
-        long long grace_period = 10 * USEC_PER_SEC; // 10 Seconds
-        long long check_interval = 100 * USEC_PER_MSEC; // 100 milliseconds
-        while (elapsed < grace_period) {
-                if (kill(pid, 0) != 0)
-                        return true;
-                Time_usleep(check_interval);
-                elapsed += check_interval;
-        }
-        return false;
-}
-
-
+// Kill a process that is still running at the shutdown deadline
 static void _shutdown_visitor(ProcessTree_T *p, __attribute__((unused)) void *context) {
-        if (p->pid > 1) {  // Skip init (ourself)
-                kill(p->pid, SIGTERM);
-                if (!_wait_for_termination(p->pid)) {
-                    // Process didn't terminate within grace period
-                    kill(p->pid, SIGKILL);
+        if (p->pid > 1 && ! p->zombie) { // Skip init (ourself) and zombies waiting to be reaped
+                if (kill(p->pid, SIGKILL) == 0) {
+                        char name[STRLEN];
+                        snprintf(name, sizeof(name), "%s", NVLSTR(p->cmdline));
+                        Log_warning("Process %d '%s' did not exit after SIGTERM -- killed\n", (int)p->pid, Str_trunc(Str_replaceChar(name, '\n', ' '), 80));
                 }
         }
 }
 
 
 static void _perform_init_shutdown(void) {
-    Log_info("Monit running as PID 1, performing init shutdown responsibilities\n");
-    
-    // First, stop all managed services gracefully
-    for (Service_T s = Service_List; s; s = s->next) {
-        control_service(s->name, Action_Stop);
-    }
-    
-    // Visit all remaining processes and shut them down (except self)
-    ProcessTree_visit(_shutdown_visitor, NULL);
+        Log_info("Monit running as PID 1, performing init shutdown responsibilities\n");
+        // Finish one second after the stop deadline, one second before the shutdown timeout, which leaves time for the exit
+        long long deadline = Run.stopDeadline + 1000;
+        // First, stop all services with their stop programs, in dependency order, until the stop deadline
+        for (Service_T s = Service_List; s; s = s->next) {
+                control_service(s->name, Action_Stop);
+        }
+        // Then send SIGTERM to all other processes at once, give them the time left to exit and kill the rest
+        if (kill(-1, SIGTERM) == 0) {
+                while (kill(-1, 0) == 0 && Time_monotonic().milliseconds < deadline)
+                        Time_usleep(100 * USEC_PER_MSEC);
+                if (kill(-1, 0) == 0)
+                        ProcessTree_visit(_shutdown_visitor, NULL);
+        }
 }
 
 
 static void do_exit(bool saveState) {
         set_thread_signal_block(true);
-        Run.flags |= Run_Stopped;
-        if ((Run.flags & Run_Daemon) && ! (Run.flags & Run_Once)) {
-                if (can_http()) {
-                        monit_http(Httpd_Stop);
-                }
-
-                if (AtomicThread_isActive(&Heartbeat_Thread)) {
-                        Sem_signal(Heartbeat_Thread.sem);
-                        Thread_join(Heartbeat_Thread.value);
-                }
+        if (! Run.stopTime)
+                Run.stopTime = Time_stamp();
+        bool isDaemon = (Run.flags & Run_Daemon) && ! (Run.flags & Run_Once);
+        if (isDaemon) {
+                monit_http(Httpd_Stop);
+                _stopHeartbeat();
                 AtomicThread_destroy(&Heartbeat_Thread);
-
-                /* send the monit stop notification */
+        }
+        if (Run.isInit) {
+                // Calculate the shutdown budget. Services are stopped until two seconds
+                // before the shutdown timeout, counted from the stop request
+                uint32_t deadline = Run.stopTime + Run.limits.shutdownTimeout - 2000;
+                long long now = Time_monotonic().milliseconds;
+                Run.stopDeadline = now + (int32_t)(deadline - Time_stamp());
+                // The stop notification is sent first, before any service is stopped, and may take one second of that time
+                uint32_t notify = Time_stamp() + (uint32_t)Num_min(Run.stopDeadline - now, 1000LL);
+                Net_setDeadline(notify ? notify : 1); // 0 would mean no deadline
+        }
+        if (isDaemon) {
+                // Send the monit stop notification before services are shutdown,
+                // in case we run as init and monitor network
                 Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_STOP, "Monit %s stopped", VERSION);
         }
         if (saveState) {
                 State_save();
         }
-        // Special handling when running as PID 1 (init)
         if (Run.isInit) {
                 _perform_init_shutdown();
         }
-        if ((Run.flags & Run_Daemon) && ! (Run.flags & Run_Once)) {
+        if (isDaemon) {
                 Log_info("Monit daemon with pid [%d] stopped\n", (int)getpid());
         }
         gc();
@@ -641,7 +661,7 @@ reload:
 
                                 // Sleep, unless there is a pending action or monit was stopped/reloaded (sleep can be interrupted by signal)
                                 for (long remaining = Run.startdelay; remaining > 0; remaining = Time_sleep(remaining)) {
-                                        if (Run.flags & Run_Stopped) {
+                                        if (Run.stopTime) {
                                                 do_exit(false);
                                         } else if (Run.flags & Run_DoReload) {
                                                 do_reinit(false);
@@ -653,8 +673,8 @@ reload:
                         }
                 }
 
-                if (can_http())
-                        monit_http(Httpd_Start);
+                // Start Http if we can
+                monit_http(Httpd_Start);
 
                 /* send the monit startup notification */
                 Event_post(Run.system, Event_Instance, State_Changed, Run.system->action_MONIT_START, "Monit %s started", VERSION);
@@ -676,7 +696,7 @@ reload:
                                 DEBUG("Awakened by User defined signal 1\n");
                         }
 
-                        if (Run.flags & Run_Stopped) {
+                        if (Run.stopTime) {
                                 do_exit(true);
                         } else if (Run.flags & Run_DoReload) {
                                 do_reinit(true);
@@ -1013,7 +1033,7 @@ static void *do_heartbeat(__attribute__ ((unused)) void *args) {
 
         LOCK(Heartbeat_Thread.mutex)
         {
-                while (! (Run.flags & Run_Stopped) && ! (Run.flags & Run_DoReload)) {
+                while (! Run.stopTime && ! (Run.flags & Run_DoReload)) {
                         time_t now = Time_now();
 
                         // Run _crontab once per minute
@@ -1049,7 +1069,10 @@ static void handle_reload(__attribute__ ((unused)) int sig) {
 
 // Signal handler for monit finalization
 static void handle_stop(__attribute__ ((unused)) int sig) {
-        Run.flags |= Run_Stopped;
+        if (! Run.stopTime)
+                Run.stopTime = Time_stamp(); // Reads clock_gettime(), which is async-signal-safe
+        if (Run.isInit)
+                Net_setDeadline(Run.stopTime); // Network waits end at once until do_exit() sends the stop notification
 }
 
 
@@ -1057,3 +1080,10 @@ static void handle_stop(__attribute__ ((unused)) int sig) {
 static void handle_wakeup(__attribute__ ((unused)) int sig) {
         Run.flags |= Run_DoWakeup;
 }
+
+
+// Monit sends SIGURG to its own threads when it stops them: the handler does nothing,
+// but unlike an ignored signal it makes a wait in progress fail with EINTR
+static void handle_urgent(__attribute__ ((unused)) int sig) {
+}
+

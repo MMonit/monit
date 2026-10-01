@@ -25,6 +25,7 @@
 
 #ifndef NET_INCLUDED
 #define NET_INCLUDED
+#include <stdint.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -83,6 +84,20 @@ bool Net_canRead(int socket, time_t milliseconds);
  * @return true if the event occurred, otherwise false.
  */
 bool Net_canWrite(int socket, time_t milliseconds);
+
+
+/**
+ * Bound every wait in Net_canRead() and Net_canWrite() by a deadline, a
+ * Time_stamp() value: a wait ends at the deadline at the latest, at once if
+ * it has passed. A wait reads the deadline when it starts and after each
+ * signal its thread gets, so a signal handler that sets it ends the wait in
+ * the thread it interrupts. A wait in another thread sees the new deadline
+ * at its next signal or wait. The deadline must be less than 24 days from
+ * the waits it bounds. The default, 0, sets no bound. This function is
+ * async-signal-safe.
+ * @param stamp The deadline, or 0
+ */
+void Net_setDeadline(uint32_t stamp);
 
 
 /**

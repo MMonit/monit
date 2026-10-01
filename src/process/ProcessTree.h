@@ -141,8 +141,9 @@ void ProcessTree_testMatch(char *pattern);
  *                the ProcessTree
  * @param ap      Application-specific pointer passed to the 'visitor'
  *                function on each call. Use NULL if not needed
- * @note          The ProcessTree is reinitialized when this function is called,
- *                ensuring current system state is reflected
+ * @note          The ProcessTree is reinitialized, including each process's
+ *                command line, when this function is called, ensuring current
+ *                system state is reflected
  */
 void ProcessTree_visit(void visitor(ProcessTree_T *p, void *ap), void *ap);
 

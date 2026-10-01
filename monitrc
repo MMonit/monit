@@ -61,7 +61,8 @@ set log syslog
 #     stopTimeout:       30 seconds  # timeout for service stop
 #     startTimeout:      30 seconds  # timeout for service start
 #     restartTimeout:    30 seconds  # timeout for service restart
-#     execTimeout:       0 seconds   # timeout for test action exec
+#     # execTimeout:     20 seconds  # timeout for test action exec (no limit by default)
+#     shutdownTimeout:   10 seconds  # shutdown timeout when Monit is PID 1
 # }
 
 ## Set global SSL options (just most common options showed, see manual for

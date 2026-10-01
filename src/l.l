@@ -433,6 +433,7 @@ stoptimeout       { return STOPTIMEOUT; }
 starttimeout      { return STARTTIMEOUT; }
 restarttimeout    { return RESTARTTIMEOUT; }
 exectimeout       { return EXECTIMEOUT; }
+shutdowntimeout   { return SHUTDOWNTIMEOUT; }
 cleartext         { return CLEARTEXT; }
 md5               { return MD5HASH; }
 sha1              { return SHA1HASH; }

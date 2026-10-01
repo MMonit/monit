@@ -497,6 +497,16 @@ int main(void) {
         }
         printf("=> Test11: OK\n\n");
 
+        printf("=> Test12: Time_stamp\n");
+        {
+                uint32_t before = Time_stamp();
+                Time_usleep(50000);
+                uint32_t after = Time_stamp();
+                assert(before && after);
+                assert((int32_t)(after - before) >= 50 && (int32_t)(after - before) < 1000);
+        }
+        printf("=> Test12: OK\n\n");
+
         printf("============> Time Tests: OK\n\n");
 
         return 0;
