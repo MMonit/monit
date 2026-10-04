@@ -4045,6 +4045,9 @@ static void addservicegroup(char *name) {
 
         assert(name);
 
+        if (Str_ge(name, STRLEN))
+                yyerror2("Service group name is too long -- the maximum is %d bytes", STRLEN - 1);
+
         /* Check if service group with the same name is defined already */
         for (g = Service_Group_List; g; g = g->next)
                 if (IS(g->name, name))
@@ -4066,6 +4069,8 @@ static void addservicegroup(char *name) {
  * Add entry to M/Monit hostgroup membership list
  */
 static void addhostgroup(char *name) {
+        if (Str_ge(name, STRLEN))
+                yyerror2("Host group name is too long -- the maximum is %d bytes", STRLEN - 1);
         if (! mmonitset.hostgroups)
                 mmonitset.hostgroups = List_new();
         List_append(mmonitset.hostgroups, name);
@@ -5673,6 +5678,8 @@ static void check_name(char *name) {
                 yyerror2("Service name conflict, %s already defined", name);
         if (name && *name == '/')
                 yyerror2("Service name '%s' must not start with '/' -- ", name);
+        if (Str_ge(name, STRLEN))
+                yyerror2("Service name is too long -- the maximum is %d bytes", STRLEN - 1);
 }
 
 

@@ -330,6 +330,14 @@ char *Str_curtail(char *s, const char *t) {
 }
 
 
+bool Str_ge(const char *s, int limit) {
+        assert(limit >= 0);
+        if (s)
+                return strnlen(s, (size_t)limit) >= (size_t)limit;
+        return false;
+}
+
+
 bool Str_match(const char *pattern, const char *subject) {
         assert(pattern);
         if (STR_DEF(subject)) {

@@ -81,6 +81,10 @@ Fixed: An 'include' statement without a file name took the first word of the nex
        failed include is only a warning, that line was silently ignored. A missing include file name is now reported
        as an error.
 
+Fixed: A service, service group or M/Monit host group name longer than 255 bytes is now reported as an error. The state
+       file kept only the first 255 bytes of a service name, so a service with a longer name lost its monitoring state
+       on restart, and M/Monit stores names of up to 255 characters.
+
 Fixed: SSL/TLS: Make the certificate checksum comparison case-insensitive.
 
 Fixed: SSL/TLS: Monit checked the certificate chain is valid but never matched the certificate's subjectAltName/CN against the

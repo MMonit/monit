@@ -452,6 +452,23 @@ int main(void) {
         }
         printf("=> Test19: OK\n\n");
 
+        printf("=> Test20: Str_ge\n");
+        {
+                assert(!Str_ge("ab", 3)); // "ab" and its '\0' fit in 3 bytes
+                assert(Str_ge("ab", 2));
+                assert(Str_ge("ab", 0));
+                assert(Str_ge("", 0));
+                assert(!Str_ge("", 1));
+                assert(!Str_ge(NULL, 10));
+                // A limit that is a buffer size: 255 characters fit in STRLEN bytes, 256 do not
+                char name[STRLEN + 1] = {0};
+                memset(name, 'a', STRLEN);
+                assert(Str_ge(name, STRLEN));
+                name[STRLEN - 1] = 0;
+                assert(!Str_ge(name, STRLEN));
+        }
+        printf("=> Test20: OK\n\n");
+
         printf("============> Str Tests: OK\n\n");
         return 0;
 }

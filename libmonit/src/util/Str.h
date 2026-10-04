@@ -331,6 +331,17 @@ char *Str_curtail(char *s, const char *t);
 
 
 /**
+ * Returns true if the string `s` has length greater than or equal to
+ * `limit`, that is, if `s` and its `'\0'` do not fit in `limit` bytes.
+ * @param s String to test
+ * @param limit The limit in bytes to test s against
+ * @return true if `s.length >= limit` otherwise false
+ * @exception AssertException if limit is less than 0
+ */
+bool Str_ge(const char *s, int limit);
+
+
+/**
  * Returns true if the regular expression <code>pattern</code> match
  * the <code>subject</code> string, otherwise false. This function
  * supports POSIX regular expression for <code>pattern</code>. See
