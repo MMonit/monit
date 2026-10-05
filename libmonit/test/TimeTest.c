@@ -507,6 +507,17 @@ int main(void) {
         }
         printf("=> Test12: OK\n\n");
 
+        printf("=> Test13: Time_monotonic() reads CLOCK_MONOTONIC\n");
+        {
+                struct timespec before, after;
+                assert(clock_gettime(CLOCK_MONOTONIC, &before) == 0);
+                long long now = Time_monotonic().nanoseconds;
+                assert(clock_gettime(CLOCK_MONOTONIC, &after) == 0);
+                assert(now >= before.tv_sec * 1000000000LL + before.tv_nsec);
+                assert(now <= after.tv_sec * 1000000000LL + after.tv_nsec);
+        }
+        printf("=> Test13: OK\n\n");
+
         printf("============> Time Tests: OK\n\n");
 
         return 0;

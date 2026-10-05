@@ -1153,16 +1153,12 @@ long long Time_micro(void) {
 struct time_monotonic_t Time_monotonic(void) {
     struct time_monotonic_t tm;
 #ifdef HAVE_CLOCK_GETTIME
-    struct timespec t;
-    clockid_t clockid;
-    #ifdef CLOCK_MONOTONIC_RAW
-        clockid = CLOCK_MONOTONIC_RAW;
-    #elif defined CLOCK_MONOTONIC
-        clockid = CLOCK_MONOTONIC;
-    #else
+    #ifndef CLOCK_MONOTONIC
         #error "clock_gettime() present but no monotonic clock available"
     #endif
-    if (clock_gettime(clockid, &t) != 0)
+    // CLOCK_MONOTONIC_RAW is a system call on x86_64 Linux before 5.3
+    struct timespec t;
+    if (clock_gettime(CLOCK_MONOTONIC, &t) != 0)
         THROW(AssertException, "%s", System_lastError());
     tm.seconds = t.tv_sec;
     tm.milliseconds = t.tv_sec * 1000LL + t.tv_nsec / 1000000LL;

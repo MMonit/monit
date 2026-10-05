@@ -123,8 +123,8 @@ long long Time_micro(void);
 
 /// Returns a monotonic time at some unspecified starting point as a
 /// structure with various temporal resolution of the <b>same</b> time.
-/// This time is not affected by NTP time jumps, but may change in
-/// frequency on platforms that don't support CLOCK_MONOTONIC_RAW.
+/// This time does not jump when the system time is set (CLOCK_MONOTONIC),
+/// though NTP may adjust its rate.
 /// @return A time_monotonic_t structure with various resolutions of the
 /// same time since the clock started.
 /// @exception AssertException If time could not be obtained
