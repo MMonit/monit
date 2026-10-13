@@ -419,6 +419,8 @@ AS_IF([test "$STDC_VERSION" -ge 202311],
         )]
     )]
 )
+# AC_PROG_CC adds a -std of its own to CC; the one chosen above is in CFLAGS
+CC=`echo "$CC" | sed 's/ -std=[[^ ]]*//'`
 
 # Check for C99 headers
 AC_CHECK_HEADERS([stdint.h stdbool.h], [], [AC_MSG_ERROR([toolchain does not have C99 headers])])
