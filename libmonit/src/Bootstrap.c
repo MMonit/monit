@@ -28,7 +28,6 @@
 #include <stdarg.h>
 
 #include "Thread.h"
-#include "Exception.h"
 #include "Bootstrap.h"
 
 
@@ -53,7 +52,6 @@ void(*_DebugHandler)(const char *info, va_list ap) = NULL;
 
 
 void Bootstrap(void) {
-        Exception_init();
         Thread_init();
 }
 

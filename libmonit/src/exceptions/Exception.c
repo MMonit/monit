@@ -32,7 +32,6 @@
 #include <string.h>
 
 #include "Str.h"
-#include "Thread.h"
 #include "system/System.h"
 #include "Exception.h"
 
@@ -56,8 +55,8 @@
 
 
 #define T Exception_T
-/* Thread specific Exception stack */
-ThreadData_T Exception_Stack;
+/* Thread local Exception stack */
+_Thread_local Exception_Frame *Exception_Stack;
 /* System exceptions */
 T IOException = {"IOException"};
 T AssertException = {"AssertException"};
@@ -65,23 +64,12 @@ T MemoryException = {"MemoryException"};
 T NumberFormatException = {"NumberFormatException"};
 T ProtocolException = {"ProtocolException"};
 
-static pthread_once_t once_control = PTHREAD_ONCE_INIT;
-
-
-/* --------------------------------------------------------------- Private */
-
-
-static void init_once(void) { ThreadData_create(Exception_Stack); }
-
 
 /* ---------------------------------------------------------------- Public */
 
 
-void Exception_init(void) { pthread_once(&once_control, init_once); }
-
-
 void Exception_throw(const T *e, const char *func, const char *file, int line, const char *message) {
-        Exception_Frame *p = ThreadData_get(Exception_Stack);
+        Exception_Frame *p = Exception_Stack;
         assert(e);
         if (p) {
                 p->exception = e;
@@ -90,7 +78,7 @@ void Exception_throw(const T *e, const char *func, const char *file, int line, c
                 p->line = line;
                 if (message)
                         Str_copy(p->message, message, EXCEPTION_MESSAGE_LENGTH);
-                pop_exception_stack;
+                Exception_Stack = p->prev;
                 siglongjmp(p->env, Exception_thrown);
         } else if (message) {
                 ABORT("%s: %s\n raised in %s at %s:%d\n", e->name, message, func ? func : "?", file ? file : "?", line);

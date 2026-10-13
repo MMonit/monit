@@ -72,11 +72,6 @@
  * @hideinitializer
  */
 #define Lock_T pthread_rwlock_t
-/**
- * Thread Data object type
- * @hideinitializer
- */
-#define ThreadData_T pthread_key_t
 //@}
 /** @name Thread methods */
 //@{
@@ -269,31 +264,6 @@
  * @hideinitializer
  */
 #define END_WLOCK _yystatus=pthread_rwlock_unlock(_yywlock); assert(_yystatus==0); } while (0)
-//@}
-/** @name Thread data methods */
-//@{
-/**
- * Creates a thread-specific data key.
- * @param key The ThreadData_T key to create
- * @exception AssertException If thread data creation failed
- * @hideinitializer
- */
-#define ThreadData_create(key) __trapper(pthread_key_create(&(key), NULL))
-/**
- * Sets a thread-specific data value. The key is of type ThreadData_T
- * @param key The ThreadData_T key to set a new value for
- * @param value The value for key
- * @exception AssertException If setting thread data failed
- * @hideinitializer
- */
-#define ThreadData_set(key, value) __trapper(pthread_setspecific((key), (value)))
-/**
- * Gets a thread-specific data value
- * @param key The ThreadData_T key
- * @return value of key or NULL of no value was set for the key
- * @hideinitializer
- */
-#define ThreadData_get(key) pthread_getspecific((key))
 //@}
 /** @name Atomic Thread */
 //@{

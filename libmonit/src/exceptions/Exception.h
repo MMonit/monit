@@ -115,10 +115,11 @@
  * closes the database Connection regardless if an exception
  * was thrown or not by the code in the TRY-block.
  *
- * Finally, the RETURN statement, defined in this interface, must be used
- * instead of C return statements inside a try-block. If any of the
- * statements in a try-block must do a return, they <b>must</b>
- * do so with this macro instead of the usual C return statement.
+ * A TRY statement can be left from any of its blocks with return, break or
+ * goto, and its handler is dismantled on the way out. The blocks after the
+ * one left do not run, FINALLY included, and an exception not yet handled is
+ * not rethrown. break and continue leave the TRY statement itself, not a loop
+ * around it. No goto or case label may jump into a TRY statement.
  *
  * <h3>Exception details</h3>
  * Inside an exception handler, details about an exception is
@@ -144,7 +145,29 @@
  * END_TRY;
  * </pre>
  *
- * <p>The Exception stack is stored in a thread-specific variable so Exceptions
+ * <h3>Volatile and assignment inside a try-block</h3>
+ * A local variable declared outside a try-block and assigned a value inside
+ * said block must be declared <code>volatile</code> if it is read after an
+ * exception was thrown, in a CATCH, ELSE or FINALLY block or after END_TRY.
+ * Otherwise the compiler may keep the value it had before the try-block. Only
+ * the function's own local variables are affected, not a global, a static or
+ * an object reached through a pointer the function was given. Example:
+ * <pre>
+ * volatile int i = 0;
+ * TRY
+ * {
+ *      i = 1;
+ *      THROW(IOException, "IOException");
+ * }
+ * ELSE
+ * {
+ *      assert(i == 1); // Unless declared volatile i could be 0 here
+ * }
+ * END_TRY;
+ * assert(i == 1); // and here
+ * </pre>
+ *
+ * <p>The Exception stack is stored in a thread-local variable so Exceptions
  * are made thread-safe. <i>This means that Exceptions are thread local and an
  * Exception thrown in one thread cannot be caught in another thread</i>.
  * This also means that clients must handle Exceptions per thread and cannot
@@ -174,7 +197,9 @@
 
 #define T Exception_T
 /** @cond hide */
-#include <pthread.h>
+#ifndef __GNUC__
+#error "Exception.h requires GCC or Clang: TRY pops its frame with __attribute__((cleanup))"
+#endif
 typedef struct T {
         const char *name;
 } T;
@@ -195,11 +220,13 @@ enum {
         Exception_handled,
         Exception_finalized
 };
-extern pthread_key_t Exception_Stack;
-void Exception_init(void);
+extern _Thread_local Exception_Frame *Exception_Stack;
 void Exception_vthrow(const T *e, const char *func, const char *file, int line, const char *cause, ...) CLANG_ANALYZER_NORETURN;
 void Exception_throw(const T *e, const char *func, const char *file, int line, const char *message) CLANG_ANALYZER_NORETURN;
-#define pop_exception_stack pthread_setspecific(Exception_Stack, ((Exception_Frame*)pthread_getspecific(Exception_Stack))->prev)
+static inline void Exception_leave(Exception_Frame *frame) {
+        Exception_Stack = frame->prev;
+}
+#define pop_exception_stack (Exception_Stack = Exception_frame.prev)
 /** @endcond */
 
 
@@ -224,23 +251,23 @@ void Exception_throw(const T *e, const char *func, const char *file, int line, c
 
 
 /**
- * Clients <b>must</b> use this macro instead of C return statements
- * inside a try-block
+ * The same as return, which may leave a TRY statement from any of its blocks
+ * @deprecated Use return; RETURN is kept so existing code compiles
  * @hideinitializer
  */
-#define RETURN switch((pop_exception_stack,0)) default:return
+#define RETURN return
 
 
 /**
- * Defines a block of code that can potentially throw an exception
+ * Defines a block of code that can potentially throw an exception.
  * @hideinitializer
  */
 #define TRY do { \
 	volatile int Exception_flag; \
-        Exception_Frame Exception_frame; \
+        Exception_Frame Exception_frame __attribute__((cleanup(Exception_leave))); \
         Exception_frame.message[0] = 0; \
-        Exception_frame.prev = pthread_getspecific(Exception_Stack); \
-        pthread_setspecific(Exception_Stack, &Exception_frame); \
+        Exception_frame.prev = Exception_Stack; \
+        Exception_Stack = &Exception_frame; \
         Exception_flag = sigsetjmp(Exception_frame.env, 0); \
         if (Exception_flag == Exception_entered) {
 
@@ -252,7 +279,6 @@ void Exception_throw(const T *e, const char *func, const char *file, int line, c
  * @hideinitializer
  */
 #define CATCH(e) \
-                if (Exception_flag == Exception_entered) pop_exception_stack; \
         } else if (Exception_frame.exception == &(e)) { \
                 Exception_flag = Exception_handled;
 
@@ -264,7 +290,6 @@ void Exception_throw(const T *e, const char *func, const char *file, int line, c
  * @hideinitializer
  */
 #define ELSE \
-                if (Exception_flag == Exception_entered) pop_exception_stack; \
         } else { \
                 Exception_flag = Exception_handled;
 
@@ -275,10 +300,11 @@ void Exception_throw(const T *e, const char *func, const char *file, int line, c
  * @hideinitializer
  */
 #define FINALLY \
-                if (Exception_flag == Exception_entered) pop_exception_stack; \
         } { \
-                if (Exception_flag == Exception_entered) \
-                        Exception_flag = Exception_finalized;
+                if (Exception_flag == Exception_entered) { \
+                        pop_exception_stack; \
+                        Exception_flag = Exception_finalized; \
+                }
 
 
 /**
@@ -286,7 +312,6 @@ void Exception_throw(const T *e, const char *func, const char *file, int line, c
  * @hideinitializer
  */
 #define END_TRY \
-                if (Exception_flag == Exception_entered) pop_exception_stack; \
         } if (Exception_flag == Exception_thrown) RETHROW; \
         } while (0)
 

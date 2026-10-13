@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <pwd.h>
 #include <grp.h>
+#include <pthread.h>
 
 #ifdef HAVE_USERSEC_H
 #include <usersec.h>
