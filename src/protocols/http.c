@@ -65,6 +65,8 @@
 
 #define BUFSIZE 4096
 
+typedef void (*process_body_t)(Socket_T socket, Port_T P, char **data, int *contentLength, ChecksumContext_T context);
+
 
 /* ----------------------------------------------------------------- Private */
 
@@ -251,7 +253,7 @@ static void _processStatus(Socket_T socket, Port_T P) {
 }
 
 
-static void _processHeaders(Socket_T socket, void (**processBody)(Socket_T socket, Port_T P, char **data, int *contentLength, ChecksumContext_T context), int *contentLength) {
+static void _processHeaders(Socket_T socket, process_body_t *processBody, int *contentLength) {
         char buf[8193] = {};
         *processBody = _processBodyUntilEOF;
 
@@ -276,6 +278,28 @@ static void _processHeaders(Socket_T socket, void (**processBody)(Socket_T socke
 }
 
 
+// The body readers resize *data, which belongs to the caller, so FINALLY frees the current buffer
+static void _checkBody(Socket_T socket, Port_T P, process_body_t processBody, int *contentLength, char **data) {
+        struct ChecksumContext_T context;
+        TRY
+        {
+                // Read data
+                if (P->parameters.http.checksum)
+                        Checksum_init(&context, P->parameters.http.hashtype);
+                processBody(socket, P, data, contentLength, &context);
+                // Perform tests
+                if (P->parameters.http.checksum)
+                        Checksum_verify(&context, P->parameters.http.checksum);
+                _contentVerify(P, *data);
+        }
+        FINALLY
+        {
+                FREE(*data);
+        }
+        END_TRY;
+}
+
+
 /**
  * Check that the server returns a valid HTTP response as well as checksum
  * or content regex if required
@@ -283,29 +307,13 @@ static void _processHeaders(Socket_T socket, void (**processBody)(Socket_T socke
  */
 static void _checkResponse(Socket_T socket, Port_T P) {
         int contentLength = -1;
-        void (*processBody)(Socket_T socket, Port_T P, char **data, int *contentLength, ChecksumContext_T context);
+        process_body_t processBody;
         _processStatus(socket, P);
         _processHeaders(socket, &processBody, &contentLength);
         if ((P->url_request && P->url_request->regex) || P->parameters.http.checksum) {
                 if (processBody) {
                         char *data = CALLOC(1, BUFSIZE);
-                        struct ChecksumContext_T context;
-                        TRY
-                        {
-                                // Read data
-                                if (P->parameters.http.checksum)
-                                        Checksum_init(&context, P->parameters.http.hashtype);
-                                processBody(socket, P, &data, &contentLength, &context);
-                                // Perform tests
-                                if (P->parameters.http.checksum)
-                                        Checksum_verify(&context, P->parameters.http.checksum);
-                                _contentVerify(P, data);
-                        }
-                        FINALLY
-                        {
-                                FREE(data);
-                        }
-                        END_TRY;
+                        _checkBody(socket, P, processBody, &contentLength, &data);
                 } else {
                         THROW(ProtocolException, "HTTP error: unknown transfer encoding");
                 }
