@@ -34,6 +34,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#ifndef HAVE_ARC4RANDOM_BUF
+#include <pthread.h>
+#endif
+
 #ifdef HAVE_SYS_RANDOM_H
 #include <sys/random.h>
 #endif
