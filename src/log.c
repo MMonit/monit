@@ -180,19 +180,28 @@ static void _log(int priority, const char *s, va_list ap) {
 }
 
 
-static void _backtrace(bool force) {
 #ifdef HAVE_BACKTRACE
-        int i, frames;
-        void *callstack[128];
-        char **strs;
+__attribute__((format (printf, 2, 3)))
+static void _logf(int priority, const char *s, ...) {
+        va_list ap;
+        va_start(ap, s);
+        _log(priority, s, ap);
+        va_end(ap);
+}
+#endif
 
+
+static void _backtrace(__attribute__((unused)) bool force) {
+#ifdef HAVE_BACKTRACE
         if (force || Run.debug >= 2) {
-                frames = backtrace(callstack, 128);
-                strs = backtrace_symbols(callstack, frames);
-                Log_debug("-------------------------------------------------------------------------------\n");
-                for (i = 0; i < frames; ++i)
-                Log_debug("    %s\n", strs[i]);
-                Log_debug("-------------------------------------------------------------------------------\n");
+                int priority = force ? LOG_CRIT : LOG_DEBUG;
+                void *callstack[128];
+                int frames = backtrace(callstack, 128);
+                char **strs = backtrace_symbols(callstack, frames);
+                _logf(priority, "-------------------------------------------------------------------------------\n");
+                for (int i = 0; i < frames; i++)
+                        _logf(priority, "    %s\n", strs[i]);
+                _logf(priority, "-------------------------------------------------------------------------------\n");
                 FREE(strs);
         }
 #endif
@@ -252,10 +261,7 @@ void Log_emergency(const char *s, ...) {
  */
 void Log_vemergency(const char *s, va_list ap) {
         assert(s);
-        va_list ap_copy;
-        va_copy(ap_copy, ap);
         _log(LOG_EMERG, s, ap);
-        va_end(ap_copy);
         _backtrace(false);
 }
 
@@ -281,10 +287,7 @@ void Log_alert(const char *s, ...) {
  */
 void Log_valert(const char *s, va_list ap) {
         assert(s);
-        va_list ap_copy;
-        va_copy(ap_copy, ap);
         _log(LOG_ALERT, s, ap);
-        va_end(ap_copy);
         _backtrace(false);
 }
 
@@ -310,10 +313,7 @@ void Log_critical(const char *s, ...) {
  */
 void Log_vcritical(const char *s, va_list ap) {
         assert(s);
-        va_list ap_copy;
-        va_copy(ap_copy, ap);
         _log(LOG_CRIT, s, ap);
-        va_end(ap_copy);
         _backtrace(false);
 }
 
@@ -324,10 +324,7 @@ void Log_vcritical(const char *s, va_list ap) {
  */
 void Log_abort_handler(const char *s, va_list ap) {
         assert(s);
-        va_list ap_copy;
-        va_copy(ap_copy, ap);
         _log(LOG_CRIT, s, ap);
-        va_end(ap_copy);
         _backtrace(true); // Always log backtrace on abort (asserts, etc.)
         if (Run.debug) {
                 abort();
@@ -357,10 +354,7 @@ void Log_error(const char *s, ...) {
  */
 void Log_verror(const char *s, va_list ap) {
         assert(s);
-        va_list ap_copy;
-        va_copy(ap_copy, ap);
         _log(LOG_ERR, s, ap);
-        va_end(ap_copy);
         _backtrace(false);
 }
 
@@ -385,10 +379,7 @@ void Log_warning(const char *s, ...) {
  */
 void Log_vwarning(const char *s, va_list ap) {
         assert(s);
-        va_list ap_copy;
-        va_copy(ap_copy, ap);
         _log(LOG_WARNING, s, ap);
-        va_end(ap_copy);
 }
 
 
@@ -412,10 +403,7 @@ void Log_notice(const char *s, ...) {
  */
 void Log_vnotice(const char *s, va_list ap) {
         assert(s);
-        va_list ap_copy;
-        va_copy(ap_copy, ap);
         _log(LOG_NOTICE, s, ap);
-        va_end(ap_copy);
 }
 
 
@@ -439,10 +427,7 @@ void Log_info(const char *s, ...) {
  */
 void Log_vinfo(const char *s, va_list ap) {
         assert(s);
-        va_list ap_copy;
-        va_copy(ap_copy, ap);
         _log(LOG_INFO, s, ap);
-        va_end(ap_copy);
 }
 
 
@@ -468,12 +453,8 @@ void Log_debug(const char *s, ...) {
  */
 void Log_vdebug(const char *s, va_list ap) {
         assert(s);
-        if (Run.debug) {
-                va_list ap_copy;
-                va_copy(ap_copy, ap);
-                _log(LOG_NOTICE, s, ap);
-                va_end(ap_copy);
-        }
+        if (Run.debug)
+                _log(LOG_DEBUG, s, ap);
 }
 
 
