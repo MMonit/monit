@@ -12,6 +12,12 @@ INCOMPATIBLE CHANGE: SSL/TLS server certificate verification is now ENABLED BY D
            with ssl options {selfsigned: allow}     # accept a self-signed certificate
        The same options can be set globally with 'set ssl options { ... }'.
 
+INCOMPATIBLE CHANGE: The control file, and every file it includes, must be saved as UTF-8. A file with text that is not
+       valid UTF-8 outside a comment is reported with its name and line, and Monit refuses it as it refuses any other
+       error in the control file: Monit does not start, and a reload stops it. M/Monit refuses service and group names
+       that are not UTF-8. Test the control file with 'monit -t' before restarting Monit. To convert a file saved as Latin-1:
+           iconv -f ISO-8859-1 -t UTF-8 monitrc > monitrc.new
+
 Changed: The Monit source code repository and the issue tracker have moved from Bitbucket to GitHub:
              https://github.com/MMonit/monit
          The complete commit history and all release tags were preserved. Please use the GitHub issue tracker

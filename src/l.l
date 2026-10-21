@@ -98,6 +98,7 @@ extern void yyerror(const char *,...);
 extern void yyerror2(const char *,...);
 extern void yywarning(const char *,...);
 extern void yywarning2(const char *,...);
+extern void yyutf8(const char *);
 static void steplinenobycr(char *);
 static void save_arg(void);
 static void begin_argument(void);
@@ -1174,10 +1175,12 @@ static void _include(const char *path) {
                 }
         }
         FILE *_yyin = fopen(path, "r");
-        if (! _yyin)
+        if (! _yyin) {
                 yyerror("Cannot include file '%s' -- %s", path, STRERROR);
-        else
+        } else {
+                yyutf8(path);
                 push_buffer_state(yy_create_buffer(_yyin, YY_BUF_SIZE), path);
+        }
 }
 
 

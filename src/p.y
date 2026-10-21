@@ -173,6 +173,7 @@ void  yyerror(const char *,...) __attribute__((format (printf, 1, 2)));
 void  yyerror2(const char *,...) __attribute__((format (printf, 1, 2)));
 void  yywarning(const char *,...) __attribute__((format (printf, 1, 2)));
 void  yywarning2(const char *,...) __attribute__((format (printf, 1, 2)));
+void  yyutf8(const char *);
 
 /* lexer interface */
 int yylex(void);
@@ -1351,7 +1352,7 @@ signature       : sigenable  {
 
 bindaddress     : ADDRESS STRING {
                         if (Run.httpd.socket.net.address) {
-                                yywarning2("The 'address' option can be specified only once, the last value will be used\n");
+                                yywarning2("The 'address' option can be specified only once, the last value will be used");
                                 FREE(Run.httpd.socket.net.address);
                         }
                         Run.httpd.socket.net.address = $2;
@@ -2672,55 +2673,55 @@ resourcecpuid   : CPUUSER {
                         if (System_Info.statisticsAvailable & Statistics_CpuUser)
                                 $<number>$ = Resource_CpuUser;
                         else
-                                yywarning2("The CPU user usage statistics is not available on this system\n");
+                                yywarning2("The CPU user usage statistics is not available on this system");
                   }
                 | CPUSYSTEM {
                         if (System_Info.statisticsAvailable & Statistics_CpuSystem)
                                 $<number>$ = Resource_CpuSystem;
                         else
-                                yywarning2("The CPU system usage statistics is not available on this system\n");
+                                yywarning2("The CPU system usage statistics is not available on this system");
                   }
                 | CPUWAIT {
                         if (System_Info.statisticsAvailable & Statistics_CpuIOWait)
                                 $<number>$ = Resource_CpuWait;
                         else
-                                yywarning2("The CPU I/O wait usage statistics is not available on this system\n");
+                                yywarning2("The CPU I/O wait usage statistics is not available on this system");
                   }
                 | CPUNICE {
                         if (System_Info.statisticsAvailable & Statistics_CpuNice)
                                 $<number>$ = Resource_CpuNice;
                         else
-                                yywarning2("The CPU nice usage statistics is not available on this system\n");
+                                yywarning2("The CPU nice usage statistics is not available on this system");
                   }
                 | CPUHARDIRQ {
                         if (System_Info.statisticsAvailable & Statistics_CpuHardIRQ)
                                 $<number>$ = Resource_CpuHardIRQ;
                         else
-                                yywarning2("The CPU hardware IRQ usage statistics is not available on this system\n");
+                                yywarning2("The CPU hardware IRQ usage statistics is not available on this system");
                   }
                 | CPUSOFTIRQ {
                         if (System_Info.statisticsAvailable & Statistics_CpuSoftIRQ)
                                 $<number>$ = Resource_CpuSoftIRQ;
                         else
-                                yywarning2("The CPU software IRQ usage statistics is not available on this system\n");
+                                yywarning2("The CPU software IRQ usage statistics is not available on this system");
                   }
                 | CPUSTEAL {
                         if (System_Info.statisticsAvailable & Statistics_CpuSteal)
                                 $<number>$ = Resource_CpuSteal;
                         else
-                                yywarning2("The CPU steal usage statistics is not available on this system\n");
+                                yywarning2("The CPU steal usage statistics is not available on this system");
                   }
                 | CPUGUEST {
                         if (System_Info.statisticsAvailable & Statistics_CpuGuest)
                                 $<number>$ = Resource_CpuGuest;
                         else
-                                yywarning2("The CPU guest usage statistics is not available on this system\n");
+                                yywarning2("The CPU guest usage statistics is not available on this system");
                   }
                 | CPUGUESTNICE {
                         if (System_Info.statisticsAvailable & Statistics_CpuGuestNice)
                                 $<number>$ = Resource_CpuGuestNice;
                         else
-                                yywarning2("The CPU guest nice usage statistics is not available on this system\n");
+                                yywarning2("The CPU guest nice usage statistics is not available on this system");
                   }
                 | CPU {
                         $<number>$ = Resource_CpuPercent;
@@ -3006,7 +3007,7 @@ rateXYcycles    : NUMBER NUMBER CYCLE {
                         if ($<number>2 < 1 || (unsigned long)$<number>2 > BITMAP_MAX) {
                                 yyerror2("The number of cycles must be between 1 and %zu", BITMAP_MAX);
                         } else if ($<number>1 < 1 || $<number>1 > $<number>2) {
-                                yyerror2("The number of events must be between 1 and less then poll cycles");
+                                yyerror2("The number of events must be between 1 and less than poll cycles");
                         } else {
                                 rate.count  = $<number>1;
                                 rate.cycles = $<number>2;
@@ -3398,13 +3399,13 @@ filedescriptorssystem : IF FILEDESCRIPTORS operator NUMBER rate1 THEN action1 re
                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerSystem)
                                 addfiledescriptors($<number>3, false, (long long)$4, -1., $<number>7, $<number>8);
                         else
-                                yywarning("The per-system filedescriptors statistics is not available on this system\n");
+                                yywarning("The per-system filedescriptors statistics is not available on this system");
                   }
                 | IF FILEDESCRIPTORS operator value PERCENT rate1 THEN action1 recovery_success {
                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerSystem)
                                 addfiledescriptors($<number>3, false, -1LL, $<real>4, $<number>8, $<number>9);
                         else
-                                yywarning("The per-system filedescriptors statistics is not available on this system\n");
+                                yywarning("The per-system filedescriptors statistics is not available on this system");
                   }
                 ;
 
@@ -3412,13 +3413,13 @@ filedescriptorsprocess : IF FILEDESCRIPTORS operator NUMBER rate1 THEN action1 r
                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerProcess)
                                 addfiledescriptors($<number>3, false, (long long)$4, -1., $<number>7, $<number>8);
                         else
-                                yywarning("The per-process filedescriptors statistics is not available on this system\n");
+                                yywarning("The per-process filedescriptors statistics is not available on this system");
                   }
                 | IF FILEDESCRIPTORS operator value PERCENT rate1 THEN action1 recovery_success {
                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerProcessMax)
                                 addfiledescriptors($<number>3, false, -1LL, $<real>4, $<number>8, $<number>9);
                         else
-                                yywarning("The per-process filedescriptors maximum is not exposed on this system, so we cannot compute usage %%, please use the test with absolute value\n");
+                                yywarning("The per-process filedescriptors maximum is not exposed on this system, so we cannot compute usage %%, please use the test with absolute value");
                   }
                 ;
 
@@ -3426,7 +3427,7 @@ filedescriptorsprocesstotal : IF TOTAL FILEDESCRIPTORS operator NUMBER rate1 THE
                         if (System_Info.statisticsAvailable & Statistics_FiledescriptorsPerProcess)
                                 addfiledescriptors($<number>4, true, (long long)$5, -1., $<number>8, $<number>9);
                         else
-                                yywarning("The per-process filedescriptors statistics is not available on this system\n");
+                                yywarning("The per-process filedescriptors statistics is not available on this system");
                   }
                 ;
 
@@ -3587,7 +3588,7 @@ reminder        : /* EMPTY */           { mailset.reminder = 0; }
 /* -------------------------------------------------------- Parser interface */
 
 
-/**
+/*
  * Syntactic error routine
  *
  * This routine is automatically called by the lexer!
@@ -3605,7 +3606,7 @@ void yyerror(const char *s, ...) {
 }
 
 
-/**
+/*
  * Syntactical warning routine
  */
 void yywarning(const char *s, ...) {
@@ -3620,7 +3621,7 @@ void yywarning(const char *s, ...) {
 }
 
 
-/**
+/*
  * Argument error routine
  */
 void yyerror2(const char *s, ...) {
@@ -3636,7 +3637,7 @@ void yyerror2(const char *s, ...) {
 }
 
 
-/**
+/*
  * Argument warning routine
  */
 void yywarning2(const char *s, ...) {
@@ -3648,6 +3649,42 @@ void yywarning2(const char *s, ...) {
         va_end(ap);
         Log_warning("%s:%i: %s '%s'\n", currentfile, lineno, msg, argyytext);
         FREE(msg);
+}
+
+
+/*
+ * Report the first line of the file that is not valid UTF-8. A comment, from
+ * a '#' that starts a word outside a string quoted on the same line, is not
+ * checked
+ */
+void yyutf8(const char *path) {
+        FILE *f = fopen(path, "r");
+        if (! f)
+                return; // The caller reports it
+        char *line = NULL;
+        size_t size = 0;
+        for (int n = 1; getline(&line, &size, f) != -1; n++) {
+                for (char *p = line; *p; p++) {
+                        if (*p == '"' || *p == '\'') {
+                                char *q = strchr(p + 1, *p);
+                                if (q)
+                                        p = q;
+                        } else if (*p == '#') {
+                                // A word starts after a character that {str} in l.l excludes
+                                if (p == line || (unsigned char)p[-1] <= '!' || strchr("@:{}\"';(),%", p[-1])) {
+                                        *p = 0;
+                                        break;
+                                }
+                        }
+                }
+                if (! Str_isUTF8(line)) {
+                        Log_error("%s:%i: Invalid UTF-8 -- the file must be saved as UTF-8\n", path, n);
+                        cfg_errflag++;
+                        break;
+                }
+        }
+        free(line);
+        fclose(f);
 }
 
 
@@ -3664,6 +3701,8 @@ bool parse(char *controlfile) {
         }
 
         currentfile = Str_dup(controlfile);
+
+        yyutf8(controlfile);
 
         available_statistics(&System_Info);
 
@@ -3711,7 +3750,7 @@ static void yydeprecated(const char *s, ...) {
 }
                 
 
-/**
+/*
  * Initialize objects used by the parser.
  */
 static void preparse(void) {
@@ -3802,7 +3841,7 @@ static void postparse(void) {
 
         /* Check that we do not start monit in daemon mode without having a poll time */
         if (Run.polltime <= 0 && ((Run.flags & Run_Daemon) || (Run.flags & Run_Foreground))) {
-                Log_error("Poll time is invalid or not defined. Please define poll time in the control file\nas a number (> 0)  or use the -d option when starting monit\n");
+                Log_error("Poll time is invalid or not defined. Please define poll time in the control file\nas a number (> 0) or use the -d option when starting monit\n");
                 cfg_errflag++;
         }
 
@@ -4214,7 +4253,7 @@ static void addhttpheader(Port_T port, char *header) {
                 port->parameters.http.headers = List_new();
         }
         if (Str_startsWith(header, "Connection:") && ! Str_sub(header, "close")) {
-                yywarning("We don't recommend setting the Connection header. Monit will always close the connection even if 'keep-alive' is set\n");
+                yywarning("We don't recommend setting the Connection header. Monit will always close the connection even if 'keep-alive' is set");
         }
         List_append(port->parameters.http.headers, header);
 }
@@ -4235,7 +4274,7 @@ static void addresource(Resource_T rr) {
                 r->next        = current->resourcelist;
                 current->resourcelist = r;
         } else {
-                yywarning("Cannot activate service check. The process status engine was disabled. On certain systems you must run monit as root to utilize this feature)\n");
+                yywarning("Cannot activate service check. The process status engine was disabled. On certain systems you must run monit as root to utilize this feature");
         }
         reset_resourceset();
 }
@@ -4273,7 +4312,7 @@ static void addactionrate(ActionRate_T ar) {
         if (ar->count > ar->cycle)
                 yyerror2("The number of restarts must be less than poll cycles");
         if (ar->count <= 0 || ar->cycle <= 0)
-                yyerror2("Zero or negative values not allowed in a action rate statement");
+                yyerror2("Zero or negative values not allowed in an action rate statement");
 
         NEW(a);
         a->count  = ar->count;
@@ -4515,7 +4554,7 @@ static void addperm(Perm_T ps) {
                 if (! File_exist(current->path))
                         DEBUG("The path '%s' used in the PERMISSION statement refer to a non-existing object\n", current->path);
                 else if ((p->perm = File_mod(current->path)) < 0)
-                        yyerror2("Cannot get the timestamp for '%s'", current->path);
+                        yyerror2("Cannot get the permissions of '%s'", current->path);
                 else
                         p->perm &= 07777;
         } else {
@@ -5211,7 +5250,7 @@ static void addhtpasswdentry(char *filename, char *username, Digest_Type dtype) 
         if (filename[0] != SEPARATOR_CHAR) {
                 path = File_realPath(filename, realpath);
                 if (! path) {
-                        yyerror2("Error getting path for the htpasswd file '%s' -- %s\n", filename, STRERROR);
+                        yyerror2("Error getting path for the htpasswd file '%s' -- %s", filename, STRERROR);
                         return;
                 }
         }
@@ -5917,7 +5956,7 @@ static void addfiledescriptors(Operator_Type operator, bool total, long long val
 
 static void _sanityCheckEveryStatement(Service_T s) {
         if (s->every.type != Every_Initializing) {
-                yywarning2("The 'every' statement can be specified only once, the last value will be used\n");
+                yywarning2("The 'every' statement can be specified only once, the last value will be used");
                 switch (s->every.type) {
                         case Every_Cron:
                         case Every_NotInCron:

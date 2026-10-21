@@ -75,6 +75,43 @@ static char *strcasestr(const char *haystack, const char *needle) {
 #endif
 
 
+/* ---------------------------------------------------------------- Private */
+
+
+// The length of the UTF-8 character at s, which must not be at its end: 1 to
+// 4 bytes, or 0 if s does not start a valid one (RFC 3629). The string must be
+// NUL-terminated: the terminator is never a continuation byte, so no byte
+// after it is read
+static int _charSize(const char *s) {
+        const uchar_t *p = (const uchar_t *)s;
+        if (*p < 0x80)
+                return 1;
+        int n; // continuation bytes
+        uchar_t min = 0x80, max = 0xBF; // range of the first one
+        if (*p >= 0xC2 && *p <= 0xDF) {
+                n = 1;
+        } else if (*p >= 0xE0 && *p <= 0xEF) {
+                n = 2;
+                if (*p == 0xE0)
+                        min = 0xA0; // overlong
+                else if (*p == 0xED)
+                        max = 0x9F; // surrogate
+        } else if (*p >= 0xF0 && *p <= 0xF4) {
+                n = 3;
+                if (*p == 0xF0)
+                        min = 0x90; // overlong
+                else if (*p == 0xF4)
+                        max = 0x8F; // above U+10FFFF
+        } else {
+                return 0;
+        }
+        for (int i = 1; i <= n; i++, min = 0x80, max = 0xBF)
+                if (p[i] < min || p[i] > max)
+                        return 0;
+        return n + 1;
+}
+
+
 /* -------------------------------------------------------- Public Methods */
 
 
@@ -237,6 +274,16 @@ bool Str_isByteEqual(const char *a, const char *b) {
         if (a && b)
                 return (__builtin_strcmp(a, b) == 0);
         return false;
+}
+
+
+bool Str_isUTF8(const char *s) {
+        if (! s)
+                return false;
+        for (int n; *s; s += n)
+                if (! (n = _charSize(s)))
+                        return false;
+        return true;
 }
 
 

@@ -2,6 +2,8 @@
 ## Monit control file
 ###############################################################################
 ##
+## This file, and every file it includes, must be saved as UTF-8.
+##
 ## Comments begin with a '#' and extend through the end of the line. Keywords
 ## are case insensitive. All path's MUST BE FULLY QUALIFIED, starting with '/'.
 ##

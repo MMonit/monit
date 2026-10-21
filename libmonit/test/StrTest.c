@@ -469,6 +469,45 @@ int main(void) {
         }
         printf("=> Test20: OK\n\n");
 
+        printf("=> Test21: Str_isUTF8\n");
+        {
+                assert(Str_isUTF8(""));
+                assert(Str_isUTF8("Hello World!"));
+                assert(Str_isUTF8("Tromsø, 東京, 😀"));
+                // The first and last code point of each length, and around the surrogates
+                assert(Str_isUTF8("\x7F"));
+                assert(Str_isUTF8("\xC2\x80"));
+                assert(Str_isUTF8("\xDF\xBF"));
+                assert(Str_isUTF8("\xE0\xA0\x80"));
+                assert(Str_isUTF8("\xED\x9F\xBF"));
+                assert(Str_isUTF8("\xEE\x80\x80"));
+                assert(Str_isUTF8("\xEF\xBF\xBF"));
+                assert(Str_isUTF8("\xF0\x90\x80\x80"));
+                assert(Str_isUTF8("\xF4\x8F\xBF\xBF"));
+                // Overlong forms
+                assert(! Str_isUTF8("\xC0\x80"));
+                assert(! Str_isUTF8("\xC1\xBF"));
+                assert(! Str_isUTF8("\xE0\x80\x80"));
+                assert(! Str_isUTF8("\xE0\x9F\xBF"));
+                assert(! Str_isUTF8("\xF0\x80\x80\x80"));
+                assert(! Str_isUTF8("\xF0\x8F\xBF\xBF"));
+                // Surrogates, and above U+10FFFF
+                assert(! Str_isUTF8("\xED\xA0\x80"));
+                assert(! Str_isUTF8("\xED\xBF\xBF"));
+                assert(! Str_isUTF8("\xF4\x90\x80\x80"));
+                assert(! Str_isUTF8("\xF5\x80\x80\x80"));
+                assert(! Str_isUTF8("\xFF"));
+                // A lone continuation byte, a bad one, and characters cut short by the end
+                assert(! Str_isUTF8("a\x80"));
+                assert(! Str_isUTF8("\xE2\x28\xA1"));
+                assert(! Str_isUTF8("a\xC3"));
+                assert(! Str_isUTF8("a\xE2\x82"));
+                assert(! Str_isUTF8("a\xF0\x9F\x98"));
+                // NULL is not a string
+                assert(! Str_isUTF8(NULL));
+        }
+        printf("=> Test21: OK\n\n");
+
         printf("============> Str Tests: OK\n\n");
         return 0;
 }

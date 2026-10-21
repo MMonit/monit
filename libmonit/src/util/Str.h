@@ -233,6 +233,16 @@ bool Str_isByteEqual(const char *a, const char *b);
 
 
 /**
+ * Returns true if `s` is valid UTF-8 (RFC 3629: no overlong forms,
+ * surrogates or code points above U+10FFFF). The empty string is valid UTF-8.
+ * NULL is not a string: if `s` is NULL this method returns false.
+ * @param s A string
+ * @return true if `s` is valid UTF-8, otherwise false
+ */
+bool Str_isUTF8(const char *s);
+
+
+/**
  * Copy <code>src</code> into <code>dest</code>, writing at most
  * <code>n</code> bytes <em>including</em> the terminating NUL (i.e. at
  * most <code>n - 1</code> characters are copied). The result is always
