@@ -20,10 +20,9 @@
 
 int main(void) {
 
-        // Note: When the below setenv() is present on Alpine linux with MUSL, the test Time_localStr test fails and returns UTC time. The tzset() is called automatically
-        //       by localtime_r(). The test may fail though, if it is executed on machine, which is not in CET timezone.
-        //setenv("TZ", "CET", 1);
-        //tzset();
+        // CET as a POSIX rule, which needs no zoneinfo files
+        setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+        tzset();
 
         Bootstrap(); // Need to initialize library
 
@@ -287,10 +286,6 @@ int main(void) {
                 assert(!Time_incron(mixed, Time_build(2024, 1, 15, 9, 5, 0)));  // 09:05 - no match
                 assert(!Time_incron(mixed, Time_build(2024, 1, 15, 9, 15, 0))); // 09:15 - no match
                 assert(!Time_incron(mixed, Time_build(2024, 1, 15, 9, 30, 0))); // 09:30 - no match
-                
-                // Restore timezone
-//                setenv("TZ", "Europe/Oslo", 1);
-//                tzset();
         }
         printf("=> Test7: OK\n\n");
 
