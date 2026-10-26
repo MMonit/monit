@@ -3369,6 +3369,8 @@ Monit can check network interfaces for:
 
 =item L<Status|/"Link status">
 
+=item L<Errors|/"Link errors">
+
 =item L<Capacity|/"Link capacity">
 
 =item L<Saturation|/"Link saturation">
@@ -3391,8 +3393,7 @@ Syntax:
 I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
 "EXEC" or "UNMONITOR".
 
-The I<DOWN> test will fail if the link/interface is down or link errors were
-detected.
+The I<DOWN> test will fail if the link/interface is down.
 
 Mixing "link up" and "link down" in the same "check network" is not supported.
 
@@ -3415,6 +3416,32 @@ commands for your system)
        start program = '/sbin/ipup eth0'
        stop program = '/sbin/ipdown eth0'
        if link down then restart
+
+
+=head3 Link errors
+
+You can check the network link for transmit and receive errors. The test
+fails if any upload or download errors were detected during the last
+cycle. If no link errors test is set, Monit will send an alert on link
+errors by default. This test may only be used within a check network
+service entry in the Monit control file.
+
+Syntax:
+
+ IF LINK ERRORS THEN action
+
+I<action> is a choice of "ALERT", "RESTART", "START", "STOP",
+"EXEC" or "UNMONITOR".
+
+Examples:
+
+ check network eth0 with interface eth0
+       if link errors then alert
+
+ check network eth0 with interface eth0
+       start program = '/sbin/ipup eth0'
+       stop program = '/sbin/ipdown eth0'
+       if link errors for 3 cycles then restart
 
 
 =head3 Link capacity

@@ -37,8 +37,12 @@ New: Event types enhancement: The original events were limited to 31 types. Many
      unchanged and cover the whole group as before ("resource" covers cpu, memory, space, inode, ...). See the
      "Setting an event filter" section in the manual for the list of event types.
 
-New: The link errors tests are now performed regardless of the "if link up" test presence (it was mutually exclusive before due to
-     limited event types).
+New: Separate network "link <up|down>" and "link errors" tests. The original "if link up/down" test reacts on link state
+     change only and no longer fails on link errors. If "link errors" test is missing, Monit will send alert when link
+     errors are detected, so the configuration is backward compatible. Syntax:
+         check network eth0 with interface eth0
+             if link down then restart
+             if link errors for 3 cycles then alert
 
 New: A Debug mode On/Off button has been added to the Monit HTTP GUI. This simplifies runtime debugging when Monit is running
      as PID 1, such as in a Docker container. Thanks to Lutz Mader.

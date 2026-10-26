@@ -194,6 +194,7 @@ static void print_service_rules_filesystem(HttpResponse, Service_T);
 static void print_service_rules_size(HttpResponse, Service_T);
 static void print_service_rules_nlink(HttpResponse, Service_T);
 static void print_service_rules_linkstatus(HttpResponse, Service_T);
+static void print_service_rules_linkerror(HttpResponse, Service_T);
 static void print_service_rules_linkspeed(HttpResponse, Service_T);
 static void print_service_rules_linksaturation(HttpResponse, Service_T);
 static void print_service_rules_uploadbytes(HttpResponse, Service_T);
@@ -1391,6 +1392,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         print_service_rules_size(res, s);
         print_service_rules_nlink(res, s);
         print_service_rules_linkstatus(res, s);
+        print_service_rules_linkerror(res, s);
         print_service_rules_linkspeed(res, s);
         print_service_rules_linksaturation(res, s);
         print_service_rules_uploadbytes(res, s);
@@ -2270,6 +2272,15 @@ static void print_service_rules_linkstatus(HttpResponse res, Service_T s) {
         for (LinkStatus_T l = s->linkstatuslist; l; l = l->next) {
                 StringBuffer_T sb = StringBuffer_create(256);
                 _displayTableRow(res, true, "rule", "Link status", "%s", StringBuffer_toString(Util_printRule(l->check_invers, sb, l->action, "If %s", l->check_invers ? "up" : "down")));
+                StringBuffer_free(&sb);
+        }
+}
+
+
+static void print_service_rules_linkerror(HttpResponse res, Service_T s) {
+        for (LinkError_T l = s->linkerrorlist; l; l = l->next) {
+                StringBuffer_T sb = StringBuffer_create(256);
+                _displayTableRow(res, true, "rule", "Link errors", "%s", StringBuffer_toString(Util_printRule(false, sb, l->action, "If errors")));
                 StringBuffer_free(&sb);
         }
 }

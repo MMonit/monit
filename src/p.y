@@ -208,6 +208,7 @@ static struct NLink_T nlinkset = {};
 static struct Uptime_T uptimeset = {};
 static struct ResponseTime_T responsetimeset = {};
 static struct LinkStatus_T linkstatusset = {};
+static struct LinkError_T linkerrorset = {};
 static struct LinkSpeed_T linkspeedset = {};
 static struct LinkSaturation_T linksaturationset = {};
 static struct Bandwidth_T bandwidthset = {};
@@ -262,6 +263,7 @@ static void  addfsflag(FsFlag_T);
 static void  addnonexist(NonExist_T);
 static void  addexist(Exist_T);
 static void  addlinkstatus(Service_T, LinkStatus_T);
+static void  addlinkerror(Service_T, LinkError_T);
 static void  addlinkspeed(Service_T, LinkSpeed_T);
 static void  addlinksaturation(Service_T, LinkSaturation_T);
 static void  addbandwidth(Bandwidth_T *, Bandwidth_T);
@@ -314,6 +316,7 @@ static void  reset_fsflagset(void);
 static void  reset_nonexistset(void);
 static void  reset_existset(void);
 static void  reset_linkstatusset(void);
+static void  reset_linkerrorset(void);
 static void  reset_linkspeedset(void);
 static void  reset_linksaturationset(void);
 static void  reset_bandwidthset(void);
@@ -365,7 +368,7 @@ int yydebug = 1;
 %token SET LOG LOGFILE FACILITY DAEMON SYSLOG MAILSERVER HTTPD ALLOW REJECTOPT ADDRESS INIT TERMINAL BATCH
 %token READONLY CLEARTEXT MD5HASH SHA1HASH SHA256HASH CRYPT DELAY
 %token PEMFILE PEMKEY PEMCHAIN ENABLE DISABLE SSLTOKEN CIPHER CLIENTPEMFILE ALLOWSELFCERTIFICATION SELFSIGNED VERIFY CERTIFICATE CACERTIFICATEFILE CACERTIFICATEPATH VALID
-%token INTERFACE LINK PACKET BYTEIN BYTEOUT PACKETIN PACKETOUT SPEED SATURATION UPLOAD DOWNLOAD TOTAL UP DOWN
+%token INTERFACE LINK PACKET BYTEIN BYTEOUT PACKETIN PACKETOUT SPEED SATURATION UPLOAD DOWNLOAD TOTAL UP DOWN ERRORS
 %token IDFILE STATEFILE SEND EXPECT CYCLE COUNT REMINDER REPEAT
 %token LIMITS SENDEXPECTBUFFER EXPECTBUFFER FILECONTENTBUFFER HTTPCONTENTBUFFER PROGRAMOUTPUT NETWORKTIMEOUT PROGRAMTIMEOUT STARTTIMEOUT STOPTIMEOUT RESTARTTIMEOUT EXECTIMEOUT SHUTDOWNTIMEOUT
 %token PIDFILE START STOP PATHTOK RSAKEY
@@ -578,6 +581,7 @@ optnet          : start
                 | stop
                 | restart
                 | linkstatus
+                | linkerror
                 | linkspeed
                 | linksaturation
                 | upload
@@ -3461,6 +3465,12 @@ linkstatus   : IF FAILED LINK rate1 THEN action1 recovery_success { /* Deprecate
                   }
                 ;
 
+linkerror    : IF LINK ERRORS rate1 THEN action1 recovery_success {
+                        addeventaction(&(linkerrorset).action, $<number>6, $<number>7);
+                        addlinkerror(current, &linkerrorset);
+                  }
+                ;
+
 linkspeed    : IF CHANGED LINK rate1 THEN action1 recovery_success {
                         addeventaction(&(linkspeedset).action, $<number>6, $<number>7);
                         addlinkspeed(current, &linkspeedset);
@@ -3812,6 +3822,7 @@ static void preparse(void) {
         reset_permset();
         reset_icmpset();
         reset_linkstatusset();
+        reset_linkerrorset();
         reset_linkspeedset();
         reset_linksaturationset();
         reset_bandwidthset();
@@ -4032,6 +4043,11 @@ static void addservice(Service_T s) {
                                 // Add link status test if not defined
                                 addeventaction(&(linkstatusset).action, Action_Alert, Action_Alert);
                                 addlinkstatus(s, &linkstatusset);
+                        }
+                        if (! s->linkerrorlist) {
+                                // Add link errors test if not defined
+                                addeventaction(&(linkerrorset).action, Action_Alert, Action_Alert);
+                                addlinkerror(s, &linkerrorset);
                         }
                         break;
                 case Service_Filesystem:
@@ -4587,6 +4603,20 @@ static void addlinkstatus(Service_T s, LinkStatus_T L) {
         s->linkstatuslist = l;
 
         reset_linkstatusset();
+}
+
+
+static void addlinkerror(Service_T s, LinkError_T L) {
+        assert(L);
+
+        LinkError_T l;
+        NEW(l);
+        l->action = L->action;
+
+        l->next = s->linkerrorlist;
+        s->linkerrorlist = l;
+
+        reset_linkerrorset();
 }
 
 
@@ -5559,6 +5589,11 @@ static void reset_responsetimeset(void) {
 static void reset_linkstatusset(void) {
         linkstatusset.check_invers = false;
         linkstatusset.action = NULL;
+}
+
+
+static void reset_linkerrorset(void) {
+        linkerrorset.action = NULL;
 }
 
 
