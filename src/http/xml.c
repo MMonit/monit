@@ -95,7 +95,7 @@ static void _escapeCDATA(StringBuffer_T B, const char *buf) {
  * @param myip The client-side IP address
  */
 static void document_head(StringBuffer_T B, int V, const char *myip) {
-        StringBuffer_append(B, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>");
+        StringBuffer_append(B, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         if (V == 2)
                 StringBuffer_append(B, "<monit id=\"%s\" incarnation=\"%lld\" version=\"%s\"><server>", Run.id, (long long)Run.incarnation, VERSION);
         else
