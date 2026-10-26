@@ -89,6 +89,10 @@
 #include <sys/mman.h>
 #endif
 
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+
 
 #include "monit.h"
 #include "ProcessTree.h"
@@ -108,9 +112,15 @@
 /* ------------------------------------------------------------- Definitions */
 
 
+#ifndef PROC_SUPER_MAGIC
+#define PROC_SUPER_MAGIC 0x9fa0
+#endif
+
+
 static struct {
         bool hasIOStatistics; // True if /proc/<PID>/io is present
         bool hasSmapsRollup;  // True if /proc/<PID>/smaps_rollup is present
+        bool hasHostMeminfo;  // True if /proc/meminfo describes the real host, not a container (e.g. LXC)
 } _statistics = {};
 
 
@@ -159,8 +169,10 @@ typedef struct Proc_T {
 
 
 static void __attribute__ ((constructor)) _constructor(void) {
+        struct statfs sfs;
         _statistics.hasIOStatistics = access("/proc/self/io", R_OK) == 0 ? true : false;
         _statistics.hasSmapsRollup = access("/proc/self/smaps_rollup", R_OK) == 0 ? true : false;
+        _statistics.hasHostMeminfo = statfs("/proc/meminfo", &sfs) == 0 && sfs.f_type == PROC_SUPER_MAGIC ? true : false; // May be replaced by lxcfs (shows container memory then)
 }
 
 
@@ -520,6 +532,24 @@ static double _usagePercent(unsigned long long previous, unsigned long long curr
 }
 
 
+static unsigned long long _getZfsArcReclaimable(void) {
+        if (! _statistics.hasHostMeminfo)
+                return 0ULL;
+        unsigned long long size = 0ULL;
+        unsigned long long c_min = 0ULL;
+        FILE *f = fopen("/proc/spl/kstat/zfs/arcstats", "r");
+        if (f) {
+                char line[STRLEN];
+                while (fgets(line, sizeof(line), f)) {
+                        if (sscanf(line, "size %*d %llu", &size) != 1)
+                                sscanf(line, "c_min %*d %llu", &c_min);
+                }
+                fclose(f);
+        }
+        return size > c_min ? size - c_min : 0ULL;
+}
+
+
 /* ------------------------------------------------------------------ Public */
 
 
@@ -675,7 +705,6 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
         unsigned long long slabreclaimable = 0ULL;
         unsigned long long swap_total = 0ULL;
         unsigned long long swap_free = 0ULL;
-        unsigned long long zfsarcsize = 0ULL;
 
         if (! file_readProc(buf, sizeof(buf), "meminfo", -1, NULL)) {
                 Log_error("system statistic error -- cannot get system memory info\n");
@@ -689,7 +718,7 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
 
         // Check if the "MemAvailable" value is available on this system. If it is, we will use it. Otherwise we will attempt to calculate the amount of available memory ourself
         if ((ptr = strstr(buf, "MemAvailable:")) && sscanf(ptr + 13, "%llu", &mem_available) == 1) {
-                si->memory.usage.bytes = System_Info.memory.size - mem_available * 1024;
+                mem_available *= 1024;
         } else {
                 DEBUG("'MemAvailable' value not available on this system. Attempting to calculate available memory manually...\n");
                 if (! (ptr = strstr(buf, "MemFree:")) || sscanf(ptr + 8, "%llu", &mem_free) != 1) {
@@ -702,18 +731,10 @@ bool used_system_memory_sysdep(SystemInfo_T *si) {
                         DEBUG("system statistic error -- cannot get real memory cache amount\n");
                 if (! (ptr = strstr(buf, "SReclaimable:")) || sscanf(ptr + 13, "%llu", &slabreclaimable) != 1)
                         DEBUG("system statistic error -- cannot get slab reclaimable memory amount\n");
-                FILE *f = fopen("/proc/spl/kstat/zfs/arcstats", "r");
-                if (f) {
-                        char line[STRLEN];
-                        while (fgets(line, sizeof(line), f)) {
-                                if (sscanf(line, "size %*d %llu", &zfsarcsize) == 1) {
-                                        break;
-                                }
-                        }
-                        fclose(f);
-                }
-                si->memory.usage.bytes = System_Info.memory.size - zfsarcsize - (unsigned long long)(mem_free + buffers + cached + slabreclaimable) * 1024;
+                mem_available = (mem_free + buffers + cached + slabreclaimable) * 1024;
         }
+        mem_available += _getZfsArcReclaimable();
+        si->memory.usage.bytes = System_Info.memory.size > mem_available ? System_Info.memory.size - mem_available : 0ULL;
 
         // Swap
         if (! (ptr = strstr(buf, "SwapTotal:")) || sscanf(ptr + 10, "%llu", &swap_total) != 1) {
