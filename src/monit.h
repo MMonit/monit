@@ -121,7 +121,7 @@
 #define USEC_PER_SEC       1000000LL
 #endif
 #define USEC_PER_MSEC      1000LL
-
+#define ONE_MONTH          2629746
 #define ARGMAX             64
 #define MYPIDDIR           PIDDIR
 #define MYPIDFILE          "monit.pid"

@@ -758,8 +758,8 @@ static void do_options(int argc, char **argv, List_T arguments) {
                                 case 'd':
                                 {
                                         Run.flags |= Run_Daemon;
-                                        if (sscanf(optarg, "%d", &Run.polltime) != 1 || Run.polltime < 1) {
-                                                Log_error("Option -%c requires a natural number\n", opt);
+                                        if (sscanf(optarg, "%d", &Run.polltime) != 1 || Run.polltime < 1 || Run.polltime > ONE_MONTH) {
+                                                Log_error("Option -%c Invalid Poll time seconds. Valid range [1..%d]\n", opt, ONE_MONTH);
                                                 exit(1);
                                         }
                                         break;
