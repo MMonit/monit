@@ -59,6 +59,7 @@ static void _gcpdl(Dependant_T *);
 static void _gcso(Size_T *);
 static void _gcnlink(NLink_T *);
 static void _gclinkstatus(LinkStatus_T *);
+static void _gclinkerror(LinkError_T *);
 static void _gclinkspeed(LinkSpeed_T *);
 static void _gclinksaturation(LinkSaturation_T *);
 static void _gcbandwidth(Bandwidth_T *);
@@ -232,6 +233,8 @@ static void _gc_service(Service_T *s) {
                 _gcnlink(&(*s)->nlinklist);
         if ((*s)->linkstatuslist)
                 _gclinkstatus(&(*s)->linkstatuslist);
+        if ((*s)->linkerrorlist)
+                _gclinkerror(&(*s)->linkerrorlist);
         if ((*s)->linkspeedlist)
                 _gclinkspeed(&(*s)->linkspeedlist);
         if ((*s)->linksaturationlist)
@@ -539,6 +542,16 @@ static void _gclinkstatus(LinkStatus_T *l) {
         assert(l);
         if ((*l)->next)
                 _gclinkstatus(&(*l)->next);
+        if ((*l)->action)
+                _gc_eventaction(&(*l)->action);
+        FREE(*l);
+}
+
+
+static void _gclinkerror(LinkError_T *l) {
+        assert(l);
+        if ((*l)->next)
+                _gclinkerror(&(*l)->next);
         if ((*l)->action)
                 _gc_eventaction(&(*l)->action);
         FREE(*l);

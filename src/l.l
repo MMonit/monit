@@ -257,6 +257,7 @@ download(ed)?     { return DOWNLOAD; }
 up                { return UP; }
 down              { return DOWN; }
 saturation        { return SATURATION; }
+errors            { return ERRORS; }
 speed             { return SPEED; }
 total             { return TOTAL; }
 clientpemfile     { return CLIENTPEMFILE; }

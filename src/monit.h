@@ -937,6 +937,14 @@ typedef struct LinkStatus_T {
 } *LinkStatus_T;
 
 
+typedef struct LinkError_T {
+        EventAction_T action; /**< Description of the action upon event occurrence */
+
+        /** For internal use */
+        struct LinkError_T *next;                          /**< next link in chain */
+} *LinkError_T;
+
+
 typedef struct LinkSpeed_T {
         int duplex;                                        /**< Last duplex status */
         long long speed;                                     /**< Last speed [bps] */
@@ -1302,6 +1310,7 @@ typedef struct Service_T {
         SecurityAttribute_T secattrlist;             /**< Security attributes list */
         Filedescriptors_T filedescriptorslist;                   /**< Filedescriptors list */
         LinkStatus_T linkstatuslist;                 /**< Network link status list */
+        LinkError_T linkerrorlist;                   /**< Network link errors list */
         LinkSpeed_T linkspeedlist;                    /**< Network link speed list */
         LinkSaturation_T linksaturationlist;     /**< Network link saturation list */
         Bandwidth_T uploadbyteslist;                  /**< Upload bytes check list */

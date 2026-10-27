@@ -393,6 +393,12 @@ const char *Event_description(Event_T E) {
                 changed = et->description_changed;
                 changednot = et->description_changednot;
         }
+        if (E->id == Event_LinkStatus && E->source && E->source->inverseStatus) {
+                /* The "link up" test fails when the link is up */
+                const char *swap = failed;
+                failed = succeeded;
+                succeeded = swap;
+        }
         switch (E->state) {
                 case State_Succeeded:
                         return succeeded;
