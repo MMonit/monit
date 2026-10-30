@@ -119,8 +119,8 @@ B<-c> I<file>
    Use this control file
 
 B<-d> I<n>
-   Run Monit as a daemon once per I<n> seconds. Or use I<"set
-   daemon"> in monitrc.
+   Run Monit as a daemon once per I<n> seconds, from 1 to 3600. Or
+   use I<"set daemon"> in monitrc.
 
 B<-g> I<name>
    Set group name for start, stop, restart, monitor, unmonitor,
@@ -499,7 +499,6 @@ completely:
  SET TERMINAL BATCH
 
 
-
 =head1 DAEMON MODE
 
 Use
@@ -509,7 +508,9 @@ Use
 
 to specify Monit's poll cycle length and run Monit in daemon
 mode. You must specify a numeric argument which is a polling
-interval in seconds.
+interval in seconds, from 1 to 3600 (one hour). We recommend 60
+seconds or less. To check a service less often, use the C<every>
+statement, see L</"SERVICE POLL TIME">.
 
 In daemon mode, Monit detaches from the console, puts itself in
 the background and runs continuously, monitoring each specified

@@ -18,6 +18,14 @@ INCOMPATIBLE CHANGE: The control file, and every file it includes, must be saved
        that are not UTF-8. Test the control file with 'monit -t' before restarting Monit. To convert a file saved as Latin-1:
            iconv -f ISO-8859-1 -t UTF-8 monitrc > monitrc.new
 
+INCOMPATIBLE CHANGE: The poll time, 'set daemon n' or the -d option, must be 1 to 3600 seconds; it could be up to a
+       year. Monit now refuses a longer poll time as it refuses any other error in the control file. The poll time
+       specifies how long Monit sleeps between cycles and is best kept at a minute or less.
+       To check a service less often, use a cron-style 'every' statement, which wakes Monit at the scheduled minute
+       whatever the poll time. For example, once a day at 03:00:
+           check filesystem data with path /data
+               every "0 3 * * *"
+
 Changed: The Monit source code repository and the issue tracker have moved from Bitbucket to GitHub:
              https://github.com/MMonit/monit
          The complete commit history and all release tags were preserved. Please use the GitHub issue tracker
@@ -187,7 +195,8 @@ Fixed: GitHub issue #1: A service which depends on another service ("depends on"
        test used the multiple-errors condition ("for X cycles") and the error threshold wasn't reached yet. The dependent service is now skipped only when the parent
        failure is confirmed. Regression in Monit 6.0.0. Thanks to Lutz Mader.
 
-Fixed: GitHub Issue #3: Linux: the ZFS ARC was counted as used memory since Monit 5.27.0, so a host using ZFS could report Thanks to Jeff Honig for the report.
+Fixed: GitHub Issue #3: Linux: the ZFS ARC was counted as used memory since Monit 5.27.0, so a host using ZFS could report
+       too high memory usage. Thanks to Jeff Honig for the report.
 
 
 

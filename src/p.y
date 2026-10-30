@@ -671,8 +671,8 @@ setdaemon       : SET DAEMON NUMBER startdelay {
                         if (! (Run.flags & Run_Daemon) || ihp.daemon) {
                                 ihp.daemon   = true;
                                 Run.flags    |= Run_Daemon;
-                                if (($3 < 1) || ($3 > ONE_MONTH)) {
-                                        yyerror2("Invalid Poll time seconds.");
+                                if (($3 < 1) || ($3 > Time_Hour)) {
+                                        yyerror2("Invalid Poll time seconds. Valid range is [1..%d]", Time_Hour);
                                 }
                                 Run.polltime   = $3;
                                 Run.startdelay = $<number>4;
