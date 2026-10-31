@@ -189,6 +189,9 @@ Fixed: GitHub issue #1: A service which depends on another service ("depends on"
 
 Fixed: GitHub Issue #3: Linux: the ZFS ARC was counted as used memory since Monit 5.27.0, so a host using ZFS could report Thanks to Jeff Honig for the report.
 
+Fixed: GitHub Issue #4: A deprecation warning or a configuration error detected while processing a statement could be reported with the file name and line number
+       of the next statement. Thanks to hs-kolesik for the report.
+
 
 
 Version 6.0.0

@@ -183,6 +183,8 @@ extern char *yytext;
 extern char *argyytext;
 extern char *currentfile;
 extern int buffer_stack_ptr;
+char *yyfile(const char *);
+void yyfile_free(void);
 
 /* Local variables */
 static int cfg_errflag = 0;
@@ -354,6 +356,23 @@ int yydebug = 1;
 #endif
 
 %}
+
+%locations
+
+%code requires {
+        typedef struct YYLTYPE {
+                int line;
+                const char *file;
+        } YYLTYPE;
+        #define YYLTYPE_IS_DECLARED 1
+        #define YYLTYPE_IS_TRIVIAL 0
+        #define YYLOCATION_PRINT(File, Loc) fprintf(File, "%s:%d", (Loc)->file, (Loc)->line)
+}
+
+%code {
+        static YYLTYPE yyruleloc;
+        #define YYLLOC_DEFAULT(Current, Rhs, N) do { (Current) = YYRHSLOC(Rhs, (N) ? 1 : 0); yyruleloc = (Current); } while (0)
+}
 
 %union {
         URL_T     url;
@@ -3641,7 +3660,7 @@ void yyerror2(const char *s, ...) {
         va_start(ap, s);
         msg = Str_vcat(s, ap);
         va_end(ap);
-        Log_error("%s:%i: %s '%s'\n", currentfile, lineno, msg, argyytext);
+        Log_error("%s:%i: %s '%s'\n", yyruleloc.file, yyruleloc.line, msg, argyytext);
         cfg_errflag++;
         FREE(msg);
 }
@@ -3657,7 +3676,7 @@ void yywarning2(const char *s, ...) {
         va_start(ap, s);
         msg = Str_vcat(s, ap);
         va_end(ap);
-        Log_warning("%s:%i: %s '%s'\n", currentfile, lineno, msg, argyytext);
+        Log_warning("%s:%i: %s '%s'\n", yyruleloc.file, yyruleloc.line, msg, argyytext);
         FREE(msg);
 }
 
@@ -3710,7 +3729,11 @@ bool parse(char *controlfile) {
                 return false;
         }
 
-        currentfile = Str_dup(controlfile);
+        yyfile_free();
+        currentfile = yyfile(controlfile);
+        yylloc.file = currentfile;
+        yylloc.line = 1;
+        yyruleloc = yylloc;
 
         yyutf8(controlfile);
 
@@ -3727,8 +3750,6 @@ bool parse(char *controlfile) {
                 postparse();
         }
         END_LOCK;
-
-        FREE(currentfile);
 
         if (argyytext != NULL)
                 FREE(argyytext);
@@ -3755,7 +3776,7 @@ static void yydeprecated(const char *s, ...) {
         va_start(ap, s);
         msg = Str_vcat(s, ap);
         va_end(ap);
-        Log_warning("%s:%i: %s\n", currentfile, lineno, msg);
+        Log_warning("%s:%i: %s\n", yyruleloc.file, yyruleloc.line, msg);
         FREE(msg);
 }
                 

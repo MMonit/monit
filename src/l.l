@@ -78,6 +78,14 @@ struct buffer_stack_s {
 int lineno = 1;
 char *currentfile = NULL;
 char *argyytext = NULL;
+
+typedef struct FileName_T {
+        char *name;
+        struct FileName_T *next;
+} *FileName_T;
+static FileName_T filenames = NULL;
+
+#define YY_USER_ACTION yylloc.file = currentfile; yylloc.line = lineno;
 typedef enum {
         Proc_State,
         File_State,
@@ -106,6 +114,8 @@ static void include_file(char *);
 static char *handle_quoted_string(char *);
 static void push_buffer_state(YY_BUFFER_STATE, const char*);
 static int  pop_buffer_state(void);
+char *yyfile(const char *);
+void yyfile_free(void);
 static URL_T create_URL(char *proto);
 
 %}
@@ -1215,7 +1225,7 @@ static void push_buffer_state(YY_BUFFER_STATE buffer, const char *filename) {
         buffer_stack_ptr++;
 
         lineno = 1;
-        currentfile = Str_dup(filename);
+        currentfile = yyfile(filename);
 
         yy_switch_to_buffer(buffer);
 
@@ -1235,7 +1245,6 @@ static int pop_buffer_state(void) {
                 fclose(yyin);
                 lineno = buffer_stack[buffer_stack_ptr].lineno;
 
-                FREE(currentfile);
                 currentfile = buffer_stack[buffer_stack_ptr].currentfile;
 
                 yy_delete_buffer(YY_CURRENT_BUFFER);
@@ -1245,6 +1254,30 @@ static int pop_buffer_state(void) {
 
         return 1;
 
+}
+
+
+char *yyfile(const char *path) {
+        assert(path);
+        FileName_T f;
+        NEW(f);
+        f->name = Str_dup(path);
+        f->next = filenames;
+        filenames = f;
+        return f->name;
+}
+
+
+/*
+ * Release the file names kept by yyfile()
+ */
+void yyfile_free(void) {
+        while (filenames) {
+                FileName_T f = filenames;
+                filenames = f->next;
+                FREE(f->name);
+                FREE(f);
+        }
 }
 
 
