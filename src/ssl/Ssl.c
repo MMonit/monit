@@ -664,6 +664,17 @@ static bool _handshake(T C, int timeout, char *error, int length) {
                         case SSL_ERROR_WANT_WRITE:
                                 retry = _retry(C->socket, &timeout, Net_canWrite);
                                 break;
+                        case SSL_ERROR_SYSCALL:
+                                {
+                                        unsigned long sslerror = ERR_get_error();
+                                        if (sslerror)
+                                                snprintf(error, length, "%s: %s", operation, ERR_error_string(sslerror, NULL));
+                                        else if (errno)
+                                                snprintf(error, length, "%s: %s", operation, STRERROR);
+                                        else
+                                                snprintf(error, length, "%s: the %s closed the connection during the TLS handshake", operation, peer);
+                                        return false;
+                                }
                         default:
                                 {
                                         long verify = SSL_get_verify_result(C->handler);
