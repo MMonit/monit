@@ -186,12 +186,22 @@ static char *_addressToString(const struct sockaddr *addr, socklen_t addrlen, ch
 }
 
 
+static void _connectError(int e, char error[static STRLEN]) {
+        if (e == EBADF) {
+                // MacOS firewall application reports a denied connection as EBADF
+                snprintf(error, STRLEN, "Connection blocked by a network filter on this system -- %s", strerror(e));
+        } else {
+                snprintf(error, STRLEN, "%s", strerror(e));
+        }
+}
+
+
 static bool _doConnect(int s, const struct sockaddr *addr, socklen_t addrlen, int timeout, char error[static STRLEN]) {
         int rv = connect(s, addr, addrlen);
         if (! rv) {
                 return true;
         } else if (errno != EINPROGRESS) {
-                snprintf(error, STRLEN, "%s", STRERROR);
+                _connectError(errno, error);
                 return false;
         }
         // The socket becomes writable when the connect completes or fails
@@ -204,7 +214,7 @@ static bool _doConnect(int s, const struct sockaddr *addr, socklen_t addrlen, in
                 snprintf(error, STRLEN, "Read of error details failed: %s", STRERROR);
                 return false;
         } else if (rv) {
-                snprintf(error, STRLEN, "%s", strerror(rv));
+                _connectError(rv, error);
                 return false;
         }
         return true;
