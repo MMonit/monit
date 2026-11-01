@@ -26,6 +26,7 @@
 #ifndef BOOTSTRAP_INCLUDED
 #define BOOTSTRAP_INCLUDED
 
+#include <stdarg.h>
 
 
 /**
