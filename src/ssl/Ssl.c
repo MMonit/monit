@@ -172,6 +172,16 @@ static const char *keylogName = NULL;
 /* ----------------------------------------------------------------- Private */
 
 
+static const char *_sslError(int rv, char buf[static STRLEN]) {
+        unsigned long error = ERR_get_error();
+        if (error)
+                return ERR_error_string(error, buf);
+        if (rv == 0)
+                return "connection closed by peer";
+        return strerror(errno);
+}
+
+
 #ifdef HAVE_SSL_CTX_SET_KEYLOG_CALLBACK
 // Close the SSLKEYLOGFILE
 static void _keylogClose(void) {
@@ -664,24 +674,13 @@ static bool _handshake(T C, int timeout, char *error, int length) {
                         case SSL_ERROR_WANT_WRITE:
                                 retry = _retry(C->socket, &timeout, Net_canWrite);
                                 break;
-                        case SSL_ERROR_SYSCALL:
-                                {
-                                        unsigned long sslerror = ERR_get_error();
-                                        if (sslerror)
-                                                snprintf(error, length, "%s: %s", operation, ERR_error_string(sslerror, NULL));
-                                        else if (errno)
-                                                snprintf(error, length, "%s: %s", operation, STRERROR);
-                                        else
-                                                snprintf(error, length, "%s: the %s closed the connection during the TLS handshake", operation, peer);
-                                        return false;
-                                }
                         default:
                                 {
                                         long verify = SSL_get_verify_result(C->handler);
                                         if (verify != X509_V_OK)
                                                 snprintf(error, length, "SSL %s certificate verification error: %s", peer, *C->error ? C->error : X509_verify_cert_error_string(verify));
                                         else
-                                                snprintf(error, length, "%s: %s", operation, SSLERROR);
+                                                snprintf(error, length, "%s: %s", operation, _sslError(rv, (char[STRLEN]){}));
                                         return false;
                                 }
                 }
@@ -886,19 +885,8 @@ int Ssl_write(T C, const void *b, int size, int timeout) {
                                         errno = EWOULDBLOCK;
                                         retry = _retry(C->socket, &timeout, Net_canWrite);
                                         break;
-                                case SSL_ERROR_SYSCALL:
-                                        {
-                                                unsigned long error = ERR_get_error();
-                                                if (error)
-                                                        Log_error("SSL: write error -- %s\n", ERR_error_string(error, NULL));
-                                                else if (n == 0)
-                                                        Log_error("SSL: write error -- EOF\n");
-                                                else if (n == -1)
-                                                        Log_error("SSL: write I/O error -- %s\n", STRERROR);
-                                        }
-                                        return -1;
                                 default:
-                                        Log_error("SSL: write error -- %s\n", SSLERROR);
+                                        Log_error("SSL: write error -- %s\n", _sslError(n, (char[STRLEN]){}));
                                         return -1;
                         }
                 } while (retry);
@@ -928,19 +916,8 @@ int Ssl_read(T C, void *b, int size, int timeout) {
                                         errno = EWOULDBLOCK;
                                         retry = _retry(C->socket, &timeout, Net_canWrite);
                                         break;
-                                case SSL_ERROR_SYSCALL:
-                                        {
-                                                unsigned long error = ERR_get_error();
-                                                if (error)
-                                                        Log_error("SSL: read error -- %s\n", ERR_error_string(error, NULL));
-                                                else if (n == 0)
-                                                        Log_error("SSL: read error -- EOF\n");
-                                                else if (n == -1)
-                                                        Log_error("SSL: read I/O error -- %s\n", STRERROR);
-                                        }
-                                        return -1;
                                 default:
-                                        Log_error("SSL: read error -- %s\n", SSLERROR);
+                                        Log_error("SSL: read error -- %s\n", _sslError(n, (char[STRLEN]){}));
                                         return -1;
                         }
                 } while (retry);
