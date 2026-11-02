@@ -22,11 +22,11 @@ AC_CONFIG_COMMANDS([monitrc], [chmod 600 monitrc])
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
-AC_CHECK_PROGS([YACC], ['bison -y' byacc yacc], [no], [$PATH:/usr/local/bin:/usr/bin])
+AC_CHECK_PROGS([YACC], [bison], [no], [$PATH:/usr/local/bin:/usr/bin])
 if test "x$YACC" = "xno"; then
 	# Require bison unless y.tab.c already is built
 	if test ! -f src/y.tab.c; then
-                AC_MSG_ERROR([Monit require bison, byacc or yacc. Download bison from http://www.gnu.org/software/bison/])
+                AC_MSG_ERROR([Monit requires bison])
 	fi
 fi
 AC_PATH_PROG([FLEX], [flex], [no], [$PATH:/usr/local/bin:/usr/bin])
