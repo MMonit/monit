@@ -6,7 +6,7 @@ ACLOCAL_AMFLAGS  = -I m4 -I config
 SUBDIRS         = . $(UNIT_TEST)
 DIST_SUBDIRS    = . test
 
-EXTRA_DIST      = README COPYING bootstrap test src config
+EXTRA_DIST      = README.md COPYING bootstrap test src config
 
 AM_CPPFLAGS     = $(CPPFLAGS) $(DBCPPFLAGS) -I./src -I./src/exceptions -I./src/io -I./src/net -I./src/util -I./src/thread
 
