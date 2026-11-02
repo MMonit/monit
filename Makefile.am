@@ -129,6 +129,7 @@ dist-hook::
 	-rm -rf `find $(distdir) -name ".libs"`
 	-rm -rf `find $(distdir) -name ".git"`
 	-rm -rf `find $(distdir) -name ".dirstamp"`
+	-rm -rf `find $(distdir) -name ".deps"`
 	-rm -rf $(distdir)/libmonit/libmonit.xcodeproj
 	-rm -rf $(distdir)/libmonit/config.log
 	-rm -rf $(distdir)/libmonit/config.status
