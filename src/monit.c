@@ -1018,7 +1018,7 @@ static void _crontab(time_t now) {
 static void *do_heartbeat(__attribute__ ((unused)) void *args) {
         set_thread_signal_block(false);
         Log_info("Scheduler started\n");
-        int frequency = Num_min(Run.polltime, 17); // At least once every 17s
+        int frequency = Num_min(Run.polltime, 29);
         time_t last_minute = 0;
 
         LOCK(Heartbeat_Thread.mutex)
