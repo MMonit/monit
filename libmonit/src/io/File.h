@@ -368,7 +368,10 @@ char *File_realPath(const char *path, char *resolved);
 /**
  * Check if the file at <code>path</code> is locked by another process.
  * Uses POSIX fcntl advisory locking to test if an exclusive write lock
- * can be acquired. The file must exist.
+ * can be acquired. The file must exist. Do not call this in a process
+ * that holds a lock on the file from File_lock(): fcntl locks belong to
+ * the process, so it returns 0 there, and closing the descriptor it
+ * opens releases that lock.
  * @param path An absolute file path
  * @return 1 (true) if the file is locked by another process,
  *         0 (false) if the file is not locked,
@@ -380,8 +383,9 @@ int File_isLocked(const char *path);
 /**
  * Acquire an exclusive advisory lock on the file at <code>path</code>.
  * Uses POSIX fcntl locking. The lock is held until the returned file
- * descriptor is closed (via File_unlock or process termination). The
- * file must exist and be writable.
+ * descriptor is closed (via File_unlock or process termination), or
+ * until this process closes any other descriptor for the same file, as
+ * File_isLocked() does. The file must exist and be writable.
  * @param path An absolute file path
  * @return A file descriptor (>= 0) holding the lock on success,
  *         -1 if the lock could not be acquired (file locked by another

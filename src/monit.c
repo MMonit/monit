@@ -642,8 +642,6 @@ static void do_default(void) {
                         exit(1);
                 State_restore();
 
-                atexit(file_finalize);
-
 reload:
                 if (Run.startdelay) {
                         if (State_reboot()) {

@@ -82,6 +82,21 @@
 #endif
 
 
+/* ----------------------------------------------------------------- Private */
+
+
+static bool _finalizeAtexit = false;
+
+static void _finalize(void) {
+        Engine_cleanup();
+        if (Run.files.pidfile_lock >= 0) {
+                File_unlock(Run.files.pidfile_lock);
+                Run.files.pidfile_lock = -1;
+        }
+        unlink(Run.files.pidfile);
+}
+
+
 /* ------------------------------------------------------------------ Public */
 
 
@@ -109,16 +124,6 @@ void file_init(void) {
                 snprintf(buf, STRLEN, "%s/.%s", Run.Env.home, MYSTATEFILE);
                 Run.files.state = Str_dup(buf);
         }
-}
-
-
-void file_finalize(void) {
-        Engine_cleanup();
-        if (Run.files.pidfile_lock >= 0) {
-                File_unlock(Run.files.pidfile_lock);
-                Run.files.pidfile_lock = -1;
-        }
-        unlink(Run.files.pidfile);
 }
 
 
@@ -191,6 +196,11 @@ bool file_createPidFile(void) {
                 return false;
         }
         Run.files.pidfile_lock = lock;
+        if (!_finalizeAtexit) {
+                if (atexit(_finalize) == 0) {
+                        _finalizeAtexit = true;
+                }
+        }
         return true;
 }
 

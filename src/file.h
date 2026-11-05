@@ -41,12 +41,6 @@ void file_init(void);
 
 
 /**
- * Finalize and remove temporary files
- */
-void file_finalize(void);
-
-
-/**
  * Search the system for the monit control file. Try first ~/.monitrc,
  * if that fails try /etc/monitrc, then /usr/local/etc/monitrc and
  * finally ./monitrc.  Exit the application if the control file was
@@ -58,7 +52,7 @@ char *file_findControlFile(void);
 
 /**
  * Create Monit's pidfile - Such a file is created when in daemon
- * mode.
+ * mode, and removed when the daemon exits.
  * @return true if the file was created, otherwise false.
  */
 bool file_createPidFile(void);

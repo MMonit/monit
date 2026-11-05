@@ -138,6 +138,9 @@ bool kill_daemon(int sig) {
  * @return The daemon's pid if running, otherwise 0
  */
 pid_t exist_daemon(void) {
+        // Opening the pid file here would release this process's lock on it
+        if (Run.files.pidfile_lock >= 0)
+                return getpid();
         pid_t pid = file_getPid(Run.files.pidfile);
         if (pid <= 0)
                 return 0;

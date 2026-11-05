@@ -112,7 +112,7 @@
 				"$(DERIVED_FILES_DIR)/y.tab.c",
 				"$(DERIVED_FILES_DIR)/y.tab.h",
 			);
-			script = "bison -dtv ${INPUT_FILE_PATH} -o ${DERIVED_FILES_DIR}/y.tab.c;\n";
+			script = "/opt/local/bin/bison -dvt ${INPUT_FILE_PATH} -o ${DERIVED_FILES_DIR}/y.tab.c;\n";
 		};
 		52F6E8CB13A751430023F87A /* PBXBuildRule */ = {
 			isa = PBXBuildRule;
