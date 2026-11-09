@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #include "Bootstrap.h"
 #include "Str.h"
@@ -221,6 +223,43 @@ int main(void) {
                 assert(File_delete(lockpath) == true);
         }
         printf("=> Test11: OK\n\n");
+
+        printf("=> Test12: File_isLocked() in another process never refuses a File_lock()\n");
+        {
+                char lockpath[STRLEN];
+                snprintf(lockpath, STRLEN, "/tmp/.FileLockTest.%d", getpid());
+                int fd;
+                assert((fd = File_open(lockpath, "w")) != -1);
+                assert(File_close(fd) == true);
+                int ready[2];
+                assert(pipe(ready) == 0);
+                pid_t child = fork();
+                assert(child >= 0);
+                if (child == 0) {
+                        // A status check, over and over
+                        assert(write(ready[1], "", 1) == 1);
+                        for (;;)
+                                File_isLocked(lockpath);
+                }
+                char c;
+                assert(read(ready[0], &c, 1) == 1);
+                int refused = 0;
+                for (int i = 0; i < 20000; i++) {
+                        int lockfd = File_lock(lockpath);
+                        if (lockfd < 0)
+                                refused++;
+                        else
+                                File_unlock(lockfd);
+                }
+                kill(child, SIGKILL);
+                waitpid(child, NULL, 0);
+                close(ready[0]);
+                close(ready[1]);
+                printf("\t%d of 20000 locks refused\n", refused);
+                assert(refused == 0);
+                assert(File_delete(lockpath) == true);
+        }
+        printf("=> Test12: OK\n\n");
 
         printf("============> File Tests: OK\n\n");
 

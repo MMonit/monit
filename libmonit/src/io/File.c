@@ -343,7 +343,7 @@ int File_lock(const char *path) {
 
 int File_isLocked(const char *path) {
         if (STR_DEF(path)) {
-                int fd = File_open(path, "r+"); // Need write mode
+                int fd = File_open(path, "r+");
                 if (fd >= 0) {
                         struct flock lock = {
                                 .l_type = F_WRLCK,
@@ -351,9 +351,11 @@ int File_isLocked(const char *path) {
                                 .l_start = 0,
                                 .l_len = 0
                         };
-                        bool isLocked = (fcntl(fd, F_SETLK, &lock) < 0);
+                        int rv = fcntl(fd, F_GETLK, &lock);
                         close(fd);
-                        return isLocked;
+                        if (rv < 0)
+                                return -1;
+                        return lock.l_type != F_UNLCK;
                 }
         }
         errno = EINVAL;
