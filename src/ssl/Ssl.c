@@ -133,7 +133,7 @@
 #define RANDOM_DEVICE "/dev/random"
 
 
-#define SSLERROR ERR_error_string(ERR_get_error(),NULL)
+#define SSLERROR ERR_error_string(ERR_get_error(), (char[STRLEN]){})
 
 
 #define T Ssl_T

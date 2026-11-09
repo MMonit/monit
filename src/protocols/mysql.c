@@ -669,7 +669,7 @@ static void _sendEncryptedPassword(mysql_t *mysql) {
         RSA *rsa = PEM_read_bio_RSA_PUBKEY(bio, NULL, NULL, NULL);
         BIO_free(bio);
         if (! rsa)
-                THROW(ProtocolException, "RSA public key load failed -- %s", ERR_error_string(ERR_get_error(), NULL));
+                THROW(ProtocolException, "RSA public key load failed -- %s", ERR_error_string(ERR_get_error(), (char[STRLEN]){}));
         // XOR the password with the salt
         unsigned char saltedPassword[STRLEN];
         size_t saltLength = strlen(mysql->salt);
@@ -685,14 +685,14 @@ static void _sendEncryptedPassword(mysql_t *mysql) {
         int encryptedPasswordLength = RSA_public_encrypt((int)passwordLength, saltedPassword, encryptedPassword, rsa, RSA_PKCS1_OAEP_PADDING);
         RSA_free(rsa);
         if (encryptedPasswordLength < 0) {
-                THROW(ProtocolException, "RSA public encrypt failed -- %s", ERR_error_string(ERR_get_error(), NULL));
+                THROW(ProtocolException, "RSA public encrypt failed -- %s", ERR_error_string(ERR_get_error(), (char[STRLEN]){}));
         }
 #else
        // Parse the server RSA public key using EVP API
         EVP_PKEY *pkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
         BIO_free(bio);
         if (! pkey)
-                THROW(ProtocolException, "RSA public key load failed -- %s", ERR_error_string(ERR_get_error(), NULL));
+                THROW(ProtocolException, "RSA public key load failed -- %s", ERR_error_string(ERR_get_error(), (char[STRLEN]){}));
 
         // Verify it's an RSA key
         if (EVP_PKEY_base_id(pkey) != EVP_PKEY_RSA) {
@@ -711,21 +711,21 @@ static void _sendEncryptedPassword(mysql_t *mysql) {
         EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(pkey, NULL);
         if (! ctx) {
                 EVP_PKEY_free(pkey);
-                THROW(ProtocolException, "Cannot create encryption context -- %s", ERR_error_string(ERR_get_error(), NULL));
+                THROW(ProtocolException, "Cannot create encryption context -- %s", ERR_error_string(ERR_get_error(), (char[STRLEN]){}));
         }
 
         // Initialize encryption
         if (EVP_PKEY_encrypt_init(ctx) <= 0) {
                 EVP_PKEY_CTX_free(ctx);
                 EVP_PKEY_free(pkey);
-                THROW(ProtocolException, "Cannot initialize the encryption -- %s", ERR_error_string(ERR_get_error(), NULL));
+                THROW(ProtocolException, "Cannot initialize the encryption -- %s", ERR_error_string(ERR_get_error(), (char[STRLEN]){}));
         }
 
         // Set padding to OAEP (equivalent to RSA_PKCS1_OAEP_PADDING)
         if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0) {
                 EVP_PKEY_CTX_free(ctx);
                 EVP_PKEY_free(pkey);
-                THROW(ProtocolException, "Cannot set the RSA padding mode -- %s", ERR_error_string(ERR_get_error(), NULL));
+                THROW(ProtocolException, "Cannot set the RSA padding mode -- %s", ERR_error_string(ERR_get_error(), (char[STRLEN]){}));
         }
 
         // Get output buffer size
@@ -733,7 +733,7 @@ static void _sendEncryptedPassword(mysql_t *mysql) {
         if (EVP_PKEY_encrypt(ctx, NULL, &encryptedPasswordLength, saltedPassword, passwordLength) <= 0) {
                 EVP_PKEY_CTX_free(ctx);
                 EVP_PKEY_free(pkey);
-                THROW(ProtocolException, "Cannot get the output buffer size -- %s", ERR_error_string(ERR_get_error(), NULL));
+                THROW(ProtocolException, "Cannot get the output buffer size -- %s", ERR_error_string(ERR_get_error(), (char[STRLEN]){}));
         }
 
         // Allocate buffer
@@ -749,7 +749,7 @@ static void _sendEncryptedPassword(mysql_t *mysql) {
                 free(encryptedPassword);
                 EVP_PKEY_CTX_free(ctx);
                 EVP_PKEY_free(pkey);
-                THROW(ProtocolException, "Password encryption failed -- %s", ERR_error_string(ERR_get_error(), NULL));
+                THROW(ProtocolException, "Password encryption failed -- %s", ERR_error_string(ERR_get_error(), (char[STRLEN]){}));
         }
 
         // Clean up
