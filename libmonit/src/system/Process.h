@@ -180,7 +180,9 @@ void Process_detach(T P);
 /**
  * Terminate the sub-process. The sub-process is terminated by sending
  * it a termination signal (SIGTERM). Note that SIGTERM can be ignored
- * or blocked by a process
+ * or blocked by a process. The signal is sent to the process group of
+ * the sub-process, so the processes it has started get it too, unless
+ * they have moved to a process group of their own
  * @param P A Process object
  * @return True if signaling the sub-process succeed, otherwise false
  * and errno is set to indicate the error
@@ -191,7 +193,10 @@ bool Process_terminate(T P);
 /**
  * Kill the sub-process. The sub-process is destroyed by sending
  * it a termination signal (SIGKILL). While SIGTERM may be blocked
- * by a process, SIGKILL cannot be blocked and will kill the process
+ * by a process, SIGKILL cannot be blocked and will kill the process.
+ * The signal is sent to the process group of the sub-process, so the
+ * processes it has started are killed too, unless they have moved to
+ * a process group of their own
  * @param P A Process object
  * @return True if signaling the sub-process succeed, otherwise false
  * and errno is set to indicate the error

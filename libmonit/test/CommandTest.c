@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <errno.h>
 
 #include "Bootstrap.h"
 #include "Str.h"
@@ -457,6 +458,36 @@ int main(void) {
                 Command_free(&c);
         }
         printf("=> Test19: OK\n\n");
+
+        printf("=> Test20: Process_kill() also stops what the sub-process started\n");
+        {
+                // Two commands, so the shell cannot exec the sleep: it runs as
+                // a child of the shell, in the shell's process group
+                Command_T c = Command_new("/bin/sh", "-c", "sleep 30 & echo $!; wait");
+                assert(c);
+                Process_T p = Command_execute(c);
+                assert(p);
+                char line[STRLEN] = {};
+                assert(InputStream_readLine(Process_inputStream(p), line, STRLEN));
+                pid_t child = (pid_t)atoi(line);
+                assert(child > 0);
+                assert(Process_kill(p));
+                Process_waitFor(p);
+                // The child is gone once whoever inherited it has reaped it
+                bool gone = false;
+                for (int i = 0; (i < 100) && ! gone; i++) {
+                        gone = (kill(child, 0) < 0) && (errno == ESRCH);
+                        if (! gone)
+                                Time_usleep(50000LL);
+                }
+                printf("\tchild pid %d of the killed shell is %s\n", (int)child, gone ? "gone" : "still running");
+                if (! gone)
+                        kill(child, SIGKILL);
+                assert(gone);
+                Process_free(&p);
+                Command_free(&c);
+        }
+        printf("=> Test20: OK\n\n");
 
         printf("============> Command Tests: OK\n\n");
 

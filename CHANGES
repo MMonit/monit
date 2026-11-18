@@ -114,6 +114,10 @@ Fixed: HTTP protocol test combined with content or checksum: a monitored server 
 Fixed: Process execution: when a program was configured to run under a specific uid without an explicit gid (or vice
        versa), the child process could silently retain the parent's (typically root's) group id and supplementary groups.
 
+Fixed: Program status test: when the program timed out, or Monit stopped or reloaded while it was running, Monit killed
+       the program only. Commands that a script had started kept running, a new set after each timeout. Monit now
+       signals the process group of the program, so they are stopped with it.
+
 Fixed: MySQL protocol test: Reject an empty salt during the handshake.
 
 Fixed: Date/time parsing when a timezone offset had hours only and no minutes (e.g. "+05").
