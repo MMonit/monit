@@ -668,10 +668,6 @@ InputStream_T Process_errorStream(Process_T P) {
 }
 
 
-// A sub-process is the leader of a session and a process group of its own, so its pid is also the id of the group that it
-// and the processes it has started are in. Signal the group: a shell script is then stopped together with the commands it
-// runs, which otherwise live on without it. A process that has moved to a group of its own, as a daemon does, is not
-// reached. If the group cannot be signalled the sub-process is signalled alone
 static bool _signalGroup(Process_T P, int signo) {
         if (kill(-P->pid, signo) == 0)
                 return true;
