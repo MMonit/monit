@@ -344,8 +344,7 @@ static void _unblock(struct _block *block) {
 }
 
 
-// Reset all signals to default, except for SIGHUP and SIGPIPE which
-// are set to SIG_IGN
+// Reset all signals to default, except SIGPIPE, which is set to SIG_IGN
 static void _resetSignals(void) {
         sigset_t mask;
         sigemptyset(&mask);
@@ -355,7 +354,7 @@ static void _resetSignals(void) {
         for (int i = 1; i < NSIG; ++i) {
                 if (i == SIGKILL || i == SIGSTOP)
                         continue;
-                if (i == SIGHUP || i == SIGPIPE)
+                if (i == SIGPIPE)
                         sigaction(i, &sa_ignore, NULL);
                 else
                         sigaction(i, &sa_default, NULL);

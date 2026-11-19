@@ -489,6 +489,22 @@ int main(void) {
         }
         printf("=> Test20: OK\n\n");
 
+        printf("=> Test21: the sub-process does not inherit an ignored SIGHUP\n");
+        {
+                void (*previous)(int) = signal(SIGHUP, SIG_IGN);
+                Command_T c = Command_new("/bin/sh", "-c", "kill -HUP $$; exit 0");
+                assert(c);
+                Process_T p = Command_execute(c);
+                assert(p);
+                int status = Process_waitFor(p);
+                signal(SIGHUP, previous);
+                printf("\tstatus %d (%s)\n", status, status == SIGHUP ? "terminated by SIGHUP" : "SIGHUP was ignored");
+                assert(status == SIGHUP);
+                Process_free(&p);
+                Command_free(&c);
+        }
+        printf("=> Test21: OK\n\n");
+
         printf("============> Command Tests: OK\n\n");
 
 }
