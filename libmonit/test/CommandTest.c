@@ -498,8 +498,9 @@ int main(void) {
                 assert(p);
                 int status = Process_waitFor(p);
                 signal(SIGHUP, previous);
-                printf("\tstatus %d (%s)\n", status, status == SIGHUP ? "terminated by SIGHUP" : "SIGHUP was ignored");
-                assert(status == SIGHUP);
+                bool hup = (status == SIGHUP || status == 128 + SIGHUP);
+                printf("\tstatus %d (%s)\n", status, hup ? "terminated by SIGHUP" : "SIGHUP was ignored");
+                assert(hup);
                 Process_free(&p);
                 Command_free(&c);
         }
