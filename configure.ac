@@ -712,9 +712,13 @@ AC_ARG_WITH([zlib],
                 AC_CHECK_HEADERS([zlib.h])
         elif test "x$withval" != "xno"; then
                 AC_MSG_CHECKING([for zlib in $withval])
-                LDFLAGS="-L$withval/lib -lz $LDFLAGS "
                 CFLAGS="-I$withval/include $CFLAGS"
                 if test -r "$withval/lib/libz.a" -a -r "$withval/include/zlib.h"; then
+                        if ls "$withval"/lib/libz.so* "$withval"/lib/libz.dylib > /dev/null 2>&1; then
+                                LDFLAGS="-L$withval/lib -lz $LDFLAGS "
+                        else
+                                LIBS="$withval/lib/libz.a $LIBS"
+                        fi
                         with_zlib=1
                         AC_DEFINE([HAVE_LIBZ], [1], [Define if you have zlib library])
                         AC_DEFINE([HAVE_ZLIB_H], [1], [Define if you have zlib header])
