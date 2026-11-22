@@ -7,6 +7,8 @@ Version 6.2.0
 Fixed: Programs that Monit starts (start, stop and restart programs, check programs and exec actions) ran with SIGHUP
        ignored, and a shell script among them could not even trap it. A program that reloads on SIGHUP never got one.
 
+Fixed: The MySQL protocol test over a unix socket failed with "Access denied" for an account that uses caching_sha2_password.
+
 
 Version 6.1.0
 

@@ -859,8 +859,9 @@ void check_mysql(Socket_T S) {
                         // The server should send an OK message immediately after fast auth success
                         _readResponse(&mysql);
                 } else if (mysql.state == MySQL_FullAuthenticationNeeded) {
-                        if (Socket_isSecure(S)) {
-                                // Send the password to the server including the terminating NUL (plain as we use TLS already)
+                        if (Socket_isSecure(S) || Socket_getFamily(S) == Socket_Unix) {
+                                // Send the password to the server including the terminating NUL. Plain is fine here: the channel is either
+                                // TLS or a local unix socket, which MySQL treats as a secure transport too.
                                 _sendPassword(&mysql, (unsigned char *)mysql.port->parameters.mysql.password, (int)strlen(mysql.port->parameters.mysql.password) + 1);
                                 _readResponse(&mysql);
                         } else {
