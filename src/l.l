@@ -117,6 +117,7 @@ static int  pop_buffer_state(void);
 char *yyfile(const char *);
 void yyfile_free(void);
 static URL_T create_URL(char *proto);
+static bool decode_userinfo(char *s);
 
 %}
 
@@ -872,6 +873,10 @@ group[ \t]+       {
                       BEGIN(INITIAL);
                       if (! yylval.url->hostname)
                                 yyerror("missing hostname in URL");
+                      if (! decode_userinfo(yylval.url->user) || ! decode_userinfo(yylval.url->password))
+                                yyerror("invalid '%%' escape in the URL username or password, write '%%' as %%25");
+                      else if (yylval.url->user && strchr(yylval.url->user, ':'))
+                                yyerror("the URL username cannot contain ':', HTTP basic authentication ends the username at the first ':'");
                       if (! yylval.url->path)
                                 yylval.url->path = Str_dup("/");
                       yylval.url->url = Str_cat("%s://[%s]:%d%s%s%s",
@@ -1289,6 +1294,38 @@ static void save_arg(void) {
 
 static void begin_argument(void) {
         BEGIN(yytext[yyleng - 1] == '\'' ? ARGUMENT_SQ_COND : ARGUMENT_COND);
+}
+
+
+static int hexvalue(char c) {
+        if (c >= '0' && c <= '9')
+                return c - '0';
+        if (c >= 'a' && c <= 'f')
+                return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F')
+                return c - 'A' + 10;
+        return -1;
+}
+
+
+/* Percent-decode the username or password of a URL in place (RFC 3986). A '+' is a '+' (not space). False if a '%' is not followed by two hex digits or decodes to NUL */
+static bool decode_userinfo(char *s) {
+        if (s) {
+                char *d = s;
+                for (; *s; s++, d++) {
+                        if (*s == '%') {
+                                int hi = hexvalue(s[1]), lo = hi < 0 ? -1 : hexvalue(s[2]);
+                                if (lo < 0 || (hi | lo) == 0)
+                                        return false;
+                                *d = (char)(hi << 4 | lo);
+                                s += 2;
+                        } else {
+                                *d = *s;
+                        }
+                }
+                *d = 0;
+        }
+        return true;
 }
 
 

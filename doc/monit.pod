@@ -4376,8 +4376,16 @@ event messages to M/Monit. We recommend using I<https> as in the
 example above to ensure that the communication between Monit and
 M/Monit is secure.
 
-The password should be URL encoded if it contains URL-significant characters
-like ":", "?", "@".
+The username cannot contain ":", not even encoded (the HTTP basic authentication
+limitation).
+
+If the username or password contains a character that has a meaning in a
+URL, such as "@", ":", "/", "?", "#", "%" or a space, URL encode it: "@" as
+%40, ":" as %3A, "%" as %25 and so on.
+
+Example for the user "monit" with the password "p@ss:word":
+
+ set mmonit https://monit:p%40ss%3Aword@192.168.1.10:8443/collector
 
 The default timeout is 5 seconds, you can customise the timeout using
 the I<TIMEOUT> option.
