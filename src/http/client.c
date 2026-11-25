@@ -62,6 +62,7 @@
 // libmonit
 #include "exceptions/AssertException.h"
 #include "exceptions/IOException.h"
+#include "net/URL.h"
 
 /**
  *  The monit HTTP GUI client
@@ -74,9 +75,13 @@
 
 
 static void _argument(StringBuffer_T data, const char *name, const char *value) {
-        char *_value = Util_urlEncode(value, true);
-        StringBuffer_append(data, "%s%s=%s", StringBuffer_length(data) ? "&" : "", name, _value);
-        FREE(_value);
+        StringBuffer_append(data, "%s%s=", StringBuffer_length(data) ? "&" : "", name);
+        for (const unsigned char *c = (const unsigned char *)value; *c; c++) {
+                if (URL_isunsafe(*c) || strchr("&=?/", *c))
+                        StringBuffer_append(data, "%%%02X", *c);
+                else
+                        StringBuffer_append(data, "%c", *c);
+        }
 }
 
 

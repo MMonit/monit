@@ -21,6 +21,7 @@ libmonit_la_SOURCES = \
                   src/io/File.c \
                   src/io/InputStream.c \
                   src/io/OutputStream.c \
+                  src/net/URL.c \
                   src/system/Mem.c \
                   src/system/Net.c \
                   src/system/Command.c \

@@ -60,6 +60,7 @@
 
 // libmonit
 #include "util/Str.h"
+#include "net/URL.h"
 
 
 // we don't use yyinput => do not generate it
@@ -918,11 +919,12 @@ group[ \t]+       {
                   }
 
   [/][^?#\r\n ]*  {
-                      yylval.url->path = Util_urlEncode(yytext, false);
+                      yylval.url->path = URL_escape(yytext);
                   }
 
   [?][^#\r\n ]*   {
-                      yylval.url->query = Util_urlEncode(++yytext, false);
+                      if (yytext[1])
+                                yylval.url->query = URL_escape(yytext + 1);
                   }
 
   [#][^\r\n ]*    {

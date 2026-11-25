@@ -101,32 +101,6 @@ char *Util_getToken(MD_T token);
 
 
 /**
- * Returns true if url contains url safe characters otherwise false
- * @param url an url string to test
- * @return true if url is url safe otherwise false
- */
-bool Util_isurlsafe(const char *url);
-
-/**
- * Escape an url string converting unsafe characters to a hex (%xx)
- * representation.  The caller must free the returned string.
- * @param string a string to encode
- * @param isParameterValue true if the string is url parameter value
- * @return the escaped string
- */
-char *Util_urlEncode(const char *string, bool isParameterValue);
-
-
-/**
- * Unescape an url string. The <code>url</code> parameter is modified
- * by this method.
- * @param url an escaped url string
- * @return A pointer to the unescaped <code>url</code>string
- */
-char *Util_urlDecode(char *url);
-
-
-/**
  * @return a Basic Authentication Authorization string (RFC 2617),
  * NULL if username is not defined.
  */

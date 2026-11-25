@@ -26,6 +26,8 @@
 		52A31C841A653235009D3D83 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A31C821A6531D8009D3D83 /* libmonit.a */; };
 		52A31C851A65323A009D3D83 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A31C821A6531D8009D3D83 /* libmonit.a */; };
 		52A31C861A653254009D3D83 /* libmonit.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A31C821A6531D8009D3D83 /* libmonit.a */; };
+		52B889FC30B7883F0011AAAB /* URL.c in Sources */ = {isa = PBXBuildFile; fileRef = 52B889FA30B7883F0011AAAB /* URL.c */; };
+		52B889FD30B7883F0011AAAB /* URL.h in Headers */ = {isa = PBXBuildFile; fileRef = 52B889F930B7883F0011AAAB /* URL.h */; };
 		52D7967E13A6CE560014CED2 /* Bootstrap.c in Sources */ = {isa = PBXBuildFile; fileRef = 52D7964A13A6CE560014CED2 /* Bootstrap.c */; };
 		52D7968113A6CE560014CED2 /* assert.c in Sources */ = {isa = PBXBuildFile; fileRef = 52D7964F13A6CE560014CED2 /* assert.c */; };
 		52D7968413A6CE560014CED2 /* Exception.c in Sources */ = {isa = PBXBuildFile; fileRef = 52D7965213A6CE560014CED2 /* Exception.c */; };
@@ -239,6 +241,8 @@
 		529D79B71A59EBFA003C3931 /* StrTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = StrTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		529DBAB82EBD3CDD00BECF5F /* RandomTest */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = RandomTest; sourceTree = BUILT_PRODUCTS_DIR; };
 		52A31C821A6531D8009D3D83 /* libmonit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libmonit.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		52B889F930B7883F0011AAAB /* URL.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = URL.h; sourceTree = "<group>"; };
+		52B889FA30B7883F0011AAAB /* URL.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = URL.c; sourceTree = "<group>"; };
 		52D7964A13A6CE560014CED2 /* Bootstrap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = Bootstrap.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52D7964B13A6CE560014CED2 /* Bootstrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Bootstrap.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		52D7964C13A6CE560014CED2 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Config.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -441,6 +445,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		52B889FB30B7883F0011AAAB /* net */ = {
+			isa = PBXGroup;
+			children = (
+				52B889F930B7883F0011AAAB /* URL.h */,
+				52B889FA30B7883F0011AAAB /* URL.c */,
+			);
+			path = net;
+			sourceTree = "<group>";
+		};
 		52D7964813A6CE560014CED2 /* src */ = {
 			isa = PBXGroup;
 			children = (
@@ -449,6 +462,7 @@
 				52D7964B13A6CE560014CED2 /* Bootstrap.h */,
 				52D7964D13A6CE560014CED2 /* exceptions */,
 				52D7965713A6CE560014CED2 /* io */,
+				52B889FB30B7883F0011AAAB /* net */,
 				52D7966213A6CE560014CED2 /* system */,
 				52D7966F13A6CE560014CED2 /* thread */,
 				52D7967413A6CE560014CED2 /* util */,
@@ -552,6 +566,7 @@
 				520CA04C2D56520E00D851CD /* Array.h in Headers */,
 				521ECE3921D85CFE00F8045E /* Fmt.h in Headers */,
 				93D5F8AB2EBB81CE009E458B /* Num.h in Headers */,
+				52B889FD30B7883F0011AAAB /* URL.h in Headers */,
 				52E737DC1EE71099007BF939 /* ProtocolException.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -839,6 +854,7 @@
 				5256BCA22D5EA75B005FC07A /* Random.c in Sources */,
 				52D7968F13A6CE560014CED2 /* OutputStream.c in Sources */,
 				52D7969113A6CE560014CED2 /* Command.c in Sources */,
+				52B889FC30B7883F0011AAAB /* URL.c in Sources */,
 				521ECE3C21D85EC100F8045E /* FmtTest.c in Sources */,
 				52D7969313A6CE560014CED2 /* Mem.c in Sources */,
 				52D7969513A6CE560014CED2 /* Net.c in Sources */,

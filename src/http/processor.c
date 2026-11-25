@@ -75,6 +75,7 @@
 // libmonit
 #include "util/Str.h"
 #include "system/Net.h"
+#include "net/URL.h"
 
 
 /**
@@ -560,7 +561,7 @@ static HttpRequest create_HttpRequest(Socket_T S) {
                 internal_error(S, SC_BAD_REQUEST, "[error] URL too long");
                 return NULL;
         }
-        Util_urlDecode(url);
+        URL_unescape(url);
         // Reject control characters (CR, LF, etc.) in the decoded URL
         for (const unsigned char *p = (const unsigned char *)url; *p; p++) {
                 if (*p < 0x20 || *p == 0x7f) {
@@ -936,7 +937,7 @@ static HttpParameter parse_parameters(char *query_string) {
                                 goto error;
                         NEW(p);
                         p->name = key;
-                        p->value = Util_urlDecode(value);
+                        p->value = URL_unescape(value);
                         p->next = head;
                         head = p;
                         key = NULL;
