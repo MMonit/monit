@@ -873,7 +873,9 @@ group[ \t]+       {
                       BEGIN(INITIAL);
                       if (! yylval.url->hostname)
                                 yyerror("missing hostname in URL");
-                      if (! decode_userinfo(yylval.url->user) || ! decode_userinfo(yylval.url->password))
+                      if (yylval.url->password && ! yylval.url->user)
+                                yyerror("the URL username is missing or the password contains ':', write ':' in the password as %%3A");
+                      else if (! decode_userinfo(yylval.url->user) || ! decode_userinfo(yylval.url->password))
                                 yyerror("invalid '%%' escape in the URL username or password, write '%%' as %%25");
                       else if (yylval.url->user && strchr(yylval.url->user, ':'))
                                 yyerror("the URL username cannot contain ':', HTTP basic authentication ends the username at the first ':'");

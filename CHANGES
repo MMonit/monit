@@ -8,6 +8,10 @@ Fixed: INCOMPATIBLE CHANGE: Monit used to send URL encoded characters in the "se
        The credentials with escaped "@", ":", "/", "?", "#", "%" characters failed to login with M/Monit >= 4.4.0.
        Workaround: use a password without these characters for Monit < 6.2.0 and M/Monit >= 4.4.0.
 
+Fixed: A ":" written as is in the password part of a "set mmonit <url>" or "if failed url <url>", instead of %3A escape sequence,
+       made Monit send the request without any credentials, so M/Monit login failed. The "monit -t" syntax check reported no
+       error though.
+
 Fixed: Programs that Monit starts (start, stop and restart programs, check programs and exec actions) ran with SIGHUP
        ignored, and a shell script among them could not even trap it. A program that reloads on SIGHUP never got one.
 
