@@ -4376,12 +4376,14 @@ event messages to M/Monit. We recommend using I<https> as in the
 example above to ensure that the communication between Monit and
 M/Monit is secure.
 
-The username cannot contain ":", not even encoded (the HTTP basic authentication
-limitation).
-
 If the username or password contains a character that has a meaning in a
 URL, such as "@", ":", "/", "?", "#", "%" or a space, URL encode it: "@" as
-%40, ":" as %3A, "%" as %25 and so on.
+%40, ":" as %3A, "%" as %25 and so on. Monit decodes them before it sends
+them to M/Monit.
+
+The username cannot contain ":", not even encoded as %3A: HTTP basic
+authentication sends "username:password" and ends the username at the
+first ":". The password can contain ":", but it must be written as %3A.
 
 Example for the user "monit" with the password "p@ss:word":
 
