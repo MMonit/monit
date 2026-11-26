@@ -20,7 +20,15 @@ Fixed: Monit could escape an URL that was already escaped. A %20 in the path or 
 Fixed: A URL with a "@" after the host, as in "if failed url http://localhost:8080/@joe", was read wrong and Monit
        tested another host. A TAB after a URL was read as part of the URL. Monit now reports an error if a "/", "?"
        or "#" character is written as is in the password of a URL. Write them as %2F, %3F and %23.
+       
+Fixed: Monit did not find a service by its name if the name had regular expression characters, for example
+       "disk [sda1]". The CLI commands start, stop, restart, monitor, unmonitor, status and summary failed for
+       such a service and "all" skipped it. The same went for a service action sent from M/Monit. Monit now
+       looks for a service with that name first and reads the name as a pattern only if there is none.
 
+Fixed: A service name pattern with a "|", as in monit restart "web|db", also matched services whose name only
+       starts with "web" or ends with "db". It now matches the services "web" and "db" only.
+       
 Fixed: Programs that Monit starts (start, stop and restart programs, check programs and exec actions) ran with SIGHUP
        ignored, and a shell script among them could not even trap it. A program that reloads on SIGHUP never got one.
 

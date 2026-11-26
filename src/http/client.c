@@ -77,7 +77,7 @@
 static void _argument(StringBuffer_T data, const char *name, const char *value) {
         StringBuffer_append(data, "%s%s=", StringBuffer_length(data) ? "&" : "", name);
         for (const unsigned char *c = (const unsigned char *)value; *c; c++) {
-                if (URL_isunsafe(*c) || strchr("&=?/", *c))
+                if (URL_isunsafe(*c) || strchr("&=?/+", *c))
                         StringBuffer_append(data, "%%%02X", *c);
                 else
                         StringBuffer_append(data, "%c", *c);
