@@ -1702,6 +1702,7 @@ connectionopt   : ip
                 ;
 
 connectionurl   : IF FAILED URL URLOBJECT connectionurloptlist rate1 THEN action1 recovery_success {
+                        yydeprecated("'if failed url' is deprecated, use 'if failed port' with 'protocol http' or 'protocol https' instead");
                         portset.check_invers = false;
                         portset.responsetime.operator = responsetimeset.operator;
                         portset.responsetime.limit = responsetimeset.limit;
@@ -1710,6 +1711,7 @@ connectionurl   : IF FAILED URL URLOBJECT connectionurloptlist rate1 THEN action
                         addport(&(current->portlist), &portset);
                   }
                 | IF SUCCEEDED URL URLOBJECT connectionurloptlist rate1 THEN action1 recovery_failure {
+                        yydeprecated("'if succeeded url' is deprecated, use 'if succeeded port' with 'protocol http' or 'protocol https' instead");
                         portset.check_invers = true;
                         portset.responsetime.operator = responsetimeset.operator;
                         portset.responsetime.limit = responsetimeset.limit;
