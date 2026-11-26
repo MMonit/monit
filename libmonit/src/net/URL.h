@@ -65,6 +65,21 @@ char *URL_escape(const char *url);
 
 
 /**
+ * Escape a URL string that may be escaped already, in whole or in part.
+ * Works as URL_escape(), except that a '%' followed by two hex digits
+ * is an escape sequence and is copied as it is. Any other '%' becomes
+ * %25. For instance, `/a b%20c%` gives `/a%20b%20c%25`. Escaping the
+ * result again changes nothing.
+ * *The caller must free the returned string.* If the `url`
+ * parameter is NULL this method returns NULL; if it is the empty
+ * string "", a *new* empty string is returned.
+ * @param url A URL string
+ * @return The escaped string
+ */
+char *URL_ensureEscaped(const char *url);
+
+
+/**
  * Returns true if the given char is URL unsafe.
  * @param c An unsigned char
  * @return true if the char is in the set of unsafe URL characters

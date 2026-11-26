@@ -83,6 +83,41 @@ static inline char *_b2x(uchar_t b, char *x) {
 }
 
 
+static inline bool _isEscape(const char *s) {
+        return s[0] == '%' && isxdigit((unsigned char)s[1]) && isxdigit((unsigned char)s[2]);
+}
+
+
+static bool _isUnsafe(const char *s) {
+        return urlunsafe[(unsigned char)*s];
+}
+
+
+static bool _isUnescaped(const char *s) {
+        return _isUnsafe(s) && !_isEscape(s);
+}
+
+
+static char *_escape(const char *url, bool (*mustEscape)(const char *)) {
+        char *escaped = 0;
+        if (url) {
+                char *p;
+                int i, n;
+                for (n = i = 0; url[i]; i++)
+                        if (mustEscape(url + i))
+                                n += 2;
+                p = escaped = ALLOC(i + n + 1);
+                for (; *url; url++, p++) {
+                        *p = *url;
+                        if (mustEscape(url))
+                                p = _b2x((uchar_t)*url, p);
+                }
+                *p = 0;
+        }
+        return escaped;
+}
+
+
 // MARK: - URL Public methods
 
 
@@ -92,8 +127,7 @@ char *URL_unescape(char *url) {
                 for (; url[y]; x++, y++) {
                         if (url[y] == '+') {
                                 url[x] = ' ';
-                        } else if (url[y] == '%' && isxdigit((unsigned char)url[y + 1]) && isxdigit((unsigned char)url[y + 2])
-                                   && (url[y + 1] != '0' || url[y + 2] != '0')) {
+                        } else if (_isEscape(url + y) && (url[y + 1] != '0' || url[y + 2] != '0')) {
                                 url[x] = (char)_x2b(url + y + 1);
                                 y += 2;
                         } else {
@@ -107,21 +141,12 @@ char *URL_unescape(char *url) {
 
 
 char *URL_escape(const char *url) {
-        char *escaped = 0;
-        if (url) {
-                char *p;
-                int i, n;
-                for (n = i = 0; url[i]; i++)
-                        if (urlunsafe[(unsigned char)(url[i])])
-                                n += 2;
-                p = escaped = ALLOC(i + n + 1);
-                for (; *url; url++, p++) {
-                        if (urlunsafe[(unsigned char)(*p = *url)])
-                                p = _b2x((uchar_t)*url, p);
-                }
-                *p = 0;
-        }
-        return escaped;
+        return _escape(url, _isUnsafe);
+}
+
+
+char *URL_ensureEscaped(const char *url) {
+        return _escape(url, _isUnescaped);
 }
 
 

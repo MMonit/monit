@@ -243,6 +243,7 @@
 		52A31C821A6531D8009D3D83 /* libmonit.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libmonit.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		52B889F930B7883F0011AAAB /* URL.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = URL.h; sourceTree = "<group>"; };
 		52B889FA30B7883F0011AAAB /* URL.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = URL.c; sourceTree = "<group>"; };
+		52B889FF30B7ADD60011AAAB /* URLTest.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = URLTest.c; sourceTree = "<group>"; };
 		52D7964A13A6CE560014CED2 /* Bootstrap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; path = Bootstrap.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		52D7964B13A6CE560014CED2 /* Bootstrap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Bootstrap.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		52D7964C13A6CE560014CED2 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Config.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
@@ -400,6 +401,7 @@
 				52936F8413A5212700FC4089 /* SystemTest.c */,
 				52936F8613A5212700FC4089 /* TimeTest.c */,
 				529303F3306DCAD500FF94AD /* ThreadTest.c */,
+				52B889FF30B7ADD60011AAAB /* URLTest.c */,
 			);
 			path = test;
 			sourceTree = "<group>";

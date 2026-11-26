@@ -919,12 +919,12 @@ group[ \t]+       {
                   }
 
   [/][^?#\r\n ]*  {
-                      yylval.url->path = URL_escape(yytext);
+                      yylval.url->path = URL_ensureEscaped(yytext);
                   }
 
   [?][^#\r\n ]*   {
                       if (yytext[1])
-                                yylval.url->query = URL_escape(yytext + 1);
+                                yylval.url->query = URL_ensureEscaped(yytext + 1);
                   }
 
   [#][^\r\n ]*    {

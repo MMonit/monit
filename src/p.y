@@ -2190,11 +2190,11 @@ method          : METHOD GET {
                 ;
 
 request         : REQUEST PATH {
-                        portset.parameters.http.request = URL_escape($2);
+                        portset.parameters.http.request = URL_ensureEscaped($2);
                         FREE($2);
                   }
                 | REQUEST STRING {
-                        portset.parameters.http.request = STR_DEF($2) ? URL_escape($2) : NULL;
+                        portset.parameters.http.request = STR_DEF($2) ? URL_ensureEscaped($2) : NULL;
                         FREE($2);
                   }
                 ;
