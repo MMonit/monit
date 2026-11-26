@@ -9,13 +9,17 @@ Fixed: INCOMPATIBLE CHANGE: Monit used to send URL encoded characters in the "se
        Workaround: use a password without these characters for Monit < 6.2.0 and M/Monit >= 4.4.0.
 
 Fixed: A ":" written as is in the password part of a "set mmonit <url>" or "if failed url <url>", instead of %3A escape sequence,
-       made Monit send the request without any credentials, so M/Monit login failed. The "monit -t" syntax check reported no
-       error though.
+       made Monit send the request without any credentials, so M/Monit login failed. The "monit -t" syntax check now
+       reports this as an error.
        
 Fixed: Monit could escape an URL that was already escaped. A %20 in the path or query was sent as %2520.
        It happened in "set mmonit <url>" and in "if failed url <url>". It also happened in the "request" option
-       of the HTTP protocol test. Monit now sends the escape sequence as you wrote it monitrc. It also ensures that
-       any URL unsafe chars that are not escaped are escaped.
+       of the HTTP protocol test. Monit now sends the escape sequence as you wrote it in monitrc. It also ensures
+       that any URL unsafe chars that are not escaped are escaped.
+       
+Fixed: A URL with a "@" after the host, as in "if failed url http://localhost:8080/@joe", was read wrong and Monit
+       tested another host. A TAB after a URL was read as part of the URL. Monit now reports an error if a "/", "?"
+       or "#" character is written as is in the password of a URL. Write them as %2F, %3F and %23.
 
 Fixed: Programs that Monit starts (start, stop and restart programs, check programs and exec actions) ran with SIGHUP
        ignored, and a shell script among them could not even trap it. A program that reloads on SIGHUP never got one.
