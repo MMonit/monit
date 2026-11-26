@@ -46,10 +46,10 @@ how much memory or cpu cycles a process is using.
 You can also use Monit to monitor B<files>, B<directories> and
 B<filesystems> on localhost. Monit can monitor these items for changes,
 such as timestamps changes, checksum changes or size changes. This is
-also useful for security reasons - you can monitor the md5, sha1, or sha256
-checksum of files that should not change and get an alert or perform an
-action if they should change. SHA256 is recommended for better cryptographic
-security.
+also useful for security reasons - you can monitor the md5, sha1, or
+sha256 checksum of files that should not change and get an alert or
+perform an action if they should change. SHA256 is recommended for
+better cryptographic security.
 
 Monit can monitor B<network connections> to various servers, either on
 localhost or on remote hosts. TCP, UDP and Unix Domain Sockets are
@@ -371,10 +371,11 @@ call the entry's start method if defined.
 <regex> is an alternative to using PID files and uses process name
 pattern matching to find the process to monitor. The top-most matching
 parent with highest uptime is selected, so this form of check is most
-useful if the process name is unique. Pid-file should be used where possible
-as it defines expected PID exactly. You can test if a process match a pattern
-from the command-line using C<monit procmatch "regex-pattern">. This will
-lists all processes matching or not, the regex-pattern.
+useful if the process name is unique. Pid-file should be used where
+possible as it defines expected PID exactly. You can test if a process
+match a pattern from the command-line using C<monit procmatch
+"regex-pattern">. This will lists all processes matching or not, the
+regex-pattern.
 
 =head3 File
 
@@ -453,8 +454,9 @@ statement).
 
     CHECK NETWORK <unique name> <ADDRESS <ipaddress> | INTERFACE <name>>
 
-<ipaddress> is the IPv4 or IPv6 address of the monitored network interface. It
-is also possible to use interface name, such as "eth0" on Linux.
+<ipaddress> is the IPv4 or IPv6 address of the monitored network
+interface. It is also possible to use interface name, such as "eth0" on
+Linux.
 
 
 
@@ -594,8 +596,8 @@ stopped" notification goes to M/Monit only, not by mail, and the results
 of the service stops are only logged.
 
 The C<shutdownTimeout> limit counts from SIGTERM. Set it to the stop
-timeout of your container runtime, which kills the container if it has not
-stopped in time:
+timeout of your container runtime, which kills the container if it has
+not stopped in time:
 
   set limits { shutdownTimeout: 30 s }
 
@@ -678,19 +680,21 @@ Example of allowed protocols list:
   }
 
 I<VERIFY> enable or disable SSL server certificate verification. When
-enabled, Monit reports an error and the test fails if the server certificate
-is not trusted, is not valid, has expired, or does not match the host Monit
-connects to (the certificate's subjectAltName/CN is checked against the host).
-Certificate verification is B<enabled by default> since version 6.1.0 (it was
-disabled by default in earlier versions); use I<verify: disable> to turn it
-off. Disabling verification means there is no guarantee that Monit speaks with
-the server you think it speaks with.
+enabled, Monit reports an error and the test fails if the server
+certificate is not trusted, is not valid, has expired, or does not
+match the host Monit connects to (the certificate's subjectAltName/CN
+is checked against the host). Certificate verification is B<enabled by
+default> since version 6.1.0 (it was disabled by default in earlier
+versions); use I<verify: disable> to turn it off. Disabling
+verification means there is no guarantee that Monit speaks with the
+server you think it speaks with.
 
-I<SELFSIGNED> self-signed certificates are rejected by default (as they cannot
-be verified against a trusted CA). Use this option to accept a self-signed
-certificate. Warning: not recommended in production for security reasons, as
-in such case the client cannot verify it talks to the correct server and
-attack types like man-in-the-middle or DNS hijacking are possible.
+I<SELFSIGNED> self-signed certificates are rejected by default (as they
+cannot be verified against a trusted CA). Use this option to accept a
+self-signed certificate. Warning: not recommended in production for
+security reasons, as in such case the client cannot verify it talks to
+the correct server and attack types like man-in-the-middle or DNS
+hijacking are possible.
 
 I<CIPHERS> override default SSL/TLS ciphers.
 
@@ -700,8 +704,8 @@ monit HTTP interface.
 
 As an alternative to setting I<PEMFILE> with a combined chain-key file,
 I<PEMCHAIN> and I<PEMKEY> set the path to the SSL certificate chain and
-the server private key file respectively, both in PEM format. This option
-has effect only for the monit HTTP interface.
+the server private key file respectively, both in PEM format. This
+option has effect only for the monit HTTP interface.
 
 I<CLIENTPEMFILE> set the path to the PEM encoded SSL client certificates
 database file. If set, a client certificate authentication is enabled.
@@ -734,7 +738,7 @@ override or extend the global settings.
 To set global SSL options, put this statement near the top of your
 I<.monitrc> file:
 
-    set ssl options {...}
+  set ssl options {...}
 
 Here is an example of setting both global and local SSL options:
 
@@ -764,8 +768,8 @@ Here is an example of setting both global and local SSL options:
 
 =head1 FIPS MODE
 
-To enable FIPS mode (provided your OpenSSL library supports it), add this
-statement to Monit control file:
+To enable FIPS mode (provided your OpenSSL library supports it), add
+this statement to Monit control file:
 
   SET FIPS
 
@@ -906,13 +910,14 @@ Example for using separate certificate chain and key:
 You can now use L<https://localhost:2812/|https://localhost:2812/> to
 access the Monit web server over a TLS encrypted connection.
 
-Self-signed server certificates note: The Monit CLI works on a client-server
-basis and uses the Monit HTTP GUI to collect status from the Monit daemon and
-pass commands like start/stop to it. As self-signed certificates are rejected
-by default for security reasons, the CLI won't work unless you explicitly allow
-it by using the I<SELFSIGNED: ALLOW> option:
+Self-signed server certificates note: The Monit CLI works on a
+client-server basis and uses the Monit HTTP GUI to collect status from
+the Monit daemon and pass commands like start/stop to it. As
+self-signed certificates are rejected by default for security reasons,
+the CLI won't work unless you explicitly allow it by using the
+I<SELFSIGNED: ALLOW> option:
 
-  set httpd
+ set httpd
      port 2812
      with ssl {
         pemfile: /etc/ssl/certs/monit.pem
@@ -923,13 +928,13 @@ it by using the I<SELFSIGNED: ALLOW> option:
 B<CLIENTPEMFILE> enables a client certificate based authentication and
 sets the path to a PEM encoded database file, that contains a list of
 allowed client certificates. A connecting client has to provide a
-certificate known to Monit (listed in I<clientpemfile>), otherwise it is
-rejected. This file must also include all necessary CA certificates. By
-default self-signed client certificates are B<rejected> for security
-reasons, if you want to allow self-signed client certificates (recommended
-only for testing), you have to allow it explicitly using the B<SELFSIGNED:
-ALLOW> option (see the example above). See your browser's documentation
-for how to import client certificate to it.
+certificate known to Monit (listed in I<clientpemfile>), otherwise it
+is rejected. This file must also include all necessary CA certificates.
+By default self-signed client certificates are B<rejected> for security
+reasons, if you want to allow self-signed client certificates
+(recommended only for testing), you have to allow it explicitly using
+the B<SELFSIGNED: ALLOW> option (see the example above). See your
+browser's documentation for how to import client certificate to it.
 
 Example:
 
@@ -945,10 +950,10 @@ Example:
 B<SIGNATURE> can be used to hide Monit version from the
 HTTP response header and error pages. For example:
 
-  set httpd
-    port 2812
-    signature disable
-    allow myuser:mypassword
+ set httpd
+     port 2812
+     signature disable
+     allow myuser:mypassword
 
 =head2 Authentication
 
@@ -3963,6 +3968,10 @@ For example:
     request "/data/show?a=b&c=d"
  then restart
 
+Monit automatically URL-encodes the characters in the request as
+needed. For example, a space is encoded and sent as %20. If you
+URL-encode the text yourself, the text is sent as is.
+
 I<METHOD> set the HTTP request method. If not specified, Monit prefers
 the HTTP GET request method, which is more common then the HEAD method.
 One may want to set the method explicitly to HEAD to save the network
@@ -4045,6 +4054,29 @@ For example:
      protocol http
      content = "foobar [0-9.]+"
   then alert
+
+
+Note, the previous I<if failed url> statement is deprecated, but can
+alternatively be used. Use a port test with I<protocol http> or
+I<protocol https> instead. For example, write
+
+  if failed url http://monit:secret@example.com:8080/status
+     and content == "running"
+  then alert
+
+as
+
+  if failed
+     host example.com
+     port 8080
+     protocol http
+     username "monit"
+     password "secret"
+     request "/status"
+     content == "running"
+  then alert
+
+Write the username and password as they are, without URL-encoding.
 
 
 =head4 APACHE-STATUS
@@ -4351,10 +4383,9 @@ provides monitoring and management of all your Monit enabled hosts.
 M/Monit uses Monit as an agent. With regular intervals, Monit sends a
 status message to M/Monit with a snapshot of the host it is running on.
 
-M/Monit presents the collected data in charts and event logs and give
-you the option to view key performance data of all your hosts in a
-modern, clean and well designed user interface which also works on
-mobile devices.
+M/Monit presents the collected data in charts and event logs so you can
+view key performance data of all your hosts in a modern, clean and well
+designed user interface which also works on mobile devices.
 
 From M/Monit, you can also start, stop and restart services on your
 hosts running Monit.
@@ -4376,12 +4407,12 @@ event messages to M/Monit. We recommend using I<https> as in the
 example above to ensure that the communication between Monit and
 M/Monit is secure.
 
-If the username or password contains a character that has a meaning in a
-URL, such as "@", ":", "/", "?", "#", "%" or a space, URL encode it: "@" as
-%40, ":" as %3A, "%" as %25 and so on. Monit decodes them before it sends
-them to M/Monit.
+If the username or password contains a character that has a meaning in
+a URL, such as "@", ":", "/", "?", "#", "%" or a space, URL-encode it:
+"@" as %40, ":" as %3A, "%" as %25 and so on. Monit decodes them before
+it sends them to M/Monit.
 
-The username cannot contain ":", not even encoded as %3A: HTTP basic
+The username cannot contain ":", not even encoded as %3A. HTTP basic
 authentication sends "username:password" and ends the username at the
 first ":". The password can contain ":", but it must be written as %3A.
 
@@ -4812,11 +4843,11 @@ The following environment variables can be used for debugging:
 
 =item SSLKEYLOGFILE
 
-To debug the SSL/TLS connections, Monit supports the SSLKEYLOGFILE=<path>
-environment variable in debug mode (with the -v option). The log file can
-be used with Wireshark to decrypt the SSL/TLS communication (set the path
-to the logfile in Wireshark's "Settings -> Protocols -> TLS ->
-(Pre)-Master-Secret log filename".
+To debug the SSL/TLS connections, Monit supports the
+SSLKEYLOGFILE=<path> environment variable in debug mode (with the -v
+option). The log file can be used with Wireshark to decrypt the SSL/TLS
+communication (set the path to the logfile in Wireshark's "Settings ->
+Protocols -> TLS -> (Pre)-Master-Secret log filename".
 
 =back
 
