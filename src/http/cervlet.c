@@ -845,6 +845,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                             " a:hover {text-decoration: none;} "\
                             " a {text-decoration: underline;color:#222} "\
                             " table {border-collapse:collapse; border:0;} "\
+                            " pre {overflow:auto;} "\
                             " .stripe {background:#EDF5FF} "\
                             " .rule {background:#ddd} "\
                             " .red-text {color:#ff0000;} "\
@@ -871,7 +872,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                             " #header-row th {padding:30px 10px 10px 10px;font-size:120%%;} "\
                             " #header-row td {padding:3px 10px;} "\
                             " #header-row .first {min-width:200px;width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} "\
-                            " #status-table {width:95%%;} "\
+                            " #status-table {width:95%%;table-layout:fixed;word-wrap:break-word;} "\
                             " #status-table th {text-align:left;background:#edf5ff;font-weight:normal;} "\
                             " #status-table th, #status-table td, #status-table tr {border:1px solid #ccc;padding:5px;} "\
                             " #buttons {font-size:20px; margin:40px 0 20px 0;} "\
