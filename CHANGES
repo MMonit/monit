@@ -17,6 +17,10 @@ Fixed: Programs that Monit starts (start, stop and restart programs, check progr
 
 Fixed: The MySQL protocol test over a unix socket failed with "Access denied" for an account that uses caching_sha2_password.
 
+Fixed: GitHub issue #5: The IMAP protocol test with STARTTLS (IMAPS on port 143) and the MySQL protocol test with TLS (MYSQLS)
+       ignored the SSL options of the test and used the global "set ssl options" only. A test "with ssl options
+       {selfsigned: allow}" or "{verify: disable}" thus failed on a self-signed certificate since Monit 6.1.0.
+
 
 Version 6.1.0
 

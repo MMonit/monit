@@ -70,7 +70,7 @@ void check_imap(Socket_T socket) {
                         THROW(ProtocolException, "IMAP: invalid logout response: %s", buf);
 
                 // Switch to TLS
-                Socket_enableSsl(socket, &(Run.ssl));
+                Socket_enableSsl(socket, &(port->target.net.ssl.options));
         }
 
         // Send LOGOUT command
