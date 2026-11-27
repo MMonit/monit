@@ -38,6 +38,10 @@ Fixed: GitHub issue #5: The IMAP protocol test with STARTTLS (IMAPS on port 143)
        ignored the SSL options of the test and used the global "set ssl options" only. A test "with ssl options
        {selfsigned: allow}" or "{verify: disable}" thus failed on a self-signed certificate since Monit 6.1.0.
 
+Fixed: The MySQL protocol test with TLS (MYSQLS) failed with "SSL connection error ... wrong version number" if an SSL
+       option ("with ssl options {...}", "certificate valid > ..." or "certificate checksum ...") was written after
+       "protocol mysqls" in the statement. The order of the options no longer matters.
+
 
 Version 6.1.0
 

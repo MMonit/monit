@@ -219,6 +219,7 @@ static struct Match_T matchset = {};
 static struct Icmp_T icmpset = {};
 static struct Mail_T mailset = {};
 static struct SslOptions_T sslset = {};
+static bool starttls = false;
 static struct Port_T portset = {};
 static struct MailServer_T mailserverset = {};
 static struct Mmonit_T mmonitset = {};
@@ -1956,6 +1957,7 @@ protocol        : PROTOCOL APACHESTATUS apache_stat_list {
                   }
                 | PROTOCOL MYSQLS mysqllist {
                         sslset.flags = SSL_StartTLS;
+                        starttls = true;
                         portset.protocol = Protocol_get(Protocol_MYSQL);
                   }
                 | PROTOCOL NNTP {
@@ -4232,7 +4234,7 @@ static void addport(Port_T *list, Port_T port) {
                 if (sslset.flags) {
 #ifdef HAVE_OPENSSL
                         p->target.net.ssl.certificate.minimumDays = port->target.net.ssl.certificate.minimumDays;
-                        if (sslset.flags && (p->target.net.port == 25 || p->target.net.port == 143 || p->target.net.port == 587))
+                        if (sslset.flags && (starttls || p->target.net.port == 25 || p->target.net.port == 143 || p->target.net.port == 587))
                                 sslset.flags = SSL_StartTLS;
                         _setSSLOptions(&(p->target.net.ssl.options));
 #else
@@ -5491,6 +5493,7 @@ static void setsyslog(char *facility) {
 static void reset_sslset(void) {
         memset(&sslset, 0, sizeof(struct SslOptions_T));
         sslset.version = sslset.verify = sslset.allowSelfSigned = -1;
+        starttls = false;
 }
 
 
