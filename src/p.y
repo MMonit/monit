@@ -1529,8 +1529,7 @@ checksystem     : CHECKSYSTEM SERVICENAME {
                         if (Str_sub(servicename, "$HOST")) {
                                 char hostname[STRLEN];
                                 if (gethostname(hostname, sizeof(hostname))) {
-                                        Log_error("System hostname error -- %s\n", STRERROR);
-                                        cfg_errflag++;
+                                        yyerror2("System hostname error -- %s", STRERROR);
                                 } else {
                                         Util_replaceString(&servicename, "$HOST", hostname);
                                 }
@@ -3622,9 +3621,8 @@ reminder        : /* EMPTY */           { mailset.reminder = 0; }
 
 
 /*
- * Syntactic error routine
- *
- * This routine is automatically called by the lexer!
+ * Syntactic error routine. This routine is automatically
+ * called by the parser or lexer on a syntax error
  */
 void yyerror(const char *s, ...) {
         assert(s);
@@ -3655,7 +3653,10 @@ void yywarning(const char *s, ...) {
 
 
 /*
- * Argument error routine
+ * Argument error routine. Reports the error with the location and the last
+ * argument of the statement being read, or the error alone when there is
+ * no such statement: after the control file is read. Use this routine to
+ * report a semantic error
  */
 void yyerror2(const char *s, ...) {
         assert(s);
@@ -3664,7 +3665,10 @@ void yyerror2(const char *s, ...) {
         va_start(ap, s);
         msg = Str_vcat(s, ap);
         va_end(ap);
-        Log_error("%s:%i: %s '%s'\n", yyruleloc.file, yyruleloc.line, msg, argyytext);
+        if (yyruleloc.line)
+                Log_error("%s:%i: %s '%s'\n", yyruleloc.file, yyruleloc.line, msg, argyytext);
+        else
+                Log_error("%s\n", msg);
         cfg_errflag++;
         FREE(msg);
 }
@@ -3863,11 +3867,40 @@ static void preparse(void) {
 
 
 /*
+ * Validate a service, service group or host group name. Returns NULL if
+ * this is a valid name (after trim), otherwise returns an error string
+ * for the caller to report. A name is valid if it;
+ * - Is not empty
+ * - Is shorter than STRLEN bytes
+ * - Is valid UTF-8
+ * - Does not contain a control character nor a double quote
+ */
+static const char *_validateName(char *name) {
+        Str_trim(name);
+        if (STR_UNDEF(name))
+                return "must not be empty";
+        if (Str_ge(name, STRLEN))
+                return "is too long -- the maximum is 255 bytes";
+        if (! Str_isUTF8(name))
+                return "must be valid UTF-8";
+        for (const unsigned char *c = (const unsigned char *)name; *c; c++) {
+                if (*c < 32 || *c == 127)
+                        return "must not contain a control character";
+                if (*c == '"')
+                        return "must not contain a double quote";
+        }
+        return NULL;
+}
+
+
+/*
  * Check that values are reasonable after parsing
  */
 static void postparse(void) {
         if (cfg_errflag)
                 return;
+
+        yyruleloc.line = 0; // No statement is being read from here on
 
         /* If defined - add the last service to the service list */
         if (current) {
@@ -3877,8 +3910,7 @@ static void postparse(void) {
 
         /* Check that we do not start monit in daemon mode without having a poll time */
         if (Run.polltime <= 0 && ((Run.flags & Run_Daemon) || (Run.flags & Run_Foreground))) {
-                Log_error("Poll time is invalid or not defined. Please define poll time in the control file\nas a number (> 0) or use the -d option when starting monit\n");
-                cfg_errflag++;
+                yyerror2("Poll time is invalid or not defined. Please define poll time in the control file\nas a number (> 0) or use the -d option when starting monit");
         }
 
         if (Run.files.log)
@@ -3888,12 +3920,19 @@ static void postparse(void) {
         if (! Run.system) {
                 char hostname[STRLEN];
                 if (gethostname(hostname, sizeof(hostname))) {
-                        Log_error("Cannot get system hostname -- please add 'check system <name>'\n");
-                        cfg_errflag++;
+                        yyerror2("Cannot get system hostname -- please add 'check system <name>'");
+                        return;
+                }
+                const char *error = _validateName(hostname);
+                if (! error && strchr(hostname, '<'))
+                        error = "must not contain '<'";
+                if (error) {
+                        yyerror2("'check system' not defined in control file, failed to add automatic configuration (the hostname cannot be the service name, which %s) -- please add 'check system <name>' manually", error);
+                        return;
                 }
                 if (Service_exists(hostname)) {
-                        Log_error("'check system' not defined in control file, failed to add automatic configuration (service name %s is used already) -- please add 'check system <name>' manually\n", hostname);
-                        cfg_errflag++;
+                        yyerror2("'check system' not defined in control file, failed to add automatic configuration (service name %s is used already) -- please add 'check system <name>' manually", hostname);
+                        return;
                 }
                 Run.system = createservice(Service_System, Str_dup(hostname), NULL, check_system);
                 addservice(Run.system);
@@ -3959,6 +3998,9 @@ static Service_T createservice(Service_Type type, char *name, char *value, State
         assert(name);
 
         check_name(name);
+        // Also written as text in the XML for M/Monit, where a '<' ends it
+        if (type == Service_System && strchr(name, '<'))
+                yyerror2("The system service name must not contain '<'");
 
         if (current)
                 addservice(current);
@@ -4125,8 +4167,9 @@ static void addservicegroup(char *name) {
 
         assert(name);
 
-        if (Str_ge(name, STRLEN))
-                yyerror2("Service group name is too long -- the maximum is %d bytes", STRLEN - 1);
+        const char *error = _validateName(name);
+        if (error)
+                yyerror2("Service group name %s", error);
 
         /* Check if service group with the same name is defined already */
         for (g = Service_Group_List; g; g = g->next)
@@ -4149,8 +4192,9 @@ static void addservicegroup(char *name) {
  * Add entry to M/Monit hostgroup membership list
  */
 static void addhostgroup(char *name) {
-        if (Str_ge(name, STRLEN))
-                yyerror2("Host group name is too long -- the maximum is %d bytes", STRLEN - 1);
+        const char *error = _validateName(name);
+        if (error)
+                yyerror2("Host group name %s", error);
         if (! mmonitset.hostgroups)
                 mmonitset.hostgroups = List_new();
         List_append(mmonitset.hostgroups, name);
@@ -4164,6 +4208,10 @@ static void adddependant(char *dependant) {
         Dependant_T d;
 
         assert(dependant);
+
+        const char *error = _validateName(dependant);
+        if (error)
+                yyerror2("Service name %s", error);
 
         NEW(d);
 
@@ -5769,17 +5817,22 @@ static void reset_rateset(struct rate_t *r) {
 
 
 /*
- * Check for unique service name
+ * Check service name for validity. The name is valid if it complies with
+ * _validateName's rules and;
+ * - Is unique
+ * - Does not start with '/'
  */
 static void check_name(char *name) {
         assert(name);
-
+        const char *error = _validateName(name);
+        if (error) {
+                yyerror2("Service name %s", error);
+                return;
+        }
         if (Service_exists(name) || (current && IS(name, current->name)))
                 yyerror2("Service name conflict, %s already defined", name);
         if (name && *name == '/')
                 yyerror2("Service name '%s' must not start with '/' -- ", name);
-        if (Str_ge(name, STRLEN))
-                yyerror2("Service name is too long -- the maximum is %d bytes", STRLEN - 1);
 }
 
 
