@@ -150,6 +150,7 @@
 #include "io/File.h"
 #include "util/Str.h"
 #include "thread/Thread.h"
+#include "net/URL.h"
 
 
 /* ------------------------------------------------------------- Definitions */
@@ -1701,6 +1702,7 @@ connectionopt   : ip
                 ;
 
 connectionurl   : IF FAILED URL URLOBJECT connectionurloptlist rate1 THEN action1 recovery_success {
+                        yydeprecated("'if failed url' is deprecated, use 'if failed port' with 'protocol http' or 'protocol https' instead");
                         portset.check_invers = false;
                         portset.responsetime.operator = responsetimeset.operator;
                         portset.responsetime.limit = responsetimeset.limit;
@@ -1709,6 +1711,7 @@ connectionurl   : IF FAILED URL URLOBJECT connectionurloptlist rate1 THEN action
                         addport(&(current->portlist), &portset);
                   }
                 | IF SUCCEEDED URL URLOBJECT connectionurloptlist rate1 THEN action1 recovery_failure {
+                        yydeprecated("'if succeeded url' is deprecated, use 'if succeeded port' with 'protocol http' or 'protocol https' instead");
                         portset.check_invers = true;
                         portset.responsetime.operator = responsetimeset.operator;
                         portset.responsetime.limit = responsetimeset.limit;
@@ -2189,11 +2192,11 @@ method          : METHOD GET {
                 ;
 
 request         : REQUEST PATH {
-                        portset.parameters.http.request = Util_urlEncode($2, false);
+                        portset.parameters.http.request = URL_ensureEscaped($2);
                         FREE($2);
                   }
                 | REQUEST STRING {
-                        portset.parameters.http.request = Util_urlEncode($2, false);
+                        portset.parameters.http.request = STR_DEF($2) ? URL_ensureEscaped($2) : NULL;
                         FREE($2);
                   }
                 ;
@@ -3997,7 +4000,7 @@ static Service_T createservice(Service_Type type, char *name, char *value, State
         current->monitor  = Monitor_Init;
         current->onreboot = Run.onreboot;
         current->name     = name;
-        current->name_urlescaped = Util_urlEncode(name, false);
+        current->name_urlescaped = URL_escape(name);
         current->name_htmlescaped = escapeHTML(StringBuffer_create(16), name);
         current->check    = check;
         current->path     = value;
@@ -4166,7 +4169,7 @@ static void adddependant(char *dependant) {
                 d->next = current->dependantlist;
 
         d->dependant = dependant;
-        d->dependant_urlescaped = Util_urlEncode(dependant, false);
+        d->dependant_urlescaped = URL_escape(dependant);
         d->dependant_htmlescaped = escapeHTML(StringBuffer_create(16), dependant);
         current->dependantlist = d;
 

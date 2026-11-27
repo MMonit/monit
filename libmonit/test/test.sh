@@ -19,4 +19,5 @@ OutputStreamTest && \
 FileTest && \
 ExceptionTest && \
 NetTest && \
-CommandTest
+CommandTest && \
+URLTest

@@ -75,6 +75,7 @@
 // libmonit
 #include "util/Str.h"
 #include "system/Net.h"
+#include "net/URL.h"
 
 
 /**
@@ -117,7 +118,7 @@ static void done(HttpRequest, HttpResponse);
 static void destroy_HttpRequest(HttpRequest);
 static void reset_response(HttpResponse res);
 static HttpParameter parse_parameters(char *);
-static bool create_parameters(HttpRequest req);
+static bool create_parameters(HttpRequest req, const char *query);
 static void destroy_HttpResponse(HttpResponse);
 static HttpRequest create_HttpRequest(Socket_T);
 static void internal_error(Socket_T, int, const char *);
@@ -438,6 +439,15 @@ const char *get_status_string(int status) {
 /* ----------------------------------------------------------------- Private */
 
 
+static bool _hasControlCharacter(const char *s) {
+        for (const unsigned char *c = (const unsigned char *)s; c && *c; c++) {
+                if (*c < 0x20 || *c == 0x7f)
+                        return true;
+        }
+        return false;
+}
+
+
 /**
  * Receives standard HTTP requests from a client socket and dispatches
  * them to the doXXX methods defined in a cervlet module.
@@ -560,13 +570,18 @@ static HttpRequest create_HttpRequest(Socket_T S) {
                 internal_error(S, SC_BAD_REQUEST, "[error] URL too long");
                 return NULL;
         }
-        Util_urlDecode(url);
+        char *query = NULL;
+        if (Str_isEqual(method, METHOD_GET) && (query = strchr(url, '?')))
+                *query++ = 0;
+        if (! *url) {
+                internal_error(S, SC_BAD_REQUEST, "Cannot parse request");
+                return NULL;
+        }
+        URL_unescape(url);
         // Reject control characters (CR, LF, etc.) in the decoded URL
-        for (const unsigned char *p = (const unsigned char *)url; *p; p++) {
-                if (*p < 0x20 || *p == 0x7f) {
-                        internal_error(S, SC_BAD_REQUEST, "Invalid control character in URL");
-                        return NULL;
-                }
+        if (_hasControlCharacter(url)) {
+                internal_error(S, SC_BAD_REQUEST, "Invalid control character in URL");
+                return NULL;
         }
         HttpRequest req = NULL;
         NEW(req);
@@ -579,7 +594,7 @@ static HttpRequest create_HttpRequest(Socket_T S) {
                 destroy_HttpRequest(req);
                 return NULL;
         }
-        if (! create_parameters(req)) {
+        if (! create_parameters(req, query)) {
                 internal_error(S, SC_BAD_REQUEST, "Cannot parse Request parameters");
                 destroy_HttpRequest(req);
                 return NULL;
@@ -637,10 +652,10 @@ static bool create_headers(HttpRequest req) {
 
 
 /**
- * Create parameters for the given request. Returns false if an error
- * occurs.
+ * Create parameters for the given request, from the body of a POST or
+ * the query of a GET. Returns false if an error occurs.
  */
-static bool create_parameters(HttpRequest req) {
+static bool create_parameters(HttpRequest req, const char *query) {
         char *query_string = NULL;
         if (IS(req->method, METHOD_POST)) {
                 int len;
@@ -655,12 +670,8 @@ static bool create_parameters(HttpRequest req) {
                                 return false;
                         }
                 }
-        } else if (IS(req->method, METHOD_GET)) {
-                char *p = strchr(req->url, '?');
-                if (p) {
-                        *p++ = 0;
-                        query_string = Str_dup(p);
-                }
+        } else if (query) {
+                query_string = Str_dup(query);
         }
         if (query_string) {
                 if (*query_string) {
@@ -672,11 +683,9 @@ static bool create_parameters(HttpRequest req) {
                         req->params = parse_parameters(query_string);
                         // Reject control characters in the decoded parameters
                         for (HttpParameter param = req->params; param; param = param->next) {
-                                for (const unsigned char *c = (const unsigned char *)param->value; c && *c; c++) {
-                                        if (*c < 0x20 || *c == 0x7f) {
-                                                FREE(query_string);
-                                                return false;
-                                        }
+                                if (_hasControlCharacter(param->name) || _hasControlCharacter(param->value)) {
+                                        FREE(query_string);
+                                        return false;
                                 }
                         }
                 }
@@ -935,8 +944,8 @@ static HttpParameter parse_parameters(char *query_string) {
                         if (! key)
                                 goto error;
                         NEW(p);
-                        p->name = key;
-                        p->value = Util_urlDecode(value);
+                        p->name = URL_unescape(key);
+                        p->value = URL_unescape(value);
                         p->next = head;
                         head = p;
                         key = NULL;

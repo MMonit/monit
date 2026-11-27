@@ -19,7 +19,8 @@ noinst_PROGRAMS = StrTest \
                   NetTest \
                   TimeTest \
                   ThreadTest \
-                  CommandTest
+                  CommandTest \
+                  URLTest
 
 StrTest_SOURCES = StrTest.c
 NumTest_SOURCES = NumTest.c
@@ -38,6 +39,7 @@ ExceptionTest_SOURCES = ExceptionTest.c
 NetTest_SOURCES = NetTest.c
 TimeTest_SOURCES = TimeTest.c
 ThreadTest_SOURCES = ThreadTest.c
+URLTest_SOURCES = URLTest.c
 
 DISTCLEANFILES = *~ 
 

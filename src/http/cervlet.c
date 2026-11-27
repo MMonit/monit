@@ -251,58 +251,46 @@ static void _printServiceSummary(TextBox_T t, Service_T s) {
 }
 
 
-static void _serviceMapByName(const char *pattern, void (*callback)(Service_T s, ServiceMap_T ap), ServiceMap_T ap) {
-        // Check the service name using the following sequence:
-        // 1) if the pattern is NULL, any service will match
-        // 2) backard compatibility: before monit 5.28.0 there was no support for regular expresion => check verbatim match before trying regex (the service may contain special characters)
-        // 3) regex match
-        if (pattern) {
-                int rv;
-                regex_t r;
-                char patternEscaped[STRLEN];
-                const char *patternCursor;
-
-                // If the pattern doesn't contain "^" or "$" already, wrap it as "^<pattern>$" to prevent match with services that contain the given substring only
-                if (! Str_has("^$", pattern)) {
-                        snprintf(patternEscaped, sizeof(patternEscaped), "^%s$", pattern);
-                        patternCursor = patternEscaped;
-                } else {
-                        patternCursor = pattern;
+static void _serviceMapByPattern(const char *pattern, void (*callback)(Service_T s, ServiceMap_T ap), ServiceMap_T ap) {
+        regex_t r;
+        char anchored[STRLEN];
+        // If the pattern doesn't contain "^" or "$" already, wrap it as "^(<pattern>)$" to prevent match with services that contain the given substring only
+        if (! Str_has("^$", pattern)) {
+                snprintf(anchored, sizeof(anchored), "^(%s)$", pattern);
+                pattern = anchored;
+        }
+        int rv = regcomp(&r, pattern, REG_NOSUB | REG_EXTENDED | REG_ICASE);
+        if (rv) {
+                char error[STRLEN];
+                regerror(rv, &r, error, sizeof(error));
+                DEBUG("Regex %s parsing error: %s\n", pattern, error);
+                return;
+        }
+        for (Service_T s = Service_List_Conf; s; s = s->next_conf) {
+                if (! regexec(&r, s->name, 0, NULL, 0)) {
+                        callback(s, ap);
+                        ap->found++;
                 }
-
-                // The pattern is set, try to compile it as regex
-                if ((rv = regcomp(&r, patternCursor, REG_NOSUB | REG_EXTENDED | REG_ICASE))) {
-                        // Pattern compilation failed, fallback to verbatim match (before monit 5.28.0 there was no support for regular expresion)
-                        char error[STRLEN];
-
-                        regerror(rv, &r, error, STRLEN);
-                        regfree(&r);
-                        DEBUG("Regex %s parsing error: %s\n", patternCursor, error);
-
-                        for (Service_T s = Service_List_Conf; s; s = s->next_conf) {
-                                if (IS(pattern, s->name)) { // Use the unescaped/original pattern
-                                        callback(s, ap);
-                                        ap->found++;
-                                }
-                        }
-                } else {
-                        // Regular expression match
-                        for (Service_T s = Service_List_Conf; s; s = s->next_conf) {
-                                if (! regexec(&r, s->name, 0, NULL, 0)) {
-                                        callback(s, ap);
-                                        ap->found++;
-                                }
-                        }
-                        regfree(&r);
-                }
+        }
+        regfree(&r);
+}
 
 
-        } else {
-                // Pattern is not set, any service will match
+// Map the service with the given name. If there is none, map every service the name matches as a regular expression. With no name, map every service
+static void _serviceMapByName(const char *name, void (*callback)(Service_T s, ServiceMap_T ap), ServiceMap_T ap) {
+        if (! name) {
                 for (Service_T s = Service_List_Conf; s; s = s->next_conf) {
                         callback(s, ap);
                         ap->found++;
                 }
+                return;
+        }
+        Service_T s = Service_get(name);
+        if (s) {
+                callback(s, ap);
+                ap->found++;
+        } else {
+                _serviceMapByPattern(name, callback, ap);
         }
 }
 
@@ -857,6 +845,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                             " a:hover {text-decoration: none;} "\
                             " a {text-decoration: underline;color:#222} "\
                             " table {border-collapse:collapse; border:0;} "\
+                            " pre {overflow:auto;} "\
                             " .stripe {background:#EDF5FF} "\
                             " .rule {background:#ddd} "\
                             " .red-text {color:#ff0000;} "\
@@ -883,7 +872,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                             " #header-row th {padding:30px 10px 10px 10px;font-size:120%%;} "\
                             " #header-row td {padding:3px 10px;} "\
                             " #header-row .first {min-width:200px;width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} "\
-                            " #status-table {width:95%%;} "\
+                            " #status-table {width:95%%;table-layout:fixed;word-wrap:break-word;} "\
                             " #status-table th {text-align:left;background:#edf5ff;font-weight:normal;} "\
                             " #status-table th, #status-table td, #status-table tr {border:1px solid #ccc;padding:5px;} "\
                             " #buttons {font-size:20px; margin:40px 0 20px 0;} "\

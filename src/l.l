@@ -60,6 +60,7 @@
 
 // libmonit
 #include "util/Str.h"
+#include "net/URL.h"
 
 
 // we don't use yyinput => do not generate it
@@ -874,7 +875,7 @@ group[ \t]+       {
                       if (! yylval.url->hostname)
                                 yyerror("missing hostname in URL");
                       if (yylval.url->password && ! yylval.url->user)
-                                yyerror("the URL username is missing or the password contains ':', write ':' in the password as %%3A");
+                                yyerror("the URL username is missing");
                       else if (! decode_userinfo(yylval.url->user) || ! decode_userinfo(yylval.url->password))
                                 yyerror("invalid '%%' escape in the URL username or password, write '%%' as %%25");
                       else if (yylval.url->user && strchr(yylval.url->user, ':'))
@@ -893,11 +894,16 @@ group[ \t]+       {
                       return URLOBJECT;
                   }
 
-  [^:@ ]+/[:][^@: ]+[@] {
-                      yylval.url->user = Str_dup(yytext);
+  [^:@/?# \t\r\n]+/[:][^@:/?# \t\r\n]+[@] {
+                      if (yylval.url->user) {
+                                yytext += yyleng; // yytext is a piece of the password here, keep it out of the message
+                                yyerror("the URL has more than one username and password, write '@' in the username or password as %%40");
+                      } else {
+                                yylval.url->user = Str_dup(yytext);
+                      }
                   }
 
-  [:][^@ ]+[@]    {
+  [:][^@:/?# \t\r\n]+[@] {
                       yytext++;
                       size_t length = strlen(yytext);
                       if (length > 0)
@@ -917,15 +923,24 @@ group[ \t]+       {
                       yylval.url->port = atoi(++yytext);
                   }
 
-  [/][^?#\r\n ]*  {
-                      yylval.url->path = Util_urlEncode(yytext, false);
+  [:]             {
+                      yyerror("the ':' in the URL is not followed by a port number or a password, in a password write ':' as %%3A, '/' as %%2F, '?' as %%3F and '#' as %%23");
                   }
 
-  [?][^#\r\n ]*   {
-                      yylval.url->query = Util_urlEncode(++yytext, false);
+  [@]             {
+                      yyerror("the '@' in the URL does not follow a username and password, write '@' in the username or password as %%40");
                   }
 
-  [#][^\r\n ]*    {
+  [/][^?# \t\r\n]* {
+                      yylval.url->path = URL_ensureEscaped(yytext);
+                  }
+
+  [?][^# \t\r\n]*  {
+                      if (yytext[1])
+                                yylval.url->query = URL_ensureEscaped(yytext + 1);
+                  }
+
+  [#][^ \t\r\n]*   {
                       /* EMPTY - reference is ignored */
                   }
 

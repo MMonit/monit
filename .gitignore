@@ -51,6 +51,7 @@ libmonit/test/ArrayTest
 libmonit/test/FmtTest
 libmonit/test/RandomTest
 libmonit/test/IntTest
+libmonit/test/URLTest
 
 monit
 monit.1
