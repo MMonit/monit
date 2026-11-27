@@ -949,7 +949,7 @@ static void do_about(HttpResponse res) {
                             "monit " VERSION "</a></center></h1>");
         StringBuffer_append(res->outputbuffer,
                             "<ul>"
-                            "<li style='padding-bottom:10px;'>Copyright &copy; 2001-2025 <a "
+                            "<li style='padding-bottom:10px;'>Copyright &copy; 2001-2026 <a "
                             "href='https://tildeslash.com/'>Tildeslash Ltd"
                             "</a>. All Rights Reserved.</li></ul>");
         StringBuffer_append(res->outputbuffer, "<hr size='1'>");
