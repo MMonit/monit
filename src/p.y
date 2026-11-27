@@ -3991,6 +3991,33 @@ static bool _parseOutgoingAddress(char *ip, Outgoing_T *outgoing) {
 
 
 /*
+ * Returns a new string with the name as one path segment of a URL, for
+ * a link. Escapes what URL_escape() does and the characters with a
+ * meaning in a URL, so only letters, digits and - . _ ~ are left as is
+ */
+static char *_urlEscapeName(const char *name) {
+        StringBuffer_T sb = StringBuffer_create(64);
+        for (const unsigned char *c = (const unsigned char *)name; *c; c++) {
+                if (URL_isunsafe(*c) || strchr("!$&'()*+,/:;=?@", *c))
+                        StringBuffer_append(sb, "%%%02X", *c);
+                else
+                        StringBuffer_append(sb, "%c", *c);
+        }
+        char *escaped = Str_dup(StringBuffer_toString(sb));
+        StringBuffer_free(&sb);
+        return escaped;
+}
+
+
+static char *_htmlEscapeName(const char *name) {
+        StringBuffer_T sb = escapeHTML(StringBuffer_create(64), name);
+        char *escaped = Str_dup(StringBuffer_toString(sb));
+        StringBuffer_free(&sb);
+        return escaped;
+}
+
+
+/*
  * Create a new service object and add any current objects to the
  * service list.
  */
@@ -4044,8 +4071,8 @@ static Service_T createservice(Service_Type type, char *name, char *value, State
         current->monitor  = Monitor_Init;
         current->onreboot = Run.onreboot;
         current->name     = name;
-        current->name_urlescaped = URL_escape(name);
-        current->name_htmlescaped = escapeHTML(StringBuffer_create(16), name);
+        current->name_urlescaped = _urlEscapeName(name);
+        current->name_htmlescaped = _htmlEscapeName(name);
         current->check    = check;
         current->path     = value;
 
@@ -4219,8 +4246,8 @@ static void adddependant(char *dependant) {
                 d->next = current->dependantlist;
 
         d->dependant = dependant;
-        d->dependant_urlescaped = URL_escape(dependant);
-        d->dependant_htmlescaped = escapeHTML(StringBuffer_create(16), dependant);
+        d->dependant_urlescaped = _urlEscapeName(dependant);
+        d->dependant_htmlescaped = _htmlEscapeName(dependant);
         current->dependantlist = d;
 
 }

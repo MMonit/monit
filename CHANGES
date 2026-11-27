@@ -29,6 +29,10 @@ Fixed: Monit did not find a service by its name if the name had regular expressi
 Fixed: A service name pattern with a "|", as in monit restart "web|db", also matched services whose name only
        starts with "web" or ends with "db". It now matches the services "web" and "db" only.
        
+Fixed: A link to a service in the Monit web interface did not work if the service name had a character with a
+       special meaning in a URL, for example "lost+found", "what?", "it's" or "a/b". The service page did not
+       open, or the buttons on it failed. Monit now escapes such characters in the link.
+       
 Fixed: Programs that Monit starts (start, stop and restart programs, check programs and exec actions) ran with SIGHUP
        ignored, and a shell script among them could not even trap it. A program that reloads on SIGHUP never got one.
 

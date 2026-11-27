@@ -805,7 +805,7 @@ typedef struct Icmp_T {
 typedef struct Dependant_T {
         char *dependant;                            /**< name of dependant service */
         char *dependant_urlescaped;     /**< URL escaped name of dependant service */
-        StringBuffer_T dependant_htmlescaped; /**< HTML escaped name of dependant service */
+        char *dependant_htmlescaped;   /**< HTML escaped name of dependant service */
 
         /** For internal use */
         struct Dependant_T *next;             /**< next dependant service in chain */
@@ -1260,7 +1260,7 @@ typedef struct Service_T {
         /** Common parameters */
         char *name;                                  /**< Service descriptive name */
         char *name_urlescaped;                       /**< Service name URL escaped */
-        StringBuffer_T name_htmlescaped;            /**< Service name HTML escaped */
+        char *name_htmlescaped;                     /**< Service name HTML escaped */
         State_Type (*check)(struct Service_T *);/**< Service verification function */
         bool onrebootRestored;
         bool visited; /**< Service visited flag, set if dependencies are used */

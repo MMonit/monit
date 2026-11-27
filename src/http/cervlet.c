@@ -756,7 +756,12 @@ static void doPost(HttpRequest req, HttpResponse res) {
             if (res->status <= 300) {
                 // #1009: Redirect back to the same url so a reload in the browser does not perform a POST again
                 set_status(res, SC_MOVED_TEMPORARILY);
-                set_header(res, "Location", "%s", req->url);
+                // req->url is the decoded path. For a service, redirect to its link, which has the name escaped
+                Service_T s = Service_get(req->url + 1);
+                if (s)
+                        set_header(res, "Location", "/%s", s->name_urlescaped);
+                else
+                        set_header(res, "Location", "%s", req->url);
             }
         }
 }
@@ -831,7 +836,6 @@ static void printFavicon(HttpResponse res) {
 
 
 static void do_head(HttpResponse res, const char *path, const char *name, int refresh) {
-        StringBuffer_T system_htmlescaped = escapeHTML(StringBuffer_create(16), Run.system->name);
         StringBuffer_append(res->outputbuffer,
                             "<!DOCTYPE html>"\
                             "<html>"\
@@ -894,8 +898,7 @@ static void do_head(HttpResponse res, const char *path, const char *name, int re
                             "  </tr>"\
                             "</table>"\
                             "<center>",
-                            StringBuffer_toString(system_htmlescaped), refresh, path, name, VERSION);
-        StringBuffer_free(&system_htmlescaped);
+                            Run.system->name_htmlescaped, refresh, path, name, VERSION);
 }
 
 
@@ -914,7 +917,6 @@ static void do_foot(HttpResponse res) {
 
 static void do_home(HttpResponse res) {
         do_head(res, "", "", Run.polltime);
-        StringBuffer_T system_htmlescaped = escapeHTML(StringBuffer_create(16), Run.system->name);
         StringBuffer_append(res->outputbuffer,
                             "<table id='header' width='100%%'>"
                             " <tr>"
@@ -924,8 +926,7 @@ static void do_home(HttpResponse res) {
                             "  </td>"
                             " </tr>"
                             "</table>",
-                            StringBuffer_toString(system_htmlescaped));
-        StringBuffer_free(&system_htmlescaped);
+                            Run.system->name_htmlescaped);
 
         do_home_system(res);
         do_home_process(res);
@@ -1316,7 +1317,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         assert(s);
         char buf[STRLEN] = {};
 
-        do_head(res, s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped), Run.polltime);
+        do_head(res, s->name_urlescaped, s->name_htmlescaped, Run.polltime);
         StringBuffer_append(res->outputbuffer,
                             "<h2>%s status</h2>"
                             "<table id='status-table'>"
@@ -1345,7 +1346,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         _displayTableRow(res, false, NULL, "On reboot",         "%s", onReboot_Names[s->onreboot]);
         for (Dependant_T d = s->dependantlist; d; d = d->next) {
                 if (d->dependant != NULL)
-                        _displayTableRow(res, false, NULL, "Depends on service", "<a href='%s'>%s</a>", d->dependant_urlescaped, StringBuffer_toString(d->dependant_htmlescaped));
+                        _displayTableRow(res, false, NULL, "Depends on service", "<a href='%s'>%s</a>", d->dependant_urlescaped, d->dependant_htmlescaped);
         }
         if (s->start)
                 _formatAction(res, "Start", s->start);
@@ -1421,7 +1422,7 @@ static void do_home_system(HttpResponse res) {
                             "<td class='left'>%s</td>"
                             "<td class='right column'>[%.2f]&nbsp;[%.2f]&nbsp;[%.2f]</td>"
                             "<td class='right column'>",
-                            s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
+                            s->name_urlescaped, s->name_htmlescaped,
                             get_service_status(HTML, s, buf, sizeof(buf)),
                             System_Info.loadavg[0], System_Info.loadavg[1], System_Info.loadavg[2]);
         if (System_Info.statisticsAvailable & Statistics_CpuUser)
@@ -1473,7 +1474,7 @@ static void do_home_process(HttpResponse res) {
                                     "<td class='left'><a href='%s'>%s</a></td>"
                                     "<td class='left'>%s</td>",
                                     on ? " class='stripe'" : "",
-                                    s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
+                                    s->name_urlescaped, s->name_htmlescaped,
                                     get_service_status(HTML, s, buf, sizeof(buf)));
                 if (! (Run.flags & Run_ProcessEngineEnabled) || ! Service_hasStatus(s) || s->inf.process->uptime < 0) {
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
@@ -1541,7 +1542,7 @@ static void do_home_program(HttpResponse res) {
                                     "<td class='left'><a href='%s'>%s</a></td>"
                                     "<td class='left'>%s</td>",
                                     on ? "class='stripe'" : "",
-                                    s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
+                                    s->name_urlescaped, s->name_htmlescaped,
                                     get_service_status(HTML, s, buf, sizeof(buf)));
                 if (! Service_hasStatus(s)) {
                         StringBuffer_append(res->outputbuffer, "<td class='left'>-</td>");
@@ -1610,7 +1611,7 @@ static void do_home_net(HttpResponse res) {
                                     "<td class='left'><a href='%s'>%s</a></td>"
                                     "<td class='left'>%s</td>",
                                     on ? "class='stripe'" : "",
-                                    s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
+                                    s->name_urlescaped, s->name_htmlescaped,
                                     get_service_status(HTML, s, buf, sizeof(buf)));
                 if (! Service_hasStatus(s) || Link_getState(s->inf.net->stats) != 1) {
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
@@ -1653,7 +1654,7 @@ static void do_home_filesystem(HttpResponse res) {
                                     "<td class='left'><a href='%s'>%s</a></td>"
                                     "<td class='left'>%s</td>",
                                     on ? "class='stripe'" : "",
-                                    s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
+                                    s->name_urlescaped, s->name_htmlescaped,
                                     get_service_status(HTML, s, buf, sizeof(buf)));
                 if (! Service_hasStatus(s)) {
                         StringBuffer_append(res->outputbuffer,
@@ -1720,7 +1721,7 @@ static void do_home_file(HttpResponse res) {
                                     "<td class='left'><a href='%s'>%s</a></td>"
                                     "<td class='left'>%s</td>",
                                     on ? "class='stripe'" : "",
-                                    s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
+                                    s->name_urlescaped, s->name_htmlescaped,
                                     get_service_status(HTML, s, buf, sizeof(buf)));
                 if (! Service_hasStatus(s) || s->inf.file->size < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
@@ -1771,7 +1772,7 @@ static void do_home_fifo(HttpResponse res) {
                                     "<td class='left'><a href='%s'>%s</a></td>"
                                     "<td class='left'>%s</td>",
                                     on ? "class='stripe'" : "",
-                                    s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
+                                    s->name_urlescaped, s->name_htmlescaped,
                                     get_service_status(HTML, s, buf, sizeof(buf)));
                 if (! Service_hasStatus(s) || s->inf.fifo->mode < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
@@ -1818,7 +1819,7 @@ static void do_home_directory(HttpResponse res) {
                                     "<td class='left'><a href='%s'>%s</a></td>"
                                     "<td class='left'>%s</td>",
                                     on ? "class='stripe'" : "",
-                                    s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
+                                    s->name_urlescaped, s->name_htmlescaped,
                                     get_service_status(HTML, s, buf, sizeof(buf)));
                 if (! Service_hasStatus(s) || s->inf.directory->mode < 0)
                         StringBuffer_append(res->outputbuffer, "<td class='right'>-</td>");
@@ -1863,7 +1864,7 @@ static void do_home_host(HttpResponse res) {
                                     "<td class='left'><a href='%s'>%s</a></td>"
                                     "<td class='left'>%s</td>",
                                     on ? "class='stripe'" : "",
-                                    s->name_urlescaped, StringBuffer_toString(s->name_htmlescaped),
+                                    s->name_urlescaped, s->name_htmlescaped,
                                     get_service_status(HTML, s, buf, sizeof(buf)));
                 if (! Service_hasStatus(s)) {
                         StringBuffer_append(res->outputbuffer,
