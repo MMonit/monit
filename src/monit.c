@@ -302,7 +302,6 @@ static void do_init(void) {
          * any Runtime constants defined in the controlfile.
          */
         if (! parse(Run.files.control)) {
-                Log_error("Monit exiting due to parsing errors in the configuration file.\n");
                 exit(1);
         }
 
