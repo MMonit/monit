@@ -1022,8 +1022,11 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                         if (c->ssl.flags) {
                                 StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;using TLS");
                                 const char *options = Ssl_printOptions(&c->ssl, (char[STRLEN]){}, STRLEN);
-                                if (options && *options)
-                                        StringBuffer_append(res->outputbuffer, " with options {%s}", options);
+                                if (options && *options) {
+                                        StringBuffer_append(res->outputbuffer, " with options {");
+                                        escapeHTML(res->outputbuffer, options);
+                                        StringBuffer_append(res->outputbuffer, "}");
+                                }
                                 if (c->ssl.checksum) {
                                         StringBuffer_append(res->outputbuffer, " and certificate checksum %s equal to '", Checksum_Names[c->ssl.checksumType]);
                                         escapeHTML(res->outputbuffer, c->ssl.checksum);
@@ -1038,7 +1041,9 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                                 int hostgroups = 0;
                                 StringBuffer_append(res->outputbuffer, "&nbsp;&nbsp;with hostgroups [");
                                 for (_list_t g = c->hostgroups->head; g; g = g->next) {
-                                        StringBuffer_append(res->outputbuffer, "%s\"%s\"", hostgroups++ ? ", " : "", (const char *)g->e);
+                                        StringBuffer_append(res->outputbuffer, "%s\"", hostgroups++ ? ", " : "");
+                                        escapeHTML(res->outputbuffer, g->e);
+                                        StringBuffer_append(res->outputbuffer, "\"");
                                 }
                                 StringBuffer_append(res->outputbuffer, "]<br>");
                         }
@@ -1057,8 +1062,11 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
                                 StringBuffer_append(res->outputbuffer, " using TLS");
                                 char opt[STRLEN] = {};
                                 const char *options = Ssl_printOptions(&mta->ssl, opt, STRLEN);
-                                if (options && *options)
-                                        StringBuffer_append(res->outputbuffer, " with options {%s}", options);
+                                if (options && *options) {
+                                        StringBuffer_append(res->outputbuffer, " with options {");
+                                        escapeHTML(res->outputbuffer, options);
+                                        StringBuffer_append(res->outputbuffer, "}");
+                                }
                                 if (mta->ssl.checksum) {
                                         StringBuffer_append(res->outputbuffer, " and certificate checksum %s equal to '", Checksum_Names[mta->ssl.checksumType]);
                                         escapeHTML(res->outputbuffer, mta->ssl.checksum);
@@ -1099,7 +1107,7 @@ static void do_runtime(HttpRequest req, HttpResponse res) {
 #ifdef HAVE_OPENSSL
                 const char *options = Ssl_printOptions(&(Run.httpd.socket.net.ssl), (char[STRLEN]){}, STRLEN);
                 if (options && *options)
-                        _displayTableRow(res, false, NULL, "httpd encryption", "%s", options);
+                        _displayTableRow(res, true, NULL, "httpd encryption", "%s", options);
 #endif
         }
         if (Run.httpd.flags & Httpd_Unix) {
@@ -1339,7 +1347,7 @@ static void do_service(HttpRequest req, HttpResponse res, Service_T s) {
         for (ServiceGroup_T sg = Service_Group_List; sg; sg = sg->next) {
                 for (_list_t m = sg->members->head; m; m = m->next)
                         if (m->e == s)
-                                _displayTableRow(res, false, NULL, "Group", "%s",  sg->name);
+                                _displayTableRow(res, true, NULL, "Group", "%s",  sg->name);
         }
         _displayTableRow(res, false, NULL, "Monitoring status", "%s", get_monitoring_status(HTML, s, buf, sizeof(buf)));
         _displayTableRow(res, false, NULL, "Monitoring mode",   "%s", Mode_Names[s->mode]);
