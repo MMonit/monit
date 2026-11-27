@@ -3874,6 +3874,7 @@ static void preparse(void) {
  * - Is shorter than STRLEN bytes
  * - Is valid UTF-8
  * - Does not contain a control character nor a double quote
+ * - Is not '.' or '..'
  */
 static const char *_validateName(char *name) {
         Str_trim(name);
@@ -3889,6 +3890,8 @@ static const char *_validateName(char *name) {
                 if (*c == '"')
                         return "must not contain a double quote";
         }
+        if (IS(name, ".") || IS(name, ".."))
+                return "must not be '.' or '..'";
         return NULL;
 }
 

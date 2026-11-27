@@ -36,6 +36,10 @@ Fixed: A link to a service in the Monit web interface did not work if the servic
        special meaning in a URL, for example "lost+found", "what?", "it's" or "a/b". The service page did not
        open, or the buttons on it failed. Monit now escapes such characters in the link.
        
+Fixed: Monit now reports an error for a service name, service group name or M/Monit host group name that is empty,
+       is "." or "..", is not valid UTF-8 or has a control character or a double quote in it. Such a name could
+       make a service unreachable from the web interface and the CLI, or make M/Monit drop the status of the host.
+       
 Fixed: Programs that Monit starts (start, stop and restart programs, check programs and exec actions) ran with SIGHUP
        ignored, and a shell script among them could not even trap it. A program that reloads on SIGHUP never got one.
 
