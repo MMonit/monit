@@ -101,6 +101,10 @@
  */
 
 
+// Monit's pages have no script and load only the favicon: a page that needs more must be allowed here
+#define CONTENT_SECURITY_POLICY "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+
+
 static int _httpPostLimit;
 
 
@@ -531,7 +535,7 @@ static void send_response(HttpRequest req, HttpResponse res) {
                 Socket_print(S, "Connection: close\r\n");
                 Socket_print(S, "X-Content-Type-Options: nosniff\r\n");
                 Socket_print(S, "X-Frame-Options: SAMEORIGIN\r\n");
-                Socket_print(S, "Content-Security-Policy: frame-ancestors 'self'\r\n");
+                Socket_print(S, "Content-Security-Policy: " CONTENT_SECURITY_POLICY "\r\n");
                 Socket_print(S, "X-XSS-Protection: 1; mode=block\r\n");
                 Socket_print(S, "Referrer-Policy: same-origin\r\n");
                 Socket_print(S, "Permissions-Policy: geolocation=(),camera=(),microphone=()\r\n");
@@ -906,7 +910,7 @@ static void internal_error(Socket_T S, int status, const char *msg) {
                      "Connection: close\r\n"
                      "X-Content-Type-Options: nosniff\r\n"
                      "X-Frame-Options: SAMEORIGIN\r\n"
-                     "Content-Security-Policy: frame-ancestors 'self'\r\n"
+                     "Content-Security-Policy: " CONTENT_SECURITY_POLICY "\r\n"
                      "X-XSS-Protection: 1; mode=block\r\n"
                      "Referrer-Policy: same-origin\r\n"
                      "Permissions-Policy: geolocation=(),camera=(),microphone=()\r\n"

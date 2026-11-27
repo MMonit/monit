@@ -4,6 +4,9 @@
 
 Version 6.2.0
 
+Changed: The Monit web interface now sends a stricter Content-Security-Policy header. It tells the browser to
+         run no script in a Monit page and to load nothing from other sites.
+         
 Fixed: INCOMPATIBLE CHANGE: Monit used to send URL encoded characters in the "set mmonit" URL without unescape.
        The credentials with escaped "@", ":", "/", "?", "#", "%" characters failed to login with M/Monit >= 4.4.0.
        Workaround: use a password without these characters for Monit < 6.2.0 and M/Monit >= 4.4.0.
