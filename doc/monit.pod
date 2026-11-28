@@ -352,10 +352,10 @@ separate files.
 =head2 Service checks
 
 Each service entry consists of the keywords C<check>, followed by the
-service type. Each entry requires a B<unique> descriptive name, which
-may be freely chosen. This name is used by Monit to refer to the
-service internally and in all interactions with the user. The name
-is case insensitive.
+service type. Each entry requires a B<unique> descriptive name. The
+name may be freely chosen with some restrictions, see L</"Names">.
+This name is used by Monit to refer to the service internally and in
+all interactions with the user. The name is case insensitive.
 
 Currently, nine types of check statements are supported:
 
@@ -458,7 +458,19 @@ statement).
 interface. It is also possible to use interface name, such as "eth0" on
 Linux.
 
+=head2 Names
 
+These rules apply to the name of a service, a service group and an
+M/Monit hostgroup.
+
+A name can be up to 255 bytes long. It cannot be empty. It cannot be
+"." or "..". It cannot contain a control character or a double quote
+(inside the name).
+
+A service name must be unique in the control file. It cannot start with
+"/". The name in a C<check system> statement cannot contain "<".
+
+Monit reports an error if a name breaks one of these rules.
 
 =head1 LOGGING
 
@@ -1701,6 +1713,9 @@ together by the I<group> statement. The syntax is simply (keyword
 in capital):
 
   GROUP groupname
+
+The group name may be freely chosen with some restrictions, see
+L</"Names">.
 
 With this statement it is possible to group similar service
 entries together and manage them as a whole. Monit provides
@@ -4435,6 +4450,8 @@ hostgroup doesn't exist, it'll be created automatically. Example:
      https://monit:monit@192.168.1.10:8443/collector
      with hostgroups [ Oslo, "Mail servers" ]
 
+A hostgroup name may be freely chosen with some restrictions, see
+L</"Names">.
 
 =head1 CONFIGURATION EXAMPLES
 
