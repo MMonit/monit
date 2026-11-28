@@ -4106,7 +4106,9 @@ Syntax:
                         [USERNAME <string>] [PASSWORD <string>]
                         [<property> <operator> <number>]+
 
-I<PATH> is an optional path to apache status ("/server-status" by default)
+I<PATH> is an optional path to apache status ("/server-status" by
+default). Monit URL-encodes the path if needed as it does with the HTTP
+request, see L</"HTTP">.
 
 I<USERNAME> is an optional username for Basic authentication
 
@@ -4371,7 +4373,9 @@ Syntax:
 
 I<HOST> you may specify an alternative Host header
 
-I<REQUEST> you may specify an alternative request, default is "/"
+I<REQUEST> you may specify an alternative request, default is "/".
+Monit URL-encodes the request if needed it as it does with the HTTP
+request, see L</"HTTP">.
 
 I<ORIGIN> you may specify an alternative origin, default is
 "https://mmonit.com"

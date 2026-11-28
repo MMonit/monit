@@ -2046,7 +2046,8 @@ websocket       : ORIGIN STRING {
                         portset.parameters.websocket.origin = $<string>2;
                   }
                 | REQUEST PATH {
-                        portset.parameters.websocket.request = $<string>2;
+                        portset.parameters.websocket.request = URL_ensureEscaped($2);
+                        FREE($2);
                   }
                 | HOST STRING {
                         portset.parameters.websocket.host = $<string>2;
@@ -2244,7 +2245,8 @@ apache_stat     : username {
                         portset.parameters.apachestatus.password = $<string>1;
                   }
                 | PATHTOK PATH {
-                        portset.parameters.apachestatus.path = $<string>2;
+                        portset.parameters.apachestatus.path = URL_ensureEscaped($2);
+                        FREE($2);
                   }
                 | LOGLIMIT operator NUMBER PERCENT {
                         portset.parameters.apachestatus.loglimitOP = $<number>2;
