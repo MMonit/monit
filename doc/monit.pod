@@ -4374,7 +4374,7 @@ Syntax:
 I<HOST> you may specify an alternative Host header
 
 I<REQUEST> you may specify an alternative request, default is "/".
-Monit URL-encodes the request if needed it as it does with the HTTP
+Monit URL-encodes the request if needed as it does with the HTTP
 request, see L</"HTTP">.
 
 I<ORIGIN> you may specify an alternative origin, default is
